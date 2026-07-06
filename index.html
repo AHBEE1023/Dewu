@@ -422,9 +422,15 @@
     </div>
     <div class="msg" id="msg"></div>
     <div class="card">
-      <label>📢 店面公告（顾客店面顶部显示，留空 = 不显示）</label>
+      <label>⚙️ 店面设置</label>
+      <label style="margin-top:8px">📢 公告（店面顶部滚动，留空不显示）</label>
       <input class="asearch" id="noticeInput" placeholder="例：🎉 本周新到 Jellycat，下单送小礼物" style="margin-bottom:0">
-      <button class="btn" onclick="saveNotice()">保存公告</button>
+      <label style="margin-top:10px">💬 WhatsApp 号（如 60123456789 — 填了顾客下单/问价直达你）</label>
+      <input class="asearch" id="waInput" inputmode="numeric" placeholder="60123456789" style="margin-bottom:0">
+      <label style="margin-top:10px">✈️ Telegram 用户名（不带 @；WhatsApp 留空时顾客走这里）</label>
+      <input class="asearch" id="tgInput" placeholder="yourusername" style="margin-bottom:0">
+      <div class="hint">两个都留空时，顾客点下单会打开 Telegram 通用分享（可能发错人），强烈建议至少填一个。</div>
+      <button class="btn" onclick="saveSettings()">保存设置</button>
     </div>
     <div class="card">
       <input class="asearch" id="aq" placeholder="搜货品…" oninput="renderAdmin()">
@@ -613,7 +619,7 @@
 
   // ===== 数据 =====
   let ALL=[];
-  let sort='new'; const SORTS=[['new','综合'],['plow','价格↑'],['phigh','价格↓']];
+  let sort='new'; const SORTS=[['new','综合'],['sold','销量'],['plow','价格↑'],['phigh','价格↓']];
   let brandFilter='', catFilter='';
   // 店面读专用视图：数据库层面只发布「已上架 + 安全字段」，成本根本不出库
   let _fresh=false;
@@ -624,15 +630,27 @@
       ALL=r.ok?await r.json():[];
     }catch(e){ ALL=[]; }
     _fresh=true; buildChips(); renderSeg(); render(); updateBadge(); checkDeepLink();
-    loadNotice();
+    loadConfig();
   }
-  async function loadNotice(){
+  let CFG={};
+  async function loadConfig(){
     try{
-      const r=await fetch(SUPABASE_URL+'/rest/v1/config_369?key=eq.notice&select=value',{headers:headers()});
+      const r=await fetch(SUPABASE_URL+'/rest/v1/config_369?select=key,value',{headers:headers()});
       const rows=r.ok?await r.json():[];
-      setNotice((rows[0]&&rows[0].value)||'');
+      CFG={}; rows.forEach(x=>CFG[x.key]=x.value||'');
+      setNotice(CFG.notice||'');
+      applyContact();
     }catch(e){}
   }
+  // 联系方式优先级：后台配的 WhatsApp → 后台配的 TG 用户名（直达聊天）→ 兜底 Telegram 分享
+  function contactHref(text){
+    const wa=((CFG.contact_wa||CONTACT_WA)||'').replace(/[^\d]/g,'');
+    if(wa) return 'https://wa.me/'+wa+'?text='+encodeURIComponent(text);
+    const tgu=(CFG.contact_tg||'').trim().replace(/^@/,'');
+    if(tgu) return 'https://t.me/'+tgu+'?text='+encodeURIComponent(text);
+    return 'https://t.me/share/url?url='+encodeURIComponent(text);
+  }
+  function applyContact(){ const c=document.getElementById('waCard'); if(c) c.href=contactHref('你好，想问下 '+SHOP_NAME+' 的货'); }
   function setNotice(t){
     t=(t||'').trim(); window._notice=t;
     const box=document.getElementById('notice'), mq=document.getElementById('noticeMq');
@@ -695,6 +713,8 @@
     if(q) list=list.filter(p=>((p.name_cn||'')+(p.brand||'')+(p.sku||'')).toLowerCase().includes(q));
     if(sort==='plow') list.sort((a,b)=>(a.sell_myr??1e9)-(b.sell_myr??1e9));
     else if(sort==='phigh') list.sort((a,b)=>(b.sell_myr??-1)-(a.sell_myr??-1));
+    else if(sort==='sold') list.sort((a,b)=>(b.sold_count||0)-(a.sold_count||0));
+    else list.sort((a,b)=>(b.hot?1:0)-(a.hot?1:0)); // 综合：热卖优先，其余保持最新在前
     const grid=document.getElementById('grid');
     grid.classList.toggle('anim',_fresh); _fresh=false; // 只在数据刚拉回来时做入场动画，搜索筛选时不闪
     const hs=document.getElementById('heroSub'); if(hs) hs.textContent='品牌正品 · 假一赔十'+(ALL.length?' · '+ALL.length+' 件在售':'');
@@ -719,9 +739,15 @@
     }).join('');
   }
 
+  const _viewed=new Set();
+  function bumpView(id){
+    if(adminEntry||_viewed.has(id)) return; // 店主自己看不算，同次会话同件货只记一次
+    _viewed.add(id);
+    try{ fetch(SUPABASE_URL+'/rest/v1/rpc/bump_view_369',{method:'POST',headers:headers(),body:JSON.stringify({pid:id})}); }catch(e){}
+  }
   function openSheet(id){
     const p=ALL.find(x=>x.id===id); if(!p) return;
-    markRecent(id);
+    markRecent(id); bumpView(id);
     let priceBlock;
     if(p.sell_myr!=null){
       const hasOrig=p.orig_myr!=null&&Number(p.orig_myr)>Number(p.sell_myr);
@@ -870,7 +896,7 @@
   }
   function askHref(p){
     const t='我想要这个：'+(p.name_cn||'')+(p.sku?'（货号 '+p.sku+'）':'')+(p.sell_myr!=null?'，RM'+money(p.sell_myr):'');
-    return CONTACT_WA?('https://wa.me/'+CONTACT_WA+'?text='+encodeURIComponent(t)):('https://t.me/share/url?url='+encodeURIComponent(t));
+    return contactHref(t);
   }
   function cartWaHref(){
     const items=cartItems().filter(p=>!p.soldout);
@@ -878,7 +904,7 @@
     let t='你好，我想下单（'+SHOP_NAME+'）订单 '+orderNo()+'：\n';
     items.forEach((p,i)=>{ t+=(i+1)+'. '+(p.name_cn||'')+(p.sku?'（'+p.sku+'）':'')+' ×'+cart[p.id]+(p.sell_myr!=null?' RM'+money(p.sell_myr):' 询价')+'\n'; });
     const tot=cartTotal(); if(tot>0) t+='合计约 RM'+money(tot)+'（共 '+n+' 件）';
-    return CONTACT_WA?('https://wa.me/'+CONTACT_WA+'?text='+encodeURIComponent(t)):('https://t.me/share/url?url='+encodeURIComponent(t));
+    return contactHref(t);
   }
 
   // ===== 后台 =====
@@ -1072,16 +1098,25 @@
   }
   async function loadNoticeInput(){
     try{
-      const r=await fetch(SUPABASE_URL+'/rest/v1/config_369?key=eq.notice&select=value',{headers:headers()});
+      const r=await fetch(SUPABASE_URL+'/rest/v1/config_369?select=key,value',{headers:headers()});
       const rows=r.ok?await r.json():[];
-      const el=document.getElementById('noticeInput');
-      if(el&&document.activeElement!==el) el.value=(rows[0]&&rows[0].value)||'';
+      const m={}; rows.forEach(x=>m[x.key]=x.value||'');
+      [['noticeInput','notice'],['waInput','contact_wa'],['tgInput','contact_tg']].forEach(([id,k])=>{
+        const el=document.getElementById(id);
+        if(el&&document.activeElement!==el) el.value=m[k]||'';
+      });
     }catch(e){}
   }
-  async function saveNotice(){
-    const v=document.getElementById('noticeInput').value.trim();
-    const r=await adminCall('config',{key:'notice',value:v}).catch(()=>null);
-    if(r&&r.ok){ toast(v?'公告已发布 📢':'公告已清空'); haptic('medium'); setNotice(v); } else toast('保存失败');
+  async function saveSettings(){
+    const kv=[['notice',document.getElementById('noticeInput').value.trim()],
+              ['contact_wa',document.getElementById('waInput').value.replace(/[^\d]/g,'')],
+              ['contact_tg',document.getElementById('tgInput').value.trim().replace(/^@/,'')]];
+    let ok=0;
+    for(const [k,v] of kv){ const r=await adminCall('config',{key:k,value:v}).catch(()=>null); if(r&&r.ok) ok++; }
+    if(ok===kv.length){
+      toast('设置已保存 ✅'); haptic('medium');
+      kv.forEach(([k,v])=>CFG[k]=v); setNotice(CFG.notice||''); applyContact();
+    } else toast('部分保存失败，重试一下');
   }
   async function markSold(id){
     const p=AROWS.find(x=>x.id===id); if(!p) return;
@@ -1126,7 +1161,7 @@
         (selMode?'<div class="selc">'+(SEL.has(p.id)?'✔':'')+'</div>':'')+img+'<div class="info">'+
         '<div class="name">'+esc(p.name_cn||'(无名)')+'</div>'+
         '<div class="brand">'+esc(p.brand||'—')+(p.sku?' · '+esc(p.sku):'')+'</div>'+
-        '<div class="cost">得物 ¥'+(p.price_rmb==null?'—':money(p.price_rmb))+' · 成本 RM'+(p.price_myr==null?'—':money(p.price_myr))+profitHtml+((p.images&&p.images.length>1)?' · 📷'+p.images.length:'')+(p.sold_count?' · 已售'+p.sold_count:'')+'　'+badge(p.status)+
+        '<div class="cost">得物 ¥'+(p.price_rmb==null?'—':money(p.price_rmb))+' · 成本 RM'+(p.price_myr==null?'—':money(p.price_myr))+profitHtml+((p.images&&p.images.length>1)?' · 📷'+p.images.length:'')+(p.views?' · 👀'+p.views:'')+(p.sold_count?' · 已售'+p.sold_count:'')+'　'+badge(p.status)+
         (p.hot?' <span class="badge" style="color:#ff7a00;border-color:#ffb02088">🔥热卖</span>':'')+
         (p.soldout?' <span class="badge down">售罄</span>':'')+
         '<span id="lp_'+p.id+'"></span></div>'+
