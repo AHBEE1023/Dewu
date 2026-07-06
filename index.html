@@ -31,6 +31,8 @@
   body{max-width:720px;margin:0 auto;min-height:100vh}
   img{-webkit-user-drag:none}
   .hidden{display:none!important}
+  #cartView,#meView,#adminView{animation:viewIn .22s ease}
+  @keyframes viewIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
   /* 视角切换 */
   #switch{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:12px;z-index:60;border:1px solid var(--line);
@@ -79,7 +81,8 @@
   .searchrow input{flex:1;background:var(--card);border:1px solid var(--line);border-radius:20px;color:var(--txt);padding:10px 16px;font-size:14px;outline:none;font-family:inherit;box-shadow:var(--shadow)}
   .searchrow input:focus{border-color:var(--accent)}
   .qwrap{flex:1;position:relative;display:flex}
-  .qwrap input{width:100%;padding-right:34px}
+  .qwrap input{width:100%;padding-right:34px;padding-left:38px}
+  .qico{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.45;pointer-events:none}
   .qclear{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;border:none;background:var(--line);color:var(--sub);font-size:11px;line-height:1;display:none;align-items:center;justify-content:center}
   .qclear.show{display:flex}
   .seg{display:flex;gap:20px;padding:11px 2px 5px}
@@ -124,7 +127,7 @@
   .vtitle{font-size:20px;font-weight:800;margin:0 0 4px}
   .vsub{font-size:12.5px;color:var(--sub);margin:0 0 16px}
   .crow{display:flex;gap:12px;background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:10px;margin-bottom:10px}
-  .crow img{width:64px;height:64px;object-fit:cover;border-radius:10px;background:var(--card2);flex:0 0 auto}
+  .crow img{width:70px;height:70px;object-fit:cover;border-radius:12px;background:var(--card2);flex:0 0 auto}
   .crow .ci{flex:1;min-width:0}
   .crow .cn{font-size:13px;font-weight:600;line-height:1.35;margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .crow .cp{font-size:13px;color:var(--price);font-weight:700}
@@ -157,8 +160,9 @@
     padding-bottom:var(--safe-b);background:#ffffffe6;backdrop-filter:blur(14px);border-top:1px solid var(--line);
     display:flex;z-index:15}
   #nav button{flex:1;background:none;border:none;color:var(--sub);font-size:10.5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative}
-  #nav button .i{font-size:20px;line-height:1}
-  #nav button.on{color:var(--accent)}
+  #nav button .i{font-size:20px;line-height:1;transition:transform .18s cubic-bezier(.34,1.56,.64,1)}
+  #nav button.on{color:var(--accent);font-weight:800}
+  #nav button.on .i{transform:translateY(-2px) scale(1.12)}
   #nav .cartn{position:absolute;top:6px;right:calc(50% - 22px);background:var(--price);color:#fff;font-size:10px;font-weight:800;min-width:16px;height:16px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px}
   @keyframes bump{0%{transform:scale(1)}35%{transform:scale(1.45)}100%{transform:scale(1)}}
   #nav .cartn.bump{animation:bump .35s}
@@ -173,8 +177,11 @@
   .ritem div{font-size:10.5px;color:var(--sub);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
   /* 详情弹层 */
-  .sheet{position:fixed;inset:0;background:#000c;display:none;align-items:flex-end;z-index:70}
-  .sheet.show{display:flex}
+  .sheet{position:fixed;inset:0;background:#000c;display:flex;align-items:flex-end;z-index:70;
+    opacity:0;visibility:hidden;pointer-events:none;transition:opacity .22s ease,visibility .22s}
+  .sheet.show{opacity:1;visibility:visible;pointer-events:auto}
+  .sheet .sheet-in{transform:translateY(48px);transition:transform .28s cubic-bezier(.2,.8,.25,1)}
+  .sheet.show .sheet-in{transform:none}
   .sheet-in{width:100%;max-width:720px;margin:0 auto;background:var(--bg);border-radius:20px 20px 0 0;max-height:92vh;overflow:auto;border-top:1px solid var(--line)}
   .sheet-img{width:100%;aspect-ratio:1/1;background:var(--card2);object-fit:cover;display:block}
   /* 详情图库轮播 */
@@ -193,8 +200,8 @@
   .shopcount{font-size:12px;color:var(--sub);padding:2px 18px 6px}
   .gslide img{cursor:zoom-in}
   /* 全屏看图 */
-  #lightbox{position:fixed;inset:0;background:#000;display:none;z-index:100}
-  #lightbox.show{display:block}
+  #lightbox{position:fixed;inset:0;background:#000;z-index:100;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s ease,visibility .2s}
+  #lightbox.show{opacity:1;visibility:visible;pointer-events:auto}
   .lbscroll{display:flex;width:100%;height:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
   .lbscroll::-webkit-scrollbar{display:none}
   .lbslide{flex:0 0 100%;display:flex;align-items:center;justify-content:center;scroll-snap-align:start}
@@ -225,7 +232,7 @@
   .spec:last-child{border-bottom:none}
   .spec span{color:var(--sub);width:76px;flex:0 0 auto}
   .spec b{font-weight:600;min-width:0;overflow-wrap:anywhere}
-  .sheet-bar{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 18px calc(12px + var(--safe-b));display:flex;gap:10px}
+  .sheet-bar{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--line);box-shadow:0 -6px 18px rgba(24,26,32,.05);padding:10px 18px calc(12px + var(--safe-b));display:flex;gap:10px}
   .sheet-btns{display:flex;gap:10px}
   .sbtn{flex:1;text-align:center;border:none;border-radius:22px;padding:14px;font-size:15px;font-weight:800;text-decoration:none}
   .sbtn.buy{color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 4px 14px rgba(255,90,60,.3)}
@@ -334,7 +341,7 @@
     <div class="sticky">
       <div class="searchrow">
         <div class="qwrap">
-          <input id="q" placeholder="搜商品名 / 品牌 / 货号…" oninput="onSearch()">
+          <span class="qico">🔍</span><input id="q" placeholder="搜商品名 / 品牌 / 货号…" oninput="onSearch()">
           <button class="qclear" id="qclear" onclick="clearSearch()">✕</button>
         </div>
       </div>
@@ -421,8 +428,12 @@
       </div>
     </div>
     <div class="msg" id="msg"></div>
-    <div class="card">
-      <label>⚙️ 店面设置</label>
+    <div class="card" style="padding-bottom:10px">
+      <div onclick="toggleSettings()" style="display:flex;align-items:center;cursor:pointer;margin-bottom:4px">
+        <label style="margin:0;flex:1;color:var(--txt);font-size:13.5px;font-weight:700">⚙️ 店面设置<span style="color:var(--sub);font-weight:500;font-size:12px">　公告 · 联系方式</span></label>
+        <span id="setArrow" style="color:var(--sub);font-size:12px">▼</span>
+      </div>
+      <div id="setBody" class="hidden">
       <label style="margin-top:8px">📢 公告（店面顶部滚动，留空不显示）</label>
       <input class="asearch" id="noticeInput" placeholder="例：🎉 本周新到 Jellycat，下单送小礼物" style="margin-bottom:0">
       <label style="margin-top:10px">💬 WhatsApp 号（如 60123456789 — 填了顾客下单/问价直达你）</label>
@@ -431,6 +442,7 @@
       <input class="asearch" id="tgInput" placeholder="yourusername" style="margin-bottom:0">
       <div class="hint">两个都留空时，顾客点下单会打开 Telegram 通用分享（可能发错人），强烈建议至少填一个。</div>
       <button class="btn" onclick="saveSettings()">保存设置</button>
+      </div>
     </div>
     <div class="card">
       <input class="asearch" id="aq" placeholder="搜货品…" oninput="renderAdmin()">
@@ -1095,6 +1107,11 @@
     if(!confirm('撤销这笔成交？记录会删除，已售数会回退')) return;
     const r=await adminCall('unsale',{saleId:saleId}).catch(()=>null);
     if(r&&r.ok){ toast('已撤销'); haptic('light'); loadSales(); loadAdmin(); } else toast('撤销失败');
+  }
+  function toggleSettings(){
+    const b=document.getElementById('setBody');
+    b.classList.toggle('hidden');
+    document.getElementById('setArrow').textContent=b.classList.contains('hidden')?'▼':'▲';
   }
   async function loadNoticeInput(){
     try{
