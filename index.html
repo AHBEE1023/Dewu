@@ -230,6 +230,13 @@
   .mini.ghost{background:transparent;color:var(--sub);border:1px solid var(--line)}
   .mini.del{background:transparent;color:var(--bad);border:1px solid rgba(255,85,102,.4)}
   .badge{font-size:11px;padding:2px 8px;border-radius:8px;border:1px solid var(--line)}
+  /* 批量选择模式 */
+  .selc{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);flex:0 0 auto;align-self:center;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#1a1204}
+  .item.selon .selc{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent}
+  .item.selon{background:rgba(255,176,32,.06);border-radius:10px}
+  .selbar{position:fixed;left:0;right:0;bottom:0;max-width:720px;margin:0 auto;background:#12141bee;backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:10px 14px calc(10px + var(--safe-b));display:flex;gap:8px;align-items:center;z-index:20}
+  .selbar b{font-size:13px;flex:1}
+  .selbar .mini{padding:9px 13px;font-size:13px}
   .badge.up{color:var(--ok);border-color:rgba(61,220,132,.4)}.badge.wait{color:var(--sub)}.badge.down{color:var(--bad);border-color:rgba(255,85,102,.4)}
   /* 后台编辑弹层字段 */
   .fld{margin-bottom:11px}.fld label{margin-bottom:5px}
@@ -360,8 +367,14 @@
         <button class="mini ghost" onclick="batchPrice()">批量定价</button>
         <button class="mini" onclick="batchList()">上架已定价</button>
       </div>
-      <div class="sec-title"><span>货品管理</span><span id="count">—</span></div>
+      <div class="sec-title"><span>货品管理 <button class="mini ghost" id="selBtn" style="margin-left:4px" onclick="toggleSel()">☑ 选择</button></span><span id="count">—</span></div>
       <div id="list"></div>
+    </div>
+    <div class="selbar hidden" id="selbar">
+      <b>已选 <span id="selN">0</span> 件</b>
+      <button class="mini" onclick="selDo('up')">上架</button>
+      <button class="mini ghost" onclick="selDo('down')">下架</button>
+      <button class="mini del" onclick="selDo('del')">删除</button>
     </div>
   </div>
 
@@ -384,6 +397,7 @@
   const SUPABASE_URL = 'https://wgulnumflnumdpqfbjqy.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_bmLjilJuTOfkFKIn-tLIIw_ynG4h4de';
   const SHOP_NAME = '369 甄选';
+  const RATE_RMB_TO_MYR = 0.62; // 人民币→马币成本折算，和解析函数里的 RATE_RMB_TO_MYR 保持一致
   const CONTACT_WA = '';      // 你的 WhatsApp 号（如 60123456789）；留空走 Telegram 分享
   const ADMIN_PIN = '3690';   // 进后台密码（记得改成自己的）；留空 = 免密直接进
 
@@ -589,13 +603,28 @@
         '<div><b>🚚 包邮</b>7–15 天到手</div>'+
       '</div>'+
       '<div class="specs">'+specs.map(s=>'<div class="spec"><span>'+s[0]+'</span><b>'+s[1]+'</b></div>').join('')+'</div>'+
+      relatedHtml(p)+
       '<button onclick="shareProduct('+p.id+')" style="width:100%;margin-top:4px;background:none;border:none;color:var(--sub);font-size:13px;font-weight:600;padding:10px">🔗 分享这件好物</button>'+
       '</div>'+
       '<div class="sheet-bar">'+
         '<button class="sbtn add" onclick="addCart('+p.id+');this.textContent=\'✓ 已在心愿单\';toast(\'已加入心愿单\')">'+(cart[p.id]?'✓ 已在心愿单':'⭐ 加心愿单')+'</button>'+
         '<a class="sbtn buy" href="'+askHref(p)+'" target="_blank" rel="noopener">💬 问价 / 下单</a>'+
       '</div>';
+    const si=document.querySelector('#sheet .sheet-in'); if(si) si.scrollTop=0;
     document.getElementById('sheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
+  }
+  // 详情页底部推荐：优先同品牌，不够拿别的补（提升连逛）
+  function relatedHtml(p){
+    const pool=ALL.filter(x=>x.id!==p.id);
+    if(!pool.length) return '';
+    const same=pool.filter(x=>x.brand&&x.brand===p.brand);
+    const list=same.concat(pool.filter(x=>!(x.brand&&x.brand===p.brand))).slice(0,8);
+    return '<div style="margin:18px 0 9px;font-size:13px;font-weight:700;color:var(--sub)">'+(same.length?'🛍 同品牌好物':'🛍 猜你喜欢')+'</div>'+
+      '<div class="rscroll">'+list.map(x=>'<div class="ritem" style="width:84px" onclick="openSheet('+x.id+')">'+
+        (x.image_url?'<img style="width:84px;height:84px" src="'+esc(x.image_url)+'" referrerpolicy="no-referrer" loading="lazy" alt="">':'<img style="width:84px;height:84px" alt="">')+
+        '<div>'+esc(x.name_cn||'')+'</div>'+
+        (x.sell_myr!=null?'<div style="color:var(--accent2);font-weight:800;margin-top:1px">RM'+money(x.sell_myr)+'</div>':'')+
+      '</div>').join('')+'</div>';
   }
   function closeSheet(){ document.getElementById('sheet').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
   function shareProduct(id){
@@ -655,7 +684,7 @@
     const items=cartItems(); const box=document.getElementById('cartList');
     show('checkout', tab==='cart' && items.length>0 && !hasMB());
     updateMainButton();
-    if(!items.length){ box.innerHTML='<div class="empty"><div class="big">🛒</div>心愿单还是空的<br>去店面挑几件喜欢的吧～</div>'; return; }
+    if(!items.length){ box.innerHTML='<div class="empty"><div class="big">🛒</div>心愿单还是空的<br>去店面挑几件喜欢的吧～<br><button onclick="setTab(\'shop\')" style="margin-top:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#1a1204;border-radius:12px;padding:11px 26px;font-size:14px;font-weight:800">🛍 去逛逛</button></div>'; return; }
     box.innerHTML=items.map(p=>
       '<div class="crow">'+(p.image_url?'<img src="'+esc(p.image_url)+'" referrerpolicy="no-referrer" alt="">':'<img alt="">')+
       '<div class="ci"><div class="cn">'+esc(p.name_cn||'')+'</div>'+
@@ -740,6 +769,35 @@
   }
   let aFilter='all';
   function setAFilter(f){ aFilter=(aFilter===f&&f!=='all')?'all':f; ['fAll','fUp','fWait'].forEach(id=>document.getElementById(id).classList.remove('active')); const map={all:'fAll',up:'fUp',wait:'fWait'}; document.getElementById(map[aFilter]).classList.add('active'); renderAdmin(); }
+  // ===== 批量选择 =====
+  let selMode=false; const SEL=new Set();
+  function toggleSel(){ selMode=!selMode; SEL.clear(); renderAdmin(); haptic('light'); }
+  function selItem(id){ if(!selMode) return; SEL.has(id)?SEL.delete(id):SEL.add(id); renderAdmin(); haptic('light'); }
+  function renderSelBar(){
+    const bar=document.getElementById('selbar'); if(!bar) return;
+    bar.classList.toggle('hidden',!selMode||mode!=='admin');
+    document.getElementById('selN').textContent=SEL.size;
+    const btn=document.getElementById('selBtn'); if(btn) btn.textContent=selMode?'✕ 取消':'☑ 选择';
+  }
+  async function selDo(action){
+    if(!SEL.size){ toast('先勾选货品'); return; }
+    const rows=[...SEL].map(id=>AROWS.find(p=>p.id===id)).filter(Boolean);
+    let msg='';
+    if(action==='del'){
+      if(!confirm('确定删除选中的 '+rows.length+' 件？删了就没了')) return;
+      let ok=0; for(const p of rows){ const r=await fetch(SUPABASE_URL+'/rest/v1/products_369?id=eq.'+p.id,{method:'DELETE',headers:headers()}); if(r.ok) ok++; }
+      msg='已删除 '+ok+' 件';
+    } else if(action==='up'){
+      const can=rows.filter(p=>p.sell_myr!=null), skip=rows.length-can.length;
+      if(!can.length){ toast('选中的都没售价，先定价再上架'); return; }
+      let ok=0; for(const p of can){ if(await patch(p.id,{status:'已上架'})) ok++; }
+      msg='已上架 '+ok+' 件 🎉'+(skip?'（'+skip+' 件没售价，跳过）':'');
+    } else {
+      let ok=0; for(const p of rows){ if(await patch(p.id,{status:'下架'})) ok++; }
+      msg='已下架 '+ok+' 件';
+    }
+    SEL.clear(); selMode=false; toast(msg); haptic('medium'); loadAdmin();
+  }
   let AROWS=[], _pollTimer=null, _pollN=0;
   const isPending=p=>/^⏳/.test(p&&p.name_cn||'');
   async function loadAdmin(){
@@ -780,17 +838,13 @@
     document.getElementById('count').onclick=aFilter!=='all'?(()=>setAFilter(aFilter)):null;
     document.getElementById('count').style.cursor=aFilter!=='all'?'pointer':'';
     const box=document.getElementById('list');
-    if(!rows.length){ box.innerHTML='<div class="empty">'+(AROWS.length?'这个筛选下没有货品':'还没有货品，上面贴内容解析入库')+'</div>'; return; }
+    if(!rows.length){ box.innerHTML='<div class="empty">'+(AROWS.length?'这个筛选下没有货品':'还没有货品，上面贴内容解析入库')+'</div>'; renderSelBar(); return; }
     box.innerHTML=rows.map(p=>{
       const img=p.image_url?'<img src="'+esc(p.image_url)+'" referrerpolicy="no-referrer" onerror="this.style.visibility=\'hidden\'" alt="">':'<img alt="">';
       const profit=(p.sell_myr!=null&&p.price_myr!=null)?(p.sell_myr-p.price_myr):null;
       const margin=(profit!=null&&p.sell_myr>0)?Math.round(profit/p.sell_myr*100):null;
       const profitHtml=profit!=null?' · <span class="profit">赚 RM'+money(profit)+(margin!=null?' '+margin+'%':'')+'</span>':'';
-      return '<div class="item'+(isPending(p)?' pending':'')+'">'+img+'<div class="info">'+
-        '<div class="name">'+esc(p.name_cn||'(无名)')+'</div>'+
-        '<div class="brand">'+esc(p.brand||'—')+(p.sku?' · '+esc(p.sku):'')+'</div>'+
-        '<div class="cost">得物 ¥'+(p.price_rmb==null?'—':money(p.price_rmb))+' · 成本 RM'+(p.price_myr==null?'—':money(p.price_myr))+profitHtml+((p.images&&p.images.length>1)?' · 📷'+p.images.length:'')+'　'+badge(p.status)+'<span id="lp_'+p.id+'"></span></div>'+
-        '<div class="ctl">'+
+      const ctl=selMode?'':'<div class="ctl">'+
           '<input type="number" inputmode="decimal" placeholder="售价RM" value="'+(p.sell_myr==null?'':p.sell_myr)+'" id="sell_'+p.id+'" oninput="liveProfit('+p.id+')">'+
           (p.price_myr!=null?'<button class="mini ghost" onclick="calcPrice('+p.id+')">算价</button>':'')+
           (/^⚠/.test(p.name_cn||'')?'<button class="mini" onclick="reparse('+p.id+')">🔄 重解析</button>':'')+
@@ -798,8 +852,15 @@
           (p.status==='已上架'?'<button class="mini ghost" onclick="setStatus('+p.id+',\'下架\')">下架</button>':'<button class="mini" onclick="setStatus('+p.id+',\'已上架\')">上架</button>')+
           '<button class="mini ghost" onclick="openEdit('+p.id+')">编辑</button>'+
           '<button class="mini del" onclick="delItem('+p.id+')">删</button>'+
-        '</div></div></div>';
+        '</div>';
+      return '<div class="item'+(isPending(p)?' pending':'')+(selMode&&SEL.has(p.id)?' selon':'')+'"'+(selMode?' onclick="selItem('+p.id+')"':'')+'>'+
+        (selMode?'<div class="selc">'+(SEL.has(p.id)?'✔':'')+'</div>':'')+img+'<div class="info">'+
+        '<div class="name">'+esc(p.name_cn||'(无名)')+'</div>'+
+        '<div class="brand">'+esc(p.brand||'—')+(p.sku?' · '+esc(p.sku):'')+'</div>'+
+        '<div class="cost">得物 ¥'+(p.price_rmb==null?'—':money(p.price_rmb))+' · 成本 RM'+(p.price_myr==null?'—':money(p.price_myr))+profitHtml+((p.images&&p.images.length>1)?' · 📷'+p.images.length:'')+'　'+badge(p.status)+'<span id="lp_'+p.id+'"></span></div>'+
+        ctl+'</div></div>';
     }).join('');
+    renderSelBar();
   }
   function extractUrl(s){ const m=(s||'').match(/https?:\/\/[^\s，。、]+/); return m?m[0]:null; }
   // 前端本地先猜个临时名占位（后台解析好会覆盖）
@@ -840,6 +901,11 @@
   async function parseNow(){
     const input=document.getElementById('input').value.trim();
     if(!input){ showMsg('warn','先贴点内容再解析。'); return; }
+    // 防重复入库：同一条链接之前入过就先问一声
+    const dupUrl=extractUrl(input);
+    if(dupUrl && AROWS.some(p=>p.source_url===dupUrl)){
+      if(!confirm('这条链接之前已经入过库了，还要再入一次吗？')) return;
+    }
     hideMsg(); const btn=document.getElementById('go'), goTxt=document.getElementById('goTxt');
     btn.disabled=true; goTxt.innerHTML='<span class="spin"></span>';
     // 一次解析用同一个 reqId，弱网就反复重发直到有一发送达；唯一索引去重，不会重复入库。
@@ -897,7 +963,7 @@
         esc(((p.images&&p.images.length)?p.images:(p.image_url?[p.image_url]:[])).join("\n"))+'</textarea>'+
         '<div class="ethumbs" id="ethumbs"></div></div>'+
       '<div class="frow"><div class="fld"><label>得物价 ¥</label><input id="e_rmb" type="number" inputmode="decimal" value="'+v(p.price_rmb)+'"></div>'+
-        '<div class="fld"><label>售价 RM</label><input id="e_sell" type="number" inputmode="decimal" value="'+v(p.sell_myr)+'"></div></div>'+
+        '<div class="fld"><label>售价 RM <button class="mini ghost" style="padding:2px 8px;font-size:10.5px;margin-left:4px" onclick="eCalc()">×'+MARKUP+' 算</button></label><input id="e_sell" type="number" inputmode="decimal" value="'+v(p.sell_myr)+'"></div></div>'+
       '<div class="fld"><label>状态</label><select id="e_status">'+
         ['待选','已上架','下架'].map(s=>'<option'+(p.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select></div>'+
       '<button class="btn" onclick="saveEdit('+id+')">保存修改</button>'+
@@ -955,23 +1021,36 @@
     }catch(e){ toast(String(e&&e.message||e)); }
     finally{ txt.innerHTML=old; inp.value=''; }
   }
+  // 在编辑页按当前倍率快速算售价（得物价¥ → 成本RM → ×倍率，尾数9 同样生效）
+  function eCalc(){
+    const rmb=Number(document.getElementById('e_rmb').value);
+    if(!Number.isFinite(rmb)||rmb<=0){ toast('先填得物价 ¥'); return; }
+    let s=Math.max(1,Math.ceil(rmb*RATE_RMB_TO_MYR*MARKUP));
+    if(NINE&&s>10) s=s+((9-s%10)+10)%10;
+    document.getElementById('e_sell').value=s; haptic('light');
+  }
   async function saveEdit(id){
     const num=(x)=>{ const t=x.trim(); return t===''?null:(Number.isFinite(Number(t))?Number(t):null); };
     const status=document.getElementById('e_status').value;
     const sell=num(document.getElementById('e_sell').value);
     if(status==='已上架'&&sell==null){ toast('上架必须有售价'); return; }
     const imgs=eImgs();
+    const rmb=num(document.getElementById('e_rmb').value);
     const fields={
       name_cn:document.getElementById('e_name').value.trim()||'(无名)',
       brand:document.getElementById('e_brand').value.trim()||null,
       sku:document.getElementById('e_sku').value.trim()||null,
       images:imgs.length?imgs:null,
       image_url:imgs[0]||null,
-      price_rmb:num(document.getElementById('e_rmb').value),
+      price_rmb:rmb,
+      price_myr:rmb!=null?Math.round(rmb*RATE_RMB_TO_MYR*100)/100:null, // 改得物价时成本同步换算，不再留旧成本
       sell_myr:sell, status:status,
     };
     if(await patch(id,fields)){ toast('已保存 ✅'); haptic('medium'); closeEdit(); loadAdmin(); } else toast('保存失败');
   }
+
+  // 切回 App 时自动刷新数据（Telegram 里没有下拉刷新，这个替代它）
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ mode==='admin'?loadAdmin():load(); } });
 
   // 启动
   updateBadge();
