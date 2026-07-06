@@ -247,9 +247,13 @@
   /* 上传图片按钮 */
   .upbtn{display:inline-flex;align-items:center;gap:6px;border:1px dashed var(--line);background:var(--card2);color:var(--sub);border-radius:10px;padding:9px 12px;font-size:13px;font-weight:600;margin-bottom:9px}
   .upbtn:active{transform:scale(.98)}
-  /* 上传中的缩略图行 */
-  .ethumbs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px}
-  .ethumbs img{width:52px;height:52px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+  /* 图库缩略图墙：点图设主图，点 ✕ 删掉 */
+  .ethumbs{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0 2px}
+  .eth{position:relative}
+  .eth img{width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--line);display:block;background:var(--card2)}
+  .eth:first-child img{border-color:var(--accent2)}
+  .ethmain{position:absolute;left:0;right:0;bottom:0;background:#000b;color:var(--accent2);font-size:9px;font-weight:700;text-align:center;border-radius:0 0 8px 8px;padding:1.5px 0;pointer-events:none}
+  .ethx{position:absolute;top:-7px;right:-7px;width:19px;height:19px;border-radius:50%;border:1px solid var(--line);background:#000d;color:#fff;font-size:10px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}
 
   .spin{width:16px;height:16px;border:2px solid rgba(26,18,4,.35);border-top-color:#1a1204;border-radius:50%;animation:sp .7s linear infinite}
   @keyframes sp{to{transform:rotate(360deg)}}
@@ -341,13 +345,17 @@
       <label>贴得物链接，或商品页『分享 → 复制』的整段文字</label>
       <textarea id="input" placeholder="把得物 App 商品页『分享』复制的整段文字贴进来，最稳。"></textarea>
       <div class="hint">带上得物链接能自动抓商品大图。入库后定价、上架，顾客店面才显示。</div>
-      <button class="btn" id="go" onclick="parseNow()"><span id="goTxt">解析入库</span></button>
+      <div style="display:flex;gap:9px">
+        <button class="btn" style="width:auto;flex:1;background:var(--card2);border:1px solid var(--line);color:var(--txt)" onclick="pasteClip()">📋 粘贴</button>
+        <button class="btn" style="width:auto;flex:2.2" id="go" onclick="parseNow()"><span id="goTxt">解析入库</span></button>
+      </div>
     </div>
     <div class="msg" id="msg"></div>
     <div class="card">
       <input class="asearch" id="aq" placeholder="搜货品…" oninput="renderAdmin()">
       <div class="pricebar">
         <label>加价倍率 ×</label><input id="markup" type="number" step="0.1" min="1" value="1.5" onchange="saveMarkup()">
+        <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input id="nine" type="checkbox" style="width:auto;accent-color:var(--accent)" onchange="saveNine()">尾数9</label>
         <span class="grow"></span>
         <button class="mini ghost" onclick="batchPrice()">批量定价</button>
         <button class="mini" onclick="batchList()">上架已定价</button>
@@ -676,8 +684,33 @@
   function hideMsg(){ document.getElementById('msg').className='msg'; }
   // ===== 定价工具 =====
   let MARKUP=Number(localStorage.getItem('markup369')||'1.5'); if(!(MARKUP>=1)) MARKUP=1.5;
+  let NINE=localStorage.getItem('nine369')==='1';
   function saveMarkup(){ const v=Number(document.getElementById('markup').value); if(v>=1){ MARKUP=v; localStorage.setItem('markup369',String(v)); } else { document.getElementById('markup').value=MARKUP; } }
-  function suggest(p){ return (p&&p.price_myr!=null)?Math.max(1,Math.ceil(p.price_myr*MARKUP)):null; } // 成本×倍率，向上取整到整数 RM
+  function saveNine(){ NINE=document.getElementById('nine').checked; localStorage.setItem('nine369',NINE?'1':'0'); }
+  // 成本×倍率，向上取整；开「尾数9」则再抬到最近的 x9 结尾（99/109/119…，心理定价）
+  function suggest(p){
+    if(!(p&&p.price_myr!=null)) return null;
+    let s=Math.max(1,Math.ceil(p.price_myr*MARKUP));
+    if(NINE && s>10) s=s+((9-s%10)+10)%10;
+    return s;
+  }
+  // 📋 一键把剪贴板内容贴进解析框（手机上省去长按粘贴）
+  async function pasteClip(){
+    try{
+      const t=await navigator.clipboard.readText();
+      if(!t||!t.trim()){ toast('剪贴板是空的'); return; }
+      document.getElementById('input').value=t.trim(); haptic('light'); toast('已粘贴 ✅ 点「解析入库」');
+    }catch(e){ document.getElementById('input').focus(); toast('读不了剪贴板，长按输入框粘贴吧'); }
+  }
+  // 🔄 解析失败的行：重新触发服务器解析（用原始内容重跑一遍）
+  async function reparse(id){
+    const p=AROWS.find(x=>x.id===id); if(!p) return;
+    if(!(p.raw_text||p.source_url)){ toast('这条没存原始内容，点「编辑」手填吧'); return; }
+    await patch(id,{name_cn:'⏳ 重新解析中…'});
+    try{ fetch(SUPABASE_URL+'/functions/v1/parse-dewu-link',{method:'POST',headers:headers(),body:JSON.stringify({rowId:id})}); }catch(e){}
+    toast('已重新解析，稍等自动补上'); haptic('light');
+    _pollN=0; loadAdmin();
+  }
   function calcPrice(id){ const p=AROWS.find(x=>x.id===id); const s=suggest(p); if(s==null){ toast('这条没成本价，先编辑填得物价'); return; } const el=document.getElementById('sell_'+id); if(el){ el.value=s; el.focus(); liveProfit(id); } }
   // 输入售价时实时预览利润，不用先保存再看
   function liveProfit(id){
@@ -694,7 +727,7 @@
   async function batchPrice(){
     const todo=AROWS.filter(p=>p.sell_myr==null && p.price_myr!=null);
     if(!todo.length){ toast('没有可自动定价的（需未定价且有成本）'); return; }
-    if(!confirm('给 '+todo.length+' 件未定价商品按 ×'+MARKUP+' 一键定价？（之后仍可手动改）')) return;
+    if(!confirm('给 '+todo.length+' 件未定价商品按 ×'+MARKUP+(NINE?'（尾数9）':'')+' 一键定价？（之后仍可手动改）')) return;
     let ok=0; for(const p of todo){ if(await patch(p.id,{sell_myr:suggest(p)})) ok++; }
     toast('已定价 '+ok+' 件'); haptic('medium'); loadAdmin();
   }
@@ -728,6 +761,7 @@
     document.getElementById('ovValue').textContent='RM'+money(Math.round(value));
     document.getElementById('ovProfit').textContent='RM'+money(Math.round(profit));
     const mk=document.getElementById('markup'); if(mk) mk.value=MARKUP;
+    const nn=document.getElementById('nine'); if(nn) nn.checked=NINE;
     renderAdmin();
     // 有「解析中」的货就自动轮询，等服务器后台把名字/价格/图补上（最多约 1 分钟）
     clearTimeout(_pollTimer);
@@ -759,6 +793,7 @@
         '<div class="ctl">'+
           '<input type="number" inputmode="decimal" placeholder="售价RM" value="'+(p.sell_myr==null?'':p.sell_myr)+'" id="sell_'+p.id+'" oninput="liveProfit('+p.id+')">'+
           (p.price_myr!=null?'<button class="mini ghost" onclick="calcPrice('+p.id+')">算价</button>':'')+
+          (/^⚠/.test(p.name_cn||'')?'<button class="mini" onclick="reparse('+p.id+')">🔄 重解析</button>':'')+
           '<button class="mini" onclick="saveItem('+p.id+')">保存</button>'+
           (p.status==='已上架'?'<button class="mini ghost" onclick="setStatus('+p.id+',\'下架\')">下架</button>':'<button class="mini" onclick="setStatus('+p.id+',\'已上架\')">上架</button>')+
           '<button class="mini ghost" onclick="openEdit('+p.id+')">编辑</button>'+
@@ -855,11 +890,12 @@
       '<div class="fld"><label>商品名</label><input id="e_name" value="'+v(p.name_cn)+'"></div>'+
       '<div class="frow"><div class="fld"><label>品牌</label><input id="e_brand" value="'+v(p.brand)+'"></div>'+
         '<div class="fld"><label>货号 SKU</label><input id="e_sku" value="'+v(p.sku)+'"></div></div>'+
-      '<div class="fld"><label>图库（每行一个链接，第一张是主图）</label>'+
+      '<div class="fld"><label>图库（点小图=设主图 · 点✕=删除 · 也可直接改链接）</label>'+
         '<input type="file" id="e_file" accept="image/*" style="display:none" onchange="doUpload(this)">'+
         '<div class="upbtn" onclick="document.getElementById(\'e_file\').click()"><span id="upTxt">📷 上传本地图片（自己拍/存的，更安全）</span></div>'+
         '<textarea id="e_imgs" style="min-height:76px" oninput="ePrev()">'+
-        esc(((p.images&&p.images.length)?p.images:(p.image_url?[p.image_url]:[])).join("\n"))+'</textarea></div>'+
+        esc(((p.images&&p.images.length)?p.images:(p.image_url?[p.image_url]:[])).join("\n"))+'</textarea>'+
+        '<div class="ethumbs" id="ethumbs"></div></div>'+
       '<div class="frow"><div class="fld"><label>得物价 ¥</label><input id="e_rmb" type="number" inputmode="decimal" value="'+v(p.price_rmb)+'"></div>'+
         '<div class="fld"><label>售价 RM</label><input id="e_sell" type="number" inputmode="decimal" value="'+v(p.sell_myr)+'"></div></div>'+
       '<div class="fld"><label>状态</label><select id="e_status">'+
@@ -868,11 +904,28 @@
       '<div style="height:10px"></div>'+
       (p.status==='已上架'?'<button class="btn" style="background:transparent;border:1px solid var(--line);color:var(--txt)" onclick="copyProductLink('+id+')">🔗 复制顾客链接（发群/发朋友）</button><div style="height:10px"></div>':'')+
       '<button class="btn" style="background:transparent;border:1px solid var(--line);color:var(--bad)" onclick="delItem('+id+');closeEdit()">删除这条</button>';
+    eThumbs();
     document.getElementById('edit').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
   }
   function closeEdit(){ document.getElementById('edit').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
   function eImgs(){ return document.getElementById('e_imgs').value.split('\n').map(s=>s.trim()).filter(Boolean); }
-  function ePrev(){ const im=eImgs()[0]||''; const el=document.getElementById('e_prev'); el.src=im; el.style.visibility=im?'visible':'hidden'; }
+  function ePrev(){ const im=eImgs()[0]||''; const el=document.getElementById('e_prev'); el.src=im; el.style.visibility=im?'visible':'hidden'; eThumbs(); }
+  function eThumbs(){
+    const box=document.getElementById('ethumbs'); if(!box) return;
+    box.innerHTML=eImgs().map((u,i)=>'<div class="eth">'+
+      '<img src="'+esc(u)+'" referrerpolicy="no-referrer" onerror="this.style.opacity=.25" onclick="eMain('+i+')" alt="">'+
+      (i===0?'<span class="ethmain">主图</span>':'')+
+      '<button class="ethx" onclick="eRm('+i+')">✕</button></div>').join('');
+  }
+  function eMain(i){
+    const im=eImgs(); if(i<=0||i>=im.length) return;
+    im.unshift(im.splice(i,1)[0]);
+    document.getElementById('e_imgs').value=im.join('\n'); ePrev(); toast('已设为主图'); haptic('light');
+  }
+  function eRm(i){
+    const im=eImgs(); im.splice(i,1);
+    document.getElementById('e_imgs').value=im.join('\n'); ePrev();
+  }
   // 上传前先在浏览器里把大图压到 ≤1600px（省流量、少失败、存储更省）
   function downscale(file,max){
     return new Promise((res)=>{
