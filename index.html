@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<!-- build: rest-trigger-v2 -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>369 甄选 · 正品好物</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root{
+    --bg:#0e0f13; --card:#171922; --card2:#1e2130; --line:#2a2e3a;
+    --txt:#f2f4f8; --sub:#9aa0af; --accent:#ff5a3c; --accent2:#ffb020; --ok:#3ddc84; --bad:#ff5566;
+    --nav-h:62px; --safe-b:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+  body{max-width:720px;margin:0 auto;min-height:100vh}
+  img{-webkit-user-drag:none}
+  .hidden{display:none!important}
+
+  /* 视角切换 */
+  #switch{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:12px;z-index:60;border:1px solid var(--line);
+    background:#000b;backdrop-filter:blur(8px);color:var(--txt);font-size:12.5px;font-weight:700;
+    padding:8px 13px;border-radius:20px}
+  #switch:active{transform:scale(.96)}
+
+  /* ============ 顾客店面 ============ */
+  #shopView{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 10px)}
+  .hero{padding:calc(20px + env(safe-area-inset-top,0px)) 16px 14px;background:
+      radial-gradient(120% 90% at 100% 0%, rgba(255,90,60,.22), transparent 60%),
+      radial-gradient(120% 90% at 0% 0%, rgba(255,176,32,.15), transparent 55%)}
+  .brand{display:flex;align-items:center;gap:11px}
+  .logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#1a1204;box-shadow:0 6px 20px rgba(255,90,60,.35)}
+  .brand h1{font-size:21px;margin:0;font-weight:800;letter-spacing:.5px}
+  .brand p{margin:2px 0 0;font-size:12px;color:var(--sub)}
+  .trust{display:flex;gap:8px;margin-top:13px;flex-wrap:wrap}
+  .trust span{font-size:11.5px;color:var(--accent2);background:rgba(255,176,32,.10);border:1px solid rgba(255,176,32,.28);padding:4px 10px;border-radius:20px}
+
+  .sticky{position:sticky;top:0;background:var(--bg);z-index:8;padding:10px 16px 4px}
+  .searchrow{display:flex;gap:8px}
+  .searchrow input{flex:1;background:var(--card2);border:1px solid var(--line);border-radius:12px;color:var(--txt);padding:11px 13px;font-size:14px;outline:none;font-family:inherit}
+  .searchrow input:focus{border-color:var(--accent)}
+  .sortbtn{border:1px solid var(--line);background:var(--card2);color:var(--txt);border-radius:12px;padding:0 13px;font-size:13px;font-weight:600}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding:10px 16px 2px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;font-size:12.5px;padding:6px 13px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--sub);white-space:nowrap}
+  .chip.on{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#1a1204;border-color:transparent;font-weight:700}
+
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:8px 16px}
+  .prod{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;position:relative;transition:transform .08s}
+  .prod:active{transform:scale(.98)}
+  .thumb{width:100%;aspect-ratio:1/1;background:var(--card2);position:relative;overflow:hidden;cursor:pointer}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .thumb .noimg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#3a3f4c;font-size:26px}
+  .addbtn{position:absolute;right:8px;bottom:8px;width:34px;height:34px;border-radius:50%;border:none;
+    background:#000a;backdrop-filter:blur(4px);color:#fff;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;z-index:2}
+  .addbtn.in{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#1a1204}
+  .pinfo{padding:10px 11px 12px;cursor:pointer}
+  .pname{font-size:13.5px;font-weight:600;line-height:1.4;height:2.8em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;margin-bottom:5px}
+  .pbrand{font-size:11.5px;color:var(--sub);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .price{font-size:16px;font-weight:800;color:var(--accent2)}
+  .price small{font-size:11px;font-weight:600;color:var(--sub);margin-right:2px}
+  .ask{font-size:13px;font-weight:700;color:var(--sub)}
+  .empty{grid-column:1/-1;text-align:center;color:var(--sub);font-size:14px;padding:50px 16px;line-height:1.7}
+  .empty .big{font-size:40px;margin-bottom:10px}
+  /* 骨架 */
+  .sk{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .sk .b{background:linear-gradient(90deg,#1c1f29,#232733,#1c1f29);background-size:200% 100%;animation:sh 1.2s infinite}
+  .sk .t1{aspect-ratio:1/1}.sk .t2{height:12px;margin:11px 11px 6px;border-radius:5px}.sk .t3{height:12px;width:55%;margin:0 11px 14px;border-radius:5px}
+  @keyframes sh{to{background-position:-200% 0}}
+
+  /* ============ 心愿单 ============ */
+  #cartView{padding:calc(18px + env(safe-area-inset-top,0px)) 16px calc(var(--nav-h) + var(--safe-b) + 120px)}
+  .vtitle{font-size:20px;font-weight:800;margin:0 0 4px}
+  .vsub{font-size:12.5px;color:var(--sub);margin:0 0 16px}
+  .crow{display:flex;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px}
+  .crow img{width:64px;height:64px;object-fit:cover;border-radius:10px;background:var(--card2);flex:0 0 auto}
+  .crow .ci{flex:1;min-width:0}
+  .crow .cn{font-size:13px;font-weight:600;line-height:1.35;margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .crow .cp{font-size:13px;color:var(--accent2);font-weight:700}
+  .qty{display:flex;align-items:center;gap:10px;margin-top:6px}
+  .qty button{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:var(--card2);color:var(--txt);font-size:16px;line-height:1}
+  .qty span{font-size:14px;min-width:18px;text-align:center}
+  .rm{margin-left:auto;color:var(--sub);font-size:12px;background:none;border:none}
+  .checkout{position:fixed;left:0;right:0;bottom:0;max-width:720px;margin:0 auto;padding:12px 16px calc(12px + var(--safe-b));
+    background:linear-gradient(180deg,transparent,var(--bg) 22%);z-index:12}
+  .checkout .box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:12px}
+  .checkout .tot{flex:1}.checkout .tot .l{font-size:11px;color:var(--sub)}.checkout .tot .v{font-size:20px;font-weight:900;color:var(--accent2)}
+  .checkout a{border:none;border-radius:12px;padding:14px 20px;font-size:15px;font-weight:800;color:#1a1204;text-decoration:none;background:linear-gradient(135deg,var(--accent),var(--accent2))}
+
+  /* ============ 客服 ============ */
+  #meView{padding:calc(24px + env(safe-area-inset-top,0px)) 20px calc(var(--nav-h) + var(--safe-b) + 20px);text-align:center}
+  #meView .logo{margin:0 auto 14px;width:60px;height:60px;font-size:24px;border-radius:18px}
+  #meView h2{margin:0 0 6px;font-size:20px}#meView p{color:var(--sub);font-size:13px;margin:0 0 22px}
+  .mcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;text-align:left;margin-bottom:12px;display:flex;gap:12px;align-items:center}
+  .mcard .ic{width:40px;height:40px;border-radius:11px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:19px}
+  .mcard .mt{flex:1}.mcard .mt b{font-size:14px}.mcard .mt div{font-size:12px;color:var(--sub);margin-top:2px}
+  .mcard a{color:var(--accent2);text-decoration:none;font-size:13px;font-weight:700}
+
+  /* 底部导航 */
+  #nav{position:fixed;left:0;right:0;bottom:0;max-width:720px;margin:0 auto;height:calc(var(--nav-h) + var(--safe-b));
+    padding-bottom:var(--safe-b);background:#12141bcc;backdrop-filter:blur(14px);border-top:1px solid var(--line);
+    display:flex;z-index:15}
+  #nav button{flex:1;background:none;border:none;color:var(--sub);font-size:10.5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative}
+  #nav button .i{font-size:20px;line-height:1}
+  #nav button.on{color:var(--accent2)}
+  #nav .cartn{position:absolute;top:6px;right:calc(50% - 22px);background:var(--accent);color:#1a1204;font-size:10px;font-weight:800;min-width:16px;height:16px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+
+  /* 详情弹层 */
+  .sheet{position:fixed;inset:0;background:#000c;display:none;align-items:flex-end;z-index:70}
+  .sheet.show{display:flex}
+  .sheet-in{width:100%;max-width:720px;margin:0 auto;background:var(--bg);border-radius:20px 20px 0 0;max-height:92vh;overflow:auto;border-top:1px solid var(--line)}
+  .sheet-img{width:100%;aspect-ratio:1/1;background:var(--card2);object-fit:cover;display:block}
+  /* 详情图库轮播 */
+  .gwrap{position:relative;background:var(--card2)}
+  .gscroll{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;aspect-ratio:1/1;scrollbar-width:none}
+  .gscroll::-webkit-scrollbar{display:none}
+  .gslide{flex:0 0 100%;scroll-snap-align:start;aspect-ratio:1/1}
+  .gslide img{width:100%;height:100%;object-fit:cover;display:block}
+  .gdots{position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:6px;pointer-events:none}
+  .gdot{width:6px;height:6px;border-radius:50%;background:#ffffff70;transition:width .2s,background .2s}
+  .gdot.on{background:#fff;width:16px;border-radius:3px}
+  .gcount{position:absolute;top:10px;right:12px;background:#000a;color:#fff;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;pointer-events:none}
+  /* 卡片多图角标 */
+  .imgbadge{position:absolute;top:8px;left:8px;background:#000a;backdrop-filter:blur(4px);color:#fff;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;z-index:2}
+  .newbadge{position:absolute;top:8px;right:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#1a1204;font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px;z-index:2;letter-spacing:.5px}
+  .shopcount{font-size:12px;color:var(--sub);padding:2px 18px 6px}
+  .gslide img{cursor:zoom-in}
+  /* 全屏看图 */
+  #lightbox{position:fixed;inset:0;background:#000;display:none;z-index:100;align-items:center;justify-content:center}
+  #lightbox.show{display:flex}
+  #lightbox img{max-width:100%;max-height:100%;object-fit:contain;touch-action:pinch-zoom}
+  #lightbox .lbx{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:14px;background:#0008;border:1px solid #ffffff33;color:#fff;width:36px;height:36px;border-radius:50%;font-size:17px;z-index:2}
+  .sheet-body{padding:16px 18px calc(22px + var(--safe-b))}
+  .sheet-body h2{font-size:17px;margin:0 0 6px;line-height:1.4;font-weight:800}
+  .sheet-price{font-size:26px;font-weight:900;color:var(--accent2);margin-bottom:4px}
+  .sheet-price small{font-size:13px;color:var(--sub);font-weight:600}
+  .meta{font-size:12px;color:var(--sub);margin:10px 0 18px;line-height:1.7}
+  .sheet-btns{display:flex;gap:10px}
+  .sbtn{flex:1;text-align:center;border:none;border-radius:13px;padding:15px;font-size:15px;font-weight:800;text-decoration:none}
+  .sbtn.buy{color:#1a1204;background:linear-gradient(135deg,var(--accent),var(--accent2))}
+  .sbtn.add{color:var(--txt);background:var(--card2);border:1px solid var(--line)}
+  .close{position:sticky;top:0;display:flex;justify-content:flex-end;padding:10px 12px;background:linear-gradient(180deg,rgba(14,15,19,.9),transparent)}
+  .close button{background:#000a;border:1px solid var(--line);color:#fff;width:34px;height:34px;border-radius:50%;font-size:16px}
+
+  /* ============ 后台 ============ */
+  #adminView{padding:calc(14px + env(safe-area-inset-top,0px)) 14px 40px}
+  .ahead{display:flex;align-items:center;gap:10px;margin:6px 0 12px}
+  .ahead h1{font-size:19px;margin:0;font-weight:800}.ahead p{margin:1px 0 0;font-size:12px;color:var(--sub)}
+  .stats{display:flex;gap:10px;margin-bottom:14px}
+  .stat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center}
+  .stat b{font-size:22px;font-weight:900;display:block}.stat span{font-size:11px;color:var(--sub)}
+  .stat.up b{color:var(--ok)}.stat.wait b{color:var(--accent2)}
+  .stat.active{border-color:var(--accent2);box-shadow:0 0 0 1px var(--accent2) inset}
+  .ovbar{display:flex;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px 6px;margin-bottom:14px}
+  .ovbar>div{flex:1;text-align:center;border-right:1px solid var(--line)}
+  .ovbar>div:last-child{border-right:none}
+  .ovbar span{display:block;font-size:10.5px;color:var(--sub);margin-bottom:3px}
+  .ovbar b{font-size:15px;font-weight:800}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px}
+  label{display:block;font-size:12px;color:var(--sub);margin-bottom:7px}
+  textarea{width:100%;min-height:96px;resize:vertical;background:var(--card2);border:1px solid var(--line);border-radius:12px;color:var(--txt);padding:11px 12px;font-size:14px;line-height:1.5;font-family:inherit;outline:none}
+  textarea:focus{border-color:var(--accent)}
+  .hint{font-size:11px;color:var(--sub);margin-top:8px;line-height:1.5}
+  .btn{width:100%;margin-top:11px;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:800;color:#1a1204;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;gap:8px}
+  .btn:active{transform:scale(.99)}.btn:disabled{opacity:.55}
+  .msg{border-radius:12px;padding:11px 12px;font-size:13px;line-height:1.55;margin-bottom:14px;display:none}
+  .msg.show{display:block}
+  .msg.bad{background:rgba(255,85,102,.12);border:1px solid rgba(255,85,102,.4);color:#ffb3bd}
+  .msg.warn{background:rgba(255,176,32,.12);border:1px solid rgba(255,176,32,.4);color:#ffd98a}
+  .msg.ok{background:rgba(61,220,132,.12);border:1px solid rgba(61,220,132,.4);color:#9be9bf}
+  .asearch{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:12px;color:var(--txt);padding:10px 12px;font-size:14px;outline:none;margin-bottom:12px;font-family:inherit}
+  .sec-title{font-size:13px;color:var(--sub);margin:2px 2px 10px;display:flex;justify-content:space-between;align-items:center}
+  .item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .item:last-child{border-bottom:none}
+  .item>img{width:66px;height:66px;object-fit:cover;border-radius:10px;background:var(--card2);flex:0 0 auto}
+  .item.pending{animation:pulseRow 1.3s ease-in-out infinite}
+  .item.pending>img{background:linear-gradient(90deg,#1c1f29,#252a38,#1c1f29);background-size:200% 100%;animation:sh 1.2s infinite}
+  @keyframes pulseRow{0%,100%{opacity:1}50%{opacity:.62}}
+  .item .info{flex:1;min-width:0}
+  .item .name{font-size:14px;font-weight:700;line-height:1.35;margin-bottom:3px}
+  .item .brand{font-size:12px;color:var(--sub);margin-bottom:6px}
+  .cost{font-size:12px;color:var(--sub);margin-bottom:8px}.cost b{color:var(--accent2)}
+  .ctl{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  .ctl input{background:var(--card2);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:7px 9px;font-size:13px;outline:none;font-family:inherit;width:92px}
+  .ctl input:focus{border-color:var(--accent)}
+  .mini{border:none;border-radius:8px;padding:7px 11px;font-size:12px;font-weight:700;color:#1a1204;background:linear-gradient(135deg,var(--accent),var(--accent2))}
+  .mini.ghost{background:transparent;color:var(--sub);border:1px solid var(--line)}
+  .mini.del{background:transparent;color:var(--bad);border:1px solid rgba(255,85,102,.4)}
+  .badge{font-size:11px;padding:2px 8px;border-radius:8px;border:1px solid var(--line)}
+  .badge.up{color:var(--ok);border-color:rgba(61,220,132,.4)}.badge.wait{color:var(--sub)}.badge.down{color:var(--bad);border-color:rgba(255,85,102,.4)}
+  /* 后台编辑弹层字段 */
+  .fld{margin-bottom:11px}.fld label{margin-bottom:5px}
+  .fld input,.fld select{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:10px;color:var(--txt);padding:10px 11px;font-size:14px;outline:none;font-family:inherit}
+  .fld input:focus,.fld select:focus{border-color:var(--accent)}
+  .frow{display:flex;gap:10px}.frow .fld{flex:1}
+  .epreview{width:100%;aspect-ratio:1/1;max-height:180px;object-fit:contain;background:var(--card2);border-radius:12px;margin-bottom:11px}
+  /* 定价工具条 */
+  .pricebar{display:flex;align-items:center;gap:8px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:9px 11px;margin-bottom:12px;flex-wrap:wrap}
+  .pricebar label{margin:0;font-size:12px;color:var(--sub)}
+  .pricebar input{width:60px;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:6px 8px;font-size:13px;text-align:center;outline:none;font-family:inherit}
+  .pricebar input:focus{border-color:var(--accent)}
+  .pricebar .grow{flex:1}
+  .profit{color:var(--ok);font-weight:700}
+  /* 上传图片按钮 */
+  .upbtn{display:inline-flex;align-items:center;gap:6px;border:1px dashed var(--line);background:var(--card2);color:var(--sub);border-radius:10px;padding:9px 12px;font-size:13px;font-weight:600;margin-bottom:9px}
+  .upbtn:active{transform:scale(.98)}
+  /* 上传中的缩略图行 */
+  .ethumbs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px}
+  .ethumbs img{width:52px;height:52px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+
+  .spin{width:16px;height:16px;border:2px solid rgba(26,18,4,.35);border-top-color:#1a1204;border-radius:50%;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .toast{position:fixed;left:50%;bottom:calc(90px + var(--safe-b));transform:translateX(-50%);background:#000d;border:1px solid var(--line);color:#fff;padding:10px 16px;border-radius:12px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:90;max-width:90%;text-align:center}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+  <button id="switch" onclick="toggleMode()"><span id="switchTxt">后台</span></button>
+
+  <!-- ============ 顾客店面 ============ -->
+  <div id="shopView">
+    <div class="hero">
+      <div class="brand">
+        <div class="logo">369</div>
+        <div><h1 id="shopName">369 甄选</h1><p id="heroSub">得物同源 · 正品保证</p></div>
+      </div>
+      <div class="trust"><span>✅ 正品保证</span><span>📦 得物货源</span><span>🚚 马来包邮</span></div>
+    </div>
+    <div class="sticky">
+      <div class="searchrow">
+        <input id="q" placeholder="搜商品名 / 品牌…" oninput="render()">
+        <button class="sortbtn" id="sortBtn" onclick="cycleSort()">最新</button>
+      </div>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="shopcount" id="shopCount"></div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <!-- ============ 心愿单 ============ -->
+  <div id="cartView" class="hidden">
+    <h2 class="vtitle">🛒 我的心愿单</h2>
+    <p class="vsub">选好后一键把整单发给客服，帮你报价 / 下单</p>
+    <div id="cartList"></div>
+  </div>
+  <div id="checkout" class="checkout hidden">
+    <div class="box">
+      <div class="tot"><div class="l" id="cartCountLabel">共 0 件</div><div class="v" id="cartTotal">RM 0</div></div>
+      <a id="cartSend" href="#">发给客服 →</a>
+    </div>
+  </div>
+
+  <!-- ============ 客服 ============ -->
+  <div id="meView" class="hidden">
+    <div class="logo">369</div>
+    <h2 id="meShop">369 甄选</h2>
+    <p>正品好物 · 得物同源 · 马来发货</p>
+    <a class="mcard" id="waCard" href="#" style="text-decoration:none;color:inherit">
+      <div class="ic">💬</div><div class="mt"><b>WhatsApp 客服</b><div>问价 / 下单 / 物流</div></div><span>联系 →</span>
+    </a>
+    <a class="mcard" id="shareCard" href="#" onclick="shareShop();return false" style="text-decoration:none;color:inherit">
+      <div class="ic">🔗</div><div class="mt"><b>分享店铺</b><div>把好物链接发给朋友</div></div><span>复制 →</span>
+    </a>
+    <div class="mcard"><div class="ic">✅</div><div class="mt"><b>正品保证</b><div>货源直采得物，假一赔十</div></div></div>
+    <div class="mcard"><div class="ic">🚚</div><div class="mt"><b>马来包邮</b><div>下单后 7–15 天到手</div></div></div>
+  </div>
+
+  <!-- 底部导航 -->
+  <div id="nav">
+    <button data-tab="shop" class="on" onclick="setTab('shop')"><span class="i">🏬</span>店面</button>
+    <button data-tab="cart" onclick="setTab('cart')"><span class="i">🛒</span>心愿单<span class="cartn hidden" id="navBadge">0</span></button>
+    <button data-tab="me" onclick="setTab('me')"><span class="i">💬</span>客服</button>
+  </div>
+
+  <!-- ============ 后台 ============ -->
+  <div id="adminView" class="hidden">
+    <div class="ahead"><div class="logo">369</div><div><h1>后台管理</h1><p>解析入库 · 定价 · 上架</p></div></div>
+    <div class="stats">
+      <div class="stat" id="fAll" onclick="setAFilter('all')"><b id="stAll">0</b><span>总货品</span></div>
+      <div class="stat up" id="fUp" onclick="setAFilter('up')"><b id="stUp">0</b><span>已上架</span></div>
+      <div class="stat wait" id="fWait" onclick="setAFilter('wait')"><b id="stWait">0</b><span>待定价</span></div>
+    </div>
+    <div class="ovbar">
+      <div><span>库存成本</span><b id="ovCost">RM—</b></div>
+      <div><span>在售货值</span><b id="ovValue">RM—</b></div>
+      <div><span>预估毛利</span><b class="profit" id="ovProfit">RM—</b></div>
+    </div>
+    <div class="card">
+      <label>贴得物链接，或商品页『分享 → 复制』的整段文字</label>
+      <textarea id="input" placeholder="把得物 App 商品页『分享』复制的整段文字贴进来，最稳。"></textarea>
+      <div class="hint">带上得物链接能自动抓商品大图。入库后定价、上架，顾客店面才显示。</div>
+      <button class="btn" id="go" onclick="parseNow()"><span id="goTxt">解析入库</span></button>
+    </div>
+    <div class="msg" id="msg"></div>
+    <div class="card">
+      <input class="asearch" id="aq" placeholder="搜货品…" oninput="renderAdmin()">
+      <div class="pricebar">
+        <label>加价倍率 ×</label><input id="markup" type="number" step="0.1" min="1" value="1.5" onchange="saveMarkup()">
+        <span class="grow"></span>
+        <button class="mini ghost" onclick="batchPrice()">批量定价</button>
+        <button class="mini" onclick="batchList()">上架已定价</button>
+      </div>
+      <div class="sec-title"><span>货品管理</span><span id="count">—</span></div>
+      <div id="list"></div>
+    </div>
+  </div>
+
+  <!-- 顾客详情弹层 -->
+  <div class="sheet" id="sheet" onclick="if(event.target===this)closeSheet()">
+    <div class="sheet-in"><div class="close"><button onclick="closeSheet()">✕</button></div><div id="sheetContent"></div></div>
+  </div>
+  <!-- 后台编辑弹层 -->
+  <div class="sheet" id="edit" onclick="if(event.target===this)closeEdit()">
+    <div class="sheet-in"><div class="close"><button onclick="closeEdit()">✕</button></div><div id="editContent" style="padding:0 18px calc(22px + var(--safe-b))"></div></div>
+  </div>
+
+  <!-- 全屏看图 -->
+  <div id="lightbox" onclick="closeLightbox()"><button class="lbx" onclick="closeLightbox()">✕</button><img id="lbimg" src="" referrerpolicy="no-referrer" alt=""></div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  // ===== 配置 =====
+  const SUPABASE_URL = 'https://wgulnumflnumdpqfbjqy.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_bmLjilJuTOfkFKIn-tLIIw_ynG4h4de';
+  const SHOP_NAME = '369 甄选';
+  const CONTACT_WA = '';      // 你的 WhatsApp 号（如 60123456789）；留空走 Telegram 分享
+  const ADMIN_PIN = '';       // 进后台密码；留空 = 免密直接进（想加密码填个数字即可）
+
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if (tg) { try { tg.ready(); tg.expand(); tg.setHeaderColor && tg.setHeaderColor('#0e0f13'); } catch(e){} }
+  document.getElementById('shopName').textContent = SHOP_NAME;
+  document.getElementById('meShop').textContent = SHOP_NAME;
+  (function(){ const c=document.getElementById('waCard'); c.href = CONTACT_WA?('https://wa.me/'+CONTACT_WA):('https://t.me/share/url?url='+encodeURIComponent('你好，想问下 '+SHOP_NAME+' 的货')); })();
+
+  function tgId(){ try{ const u=tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user; return u&&u.id?u.id:null; }catch(e){ return null; } }
+  function headers(){ return { 'apikey':SUPABASE_ANON_KEY, 'Authorization':'Bearer '+SUPABASE_ANON_KEY, 'Content-Type':'application/json', 'Prefer':'return=representation' }; }
+  function money(v){ return Number(v).toLocaleString(undefined,{maximumFractionDigits:2}); }
+  function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function haptic(t){ try{ tg&&tg.HapticFeedback&&tg.HapticFeedback.impactOccurred(t||'light'); }catch(e){} }
+  let toastTimer;
+  function toast(t){ const el=document.getElementById('toast'); el.textContent=t; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),1700); }
+  function show(id,on){ document.getElementById(id).classList.toggle('hidden',!on); }
+  function shareShop(){
+    const url=location.origin+location.pathname;
+    if(navigator.share){ navigator.share({title:SHOP_NAME,text:SHOP_NAME+' · 正品好物',url:url}).catch(()=>{}); return; }
+    if(navigator.clipboard){ navigator.clipboard.writeText(url).then(()=>toast('店铺链接已复制')).catch(()=>toast(url)); }
+    else toast(url);
+  }
+
+  // Telegram 原生返回键：有弹层先关弹层，否则从后台/其它 Tab 返回店面
+  function handleBack(){
+    const on=(id)=>document.getElementById(id).classList.contains('show');
+    if(on('lightbox')){ closeLightbox(); return; }
+    if(on('edit')){ closeEdit(); return; }
+    if(on('sheet')){ closeSheet(); return; }
+    if(mode==='admin'){ setMode('shop'); return; }
+    if(tab!=='shop'){ setTab('shop'); return; }
+  }
+  function updateBack(){
+    if(!(tg&&tg.BackButton)) return;
+    const on=(id)=>document.getElementById(id).classList.contains('show');
+    const need=on('lightbox')||on('edit')||on('sheet')||mode==='admin'||tab!=='shop';
+    try{ need?tg.BackButton.show():tg.BackButton.hide(); }catch(e){}
+  }
+  if(tg&&tg.BackButton){ try{ tg.BackButton.onClick(handleBack); }catch(e){} }
+
+  // ===== 视角切换 =====
+  let mode='shop';
+  function toggleMode(){
+    if(mode==='shop'){
+      if(ADMIN_PIN && localStorage.getItem('a369_ok')!==ADMIN_PIN){
+        const p=prompt('后台密码'); if(p===null) return;
+        if(p!==ADMIN_PIN){ toast('密码不对'); return; }
+        localStorage.setItem('a369_ok',ADMIN_PIN);
+      }
+      setMode('admin');
+    } else setMode('shop');
+  }
+  function setMode(m){
+    mode=m;
+    show('adminView', m==='admin');
+    ['shopView','cartView','checkout','meView','nav'].forEach(id=>document.getElementById(id).classList.toggle('hidden', m==='admin' || (id!=='nav'&&document.getElementById(id).id!==curViewId())));
+    document.getElementById('switchTxt').textContent = m==='shop'?'后台':'🛍 店面';
+    window.scrollTo(0,0);
+    if(m==='admin'){ loadAdmin(); } else { setTab(tab); load(); }
+    updateBack();
+  }
+  function curViewId(){ return tab==='shop'?'shopView':tab==='cart'?'cartView':'meView'; }
+
+  // ===== 底部 Tab =====
+  let tab='shop';
+  function setTab(t){
+    tab=t;
+    show('shopView', t==='shop'); show('cartView', t==='cart'); show('meView', t==='me');
+    show('checkout', t==='cart' && cartItems().length>0);
+    document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on', b.dataset.tab===t));
+    window.scrollTo(0,0);
+    if(t==='cart') renderCart();
+    haptic('light'); updateBack();
+  }
+
+  // ===== 数据 =====
+  let ALL=[];
+  let sort='new'; const SORTS=[['new','最新'],['plow','价格↑'],['phigh','价格↓']];
+  let brandFilter='';
+  async function load(){
+    if(!ALL.length) skeleton();
+    try{
+      const r=await fetch(SUPABASE_URL+'/rest/v1/products_369?select=*&status=eq.已上架&order=created_at.desc&limit=300',{headers:headers()});
+      ALL=r.ok?await r.json():[];
+    }catch(e){ ALL=[]; }
+    buildChips(); render(); updateBadge(); checkDeepLink();
+  }
+  let _deepDone=false;
+  function checkDeepLink(){
+    if(_deepDone) return;
+    const id=Number(new URLSearchParams(location.search).get('p'));
+    if(id&&ALL.find(x=>x.id===id)){ _deepDone=true; if(mode!=='shop')setMode('shop'); setTab('shop'); openSheet(id); }
+  }
+  function skeleton(){ document.getElementById('grid').innerHTML=Array(6).fill('<div class="sk"><div class="b t1"></div><div class="b t2"></div><div class="b t3"></div></div>').join(''); }
+
+  function buildChips(){
+    const brands=[...new Set(ALL.map(p=>p.brand).filter(Boolean))];
+    const box=document.getElementById('chips');
+    if(!brands.length){ box.innerHTML=''; return; }
+    box.innerHTML=['<span class="chip'+(brandFilter===''?' on':'')+'" onclick="setBrand(\'\')">全部</span>']
+      .concat(brands.map(b=>'<span class="chip'+(brandFilter===b?' on':'')+'" onclick="setBrand(\''+esc(b).replace(/'/g,"\\'")+'\')">'+esc(b)+'</span>')).join('');
+  }
+  function setBrand(b){ brandFilter=b; buildChips(); render(); }
+  function cycleSort(){ const i=SORTS.findIndex(s=>s[0]===sort); sort=SORTS[(i+1)%SORTS.length][0]; document.getElementById('sortBtn').textContent=SORTS.find(s=>s[0]===sort)[1]; render(); }
+
+  function priceHtml(p){ return p.sell_myr!=null?'<div class="price"><small>RM</small>'+money(p.sell_myr)+'</div>':'<div class="ask">点击问价</div>'; }
+  function thumb(p){
+    return p.image_url
+      ? '<img src="'+esc(p.image_url)+'" referrerpolicy="no-referrer" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" alt=""><div class="noimg" style="display:none">🖼️</div>'
+      : '<div class="noimg">🖼️</div>';
+  }
+  function render(){
+    const q=(document.getElementById('q').value||'').trim().toLowerCase();
+    let list=ALL.slice();
+    if(brandFilter) list=list.filter(p=>p.brand===brandFilter);
+    if(q) list=list.filter(p=>((p.name_cn||'')+(p.brand||'')+(p.sku||'')).toLowerCase().includes(q));
+    if(sort==='plow') list.sort((a,b)=>(a.sell_myr??1e9)-(b.sell_myr??1e9));
+    else if(sort==='phigh') list.sort((a,b)=>(b.sell_myr??-1)-(a.sell_myr??-1));
+    const grid=document.getElementById('grid');
+    const hs=document.getElementById('heroSub'); if(hs) hs.textContent='得物同源 · 正品保证'+(ALL.length?' · '+ALL.length+' 件在售':'');
+    document.getElementById('shopCount').textContent=list.length?('共 '+list.length+' 件好物'):'';
+    if(!list.length){ grid.innerHTML='<div class="empty"><div class="big">🛍️</div>'+(ALL.length?'没找到相关商品':'店铺正在上新<br>稍后再来看看～')+'</div>'; return; }
+    grid.innerHTML=list.map(p=>{
+      const inCart=!!cart[p.id];
+      const nImg=(p.images&&p.images.length)||0;
+      const isNew=p.created_at&&(Date.now()-new Date(p.created_at).getTime())<3*86400000;
+      return '<div class="prod">'+
+        '<div class="thumb" onclick="openSheet('+p.id+')">'+thumb(p)+
+          (nImg>1?'<span class="imgbadge">📷 '+nImg+'</span>':'')+
+          (isNew?'<span class="newbadge">NEW</span>':'')+
+          '<button class="addbtn'+(inCart?' in':'')+'" onclick="event.stopPropagation();addCart('+p.id+')">'+(inCart?'✓':'+')+'</button>'+
+        '</div>'+
+        '<div class="pinfo" onclick="openSheet('+p.id+')"><div class="pname">'+esc(p.name_cn||'')+'</div>'+
+        '<div class="pbrand">'+esc(p.brand||'—')+'</div>'+priceHtml(p)+'</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  function openSheet(id){
+    const p=ALL.find(x=>x.id===id); if(!p) return;
+    const priceBlock=p.sell_myr!=null?'<div class="sheet-price"><small>RM</small> '+money(p.sell_myr)+'</div>':'<div class="sheet-price" style="font-size:18px">价格请点下方问价</div>';
+    const meta=[]; if(p.brand)meta.push('品牌：'+esc(p.brand)); if(p.sku)meta.push('货号：'+esc(p.sku)); meta.push('来源：得物正品 · 假一赔十'); meta.push('🚚 马来包邮 · 约 7–15 天送达');
+    document.getElementById('sheetContent').innerHTML=
+      galleryHtml(p)+
+      '<div class="sheet-body"><h2>'+esc(p.name_cn||'')+'</h2>'+priceBlock+
+      '<div class="meta">'+meta.join('<br>')+'</div>'+
+      '<div class="sheet-btns">'+
+        '<button class="sbtn add" onclick="addCart('+p.id+');toast(\'已加入心愿单\')">'+(cart[p.id]?'✓ 已在心愿单':'加入心愿单')+'</button>'+
+        '<a class="sbtn buy" href="'+askHref(p)+'" target="_blank" rel="noopener">💬 直接问价</a>'+
+      '</div>'+
+      '<button onclick="shareProduct('+p.id+')" style="width:100%;margin-top:12px;background:none;border:none;color:var(--sub);font-size:13px;font-weight:600">🔗 分享这件好物</button>'+
+      '</div>';
+    document.getElementById('sheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
+  }
+  function closeSheet(){ document.getElementById('sheet').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
+  function shareProduct(id){
+    const p=ALL.find(x=>x.id===id); if(!p) return;
+    const url=location.origin+location.pathname+'?p='+id;
+    const text=(p.name_cn||'')+(p.sell_myr!=null?' · RM'+money(p.sell_myr):'')+' — '+SHOP_NAME;
+    if(navigator.share){ navigator.share({title:SHOP_NAME,text:text,url:url}).catch(()=>{}); return; }
+    if(navigator.clipboard){ navigator.clipboard.writeText(text+' '+url).then(()=>toast('已复制，去粘贴分享')).catch(()=>toast(url)); }
+    else toast(url);
+  }
+  function galleryHtml(p){
+    const imgs=(p.images&&p.images.length)?p.images:(p.image_url?[p.image_url]:[]);
+    if(!imgs.length) return '';
+    const lb=(u)=>"openLightbox('"+esc(u).replace(/'/g,"\\'")+"')";
+    if(imgs.length===1) return '<img class="sheet-img" style="cursor:zoom-in" src="'+esc(imgs[0])+'" referrerpolicy="no-referrer" onclick="'+lb(imgs[0])+'" alt="">';
+    return '<div class="gwrap"><div class="gscroll" id="gscroll" onscroll="gdots()">'+
+      imgs.map(u=>'<div class="gslide"><img src="'+esc(u)+'" referrerpolicy="no-referrer" loading="lazy" onclick="'+lb(u)+'" alt=""></div>').join('')+
+      '</div><div class="gcount" id="gcount">1/'+imgs.length+'</div>'+
+      '<div class="gdots" id="gdots">'+imgs.map((_,i)=>'<span class="gdot'+(i===0?' on':'')+'"></span>').join('')+'</div></div>';
+  }
+  function openLightbox(u){ const el=document.getElementById('lightbox'); document.getElementById('lbimg').src=u; el.classList.add('show'); updateBack(); }
+  function closeLightbox(){ document.getElementById('lightbox').classList.remove('show'); updateBack(); }
+  function gdots(){
+    const s=document.getElementById('gscroll'); if(!s) return;
+    const i=Math.round(s.scrollLeft/s.clientWidth);
+    document.querySelectorAll('#gdots .gdot').forEach((d,j)=>d.classList.toggle('on',j===i));
+    const c=document.getElementById('gcount'); if(c) c.textContent=(i+1)+'/'+s.children.length;
+  }
+
+  // ===== 心愿单 =====
+  let cart=JSON.parse(localStorage.getItem('cart369')||'{}');
+  function saveCart(){ localStorage.setItem('cart369',JSON.stringify(cart)); updateBadge(); }
+  function cartItems(){ return Object.keys(cart).map(id=>ALL.find(p=>p.id==id)).filter(Boolean); }
+  function addCart(id){ cart[id]=(cart[id]||0)+1; saveCart(); haptic('light'); render(); if(tab==='cart')renderCart(); }
+  function setQty(id,d){ cart[id]=(cart[id]||0)+d; if(cart[id]<=0) delete cart[id]; saveCart(); render(); renderCart(); }
+  function rmCart(id){ delete cart[id]; saveCart(); render(); renderCart(); }
+  function updateBadge(){ const n=Object.values(cart).reduce((a,b)=>a+b,0); const b=document.getElementById('navBadge'); b.textContent=n; b.classList.toggle('hidden',n===0); }
+  function cartTotal(){ return cartItems().reduce((s,p)=>s+(p.sell_myr!=null?Number(p.sell_myr)*cart[p.id]:0),0); }
+  function renderCart(){
+    const items=cartItems(); const box=document.getElementById('cartList');
+    show('checkout', tab==='cart' && items.length>0);
+    if(!items.length){ box.innerHTML='<div class="empty"><div class="big">🛒</div>心愿单还是空的<br>去店面挑几件喜欢的吧～</div>'; return; }
+    box.innerHTML=items.map(p=>
+      '<div class="crow">'+(p.image_url?'<img src="'+esc(p.image_url)+'" referrerpolicy="no-referrer" alt="">':'<img alt="">')+
+      '<div class="ci"><div class="cn">'+esc(p.name_cn||'')+'</div>'+
+      '<div class="cp">'+(p.sell_myr!=null?'RM'+money(p.sell_myr):'询价')+'</div>'+
+      '<div class="qty"><button onclick="setQty('+p.id+',-1)">−</button><span>'+cart[p.id]+'</span><button onclick="setQty('+p.id+',1)">+</button>'+
+      '<button class="rm" onclick="rmCart('+p.id+')">移除</button></div></div></div>').join('');
+    const n=Object.values(cart).reduce((a,b)=>a+b,0), tot=cartTotal();
+    document.getElementById('cartCountLabel').textContent='共 '+n+' 件'+(cartItems().some(p=>p.sell_myr==null)?'（含询价品）':'');
+    document.getElementById('cartTotal').textContent='RM '+money(tot);
+    document.getElementById('cartSend').href=cartWaHref();
+  }
+  function askHref(p){
+    const t='我想要这个：'+(p.name_cn||'')+(p.sku?'（货号 '+p.sku+'）':'')+(p.sell_myr!=null?'，RM'+money(p.sell_myr):'');
+    return CONTACT_WA?('https://wa.me/'+CONTACT_WA+'?text='+encodeURIComponent(t)):('https://t.me/share/url?url='+encodeURIComponent(t));
+  }
+  function cartWaHref(){
+    const items=cartItems();
+    let t='你好，我想要以下 '+Object.values(cart).reduce((a,b)=>a+b,0)+' 件商品（'+SHOP_NAME+'）：\n';
+    items.forEach((p,i)=>{ t+=(i+1)+'. '+(p.name_cn||'')+(p.sku?'（'+p.sku+'）':'')+' ×'+cart[p.id]+(p.sell_myr!=null?' RM'+money(p.sell_myr):' 询价')+'\n'; });
+    const tot=cartTotal(); if(tot>0) t+='合计约 RM'+money(tot);
+    return CONTACT_WA?('https://wa.me/'+CONTACT_WA+'?text='+encodeURIComponent(t)):('https://t.me/share/url?url='+encodeURIComponent(t));
+  }
+
+  // ===== 后台 =====
+  function showMsg(k,t){ const m=document.getElementById('msg'); m.className='msg show '+k; m.textContent=t; }
+  function hideMsg(){ document.getElementById('msg').className='msg'; }
+  // ===== 定价工具 =====
+  let MARKUP=Number(localStorage.getItem('markup369')||'1.5'); if(!(MARKUP>=1)) MARKUP=1.5;
+  function saveMarkup(){ const v=Number(document.getElementById('markup').value); if(v>=1){ MARKUP=v; localStorage.setItem('markup369',String(v)); } else { document.getElementById('markup').value=MARKUP; } }
+  function suggest(p){ return (p&&p.price_myr!=null)?Math.max(1,Math.ceil(p.price_myr*MARKUP)):null; } // 成本×倍率，向上取整到整数 RM
+  function calcPrice(id){ const p=AROWS.find(x=>x.id===id); const s=suggest(p); if(s==null){ toast('这条没成本价，先编辑填得物价'); return; } const el=document.getElementById('sell_'+id); if(el){ el.value=s; el.focus(); } }
+  async function batchPrice(){
+    const todo=AROWS.filter(p=>p.sell_myr==null && p.price_myr!=null);
+    if(!todo.length){ toast('没有可自动定价的（需未定价且有成本）'); return; }
+    if(!confirm('给 '+todo.length+' 件未定价商品按 ×'+MARKUP+' 一键定价？（之后仍可手动改）')) return;
+    let ok=0; for(const p of todo){ if(await patch(p.id,{sell_myr:suggest(p)})) ok++; }
+    toast('已定价 '+ok+' 件'); haptic('medium'); loadAdmin();
+  }
+  async function batchList(){
+    const todo=AROWS.filter(p=>p.status!=='已上架' && p.sell_myr!=null && !isPending(p));
+    if(!todo.length){ toast('没有可上架的（需已定价且未上架）'); return; }
+    if(!confirm('把 '+todo.length+' 件已定价商品一键上架到店面？')) return;
+    let ok=0; for(const p of todo){ if(await patch(p.id,{status:'已上架'})) ok++; }
+    toast('已上架 '+ok+' 件 🎉'); haptic('medium'); loadAdmin();
+  }
+  let aFilter='all';
+  function setAFilter(f){ aFilter=(aFilter===f&&f!=='all')?'all':f; ['fAll','fUp','fWait'].forEach(id=>document.getElementById(id).classList.remove('active')); const map={all:'fAll',up:'fUp',wait:'fWait'}; document.getElementById(map[aFilter]).classList.add('active'); renderAdmin(); }
+  let AROWS=[], _pollTimer=null, _pollN=0;
+  const isPending=p=>/^⏳/.test(p&&p.name_cn||'');
+  async function loadAdmin(){
+    if(!AROWS.length) document.getElementById('list').innerHTML='<div class="empty">加载中…</div>';
+    try{
+      const r=await fetch(SUPABASE_URL+'/rest/v1/products_369?select=*&order=created_at.desc&limit=200',{headers:headers()});
+      AROWS=r.ok?await r.json():[];
+    }catch(e){ AROWS=[]; }
+    const up=AROWS.filter(p=>p.status==='已上架').length, wait=AROWS.filter(p=>p.sell_myr==null).length;
+    document.getElementById('stAll').textContent=AROWS.length;
+    document.getElementById('stUp').textContent=up;
+    document.getElementById('stWait').textContent=wait;
+    // 经营概览：库存成本 / 在售货值 / 预估毛利
+    const cost=AROWS.reduce((s,p)=>s+(p.price_myr!=null?Number(p.price_myr):0),0);
+    const listed=AROWS.filter(p=>p.status==='已上架');
+    const value=listed.reduce((s,p)=>s+(p.sell_myr!=null?Number(p.sell_myr):0),0);
+    const profit=listed.reduce((s,p)=>s+((p.sell_myr!=null&&p.price_myr!=null)?(p.sell_myr-p.price_myr):0),0);
+    document.getElementById('ovCost').textContent='RM'+money(Math.round(cost));
+    document.getElementById('ovValue').textContent='RM'+money(Math.round(value));
+    document.getElementById('ovProfit').textContent='RM'+money(Math.round(profit));
+    const mk=document.getElementById('markup'); if(mk) mk.value=MARKUP;
+    renderAdmin();
+    // 有「解析中」的货就自动轮询，等服务器后台把名字/价格/图补上（最多约 1 分钟）
+    clearTimeout(_pollTimer);
+    if(AROWS.some(isPending) && _pollN<20){ _pollN++; _pollTimer=setTimeout(loadAdmin,3000); }
+    else _pollN=0;
+  }
+  function badge(s){ return s==='已上架'?'<span class="badge up">已上架</span>':s==='下架'?'<span class="badge down">已下架</span>':'<span class="badge wait">待选</span>'; }
+  function renderAdmin(){
+    const q=(document.getElementById('aq').value||'').trim().toLowerCase();
+    let rows=AROWS;
+    if(aFilter==='up') rows=rows.filter(p=>p.status==='已上架');
+    else if(aFilter==='wait') rows=rows.filter(p=>p.sell_myr==null);
+    if(q) rows=rows.filter(p=>((p.name_cn||'')+(p.brand||'')+(p.sku||'')).toLowerCase().includes(q));
+    const fname={all:'',up:'已上架 ',wait:'待定价 '}[aFilter];
+    document.getElementById('count').textContent=(fname||'')+rows.length+' 件'+(aFilter!=='all'?' ✕':'');
+    document.getElementById('count').onclick=aFilter!=='all'?(()=>setAFilter(aFilter)):null;
+    document.getElementById('count').style.cursor=aFilter!=='all'?'pointer':'';
+    const box=document.getElementById('list');
+    if(!rows.length){ box.innerHTML='<div class="empty">'+(AROWS.length?'这个筛选下没有货品':'还没有货品，上面贴内容解析入库')+'</div>'; return; }
+    box.innerHTML=rows.map(p=>{
+      const img=p.image_url?'<img src="'+esc(p.image_url)+'" referrerpolicy="no-referrer" onerror="this.style.visibility=\'hidden\'" alt="">':'<img alt="">';
+      const profit=(p.sell_myr!=null&&p.price_myr!=null)?(p.sell_myr-p.price_myr):null;
+      const margin=(profit!=null&&p.sell_myr>0)?Math.round(profit/p.sell_myr*100):null;
+      const profitHtml=profit!=null?' · <span class="profit">赚 RM'+money(profit)+(margin!=null?' '+margin+'%':'')+'</span>':'';
+      return '<div class="item'+(isPending(p)?' pending':'')+'">'+img+'<div class="info">'+
+        '<div class="name">'+esc(p.name_cn||'(无名)')+'</div>'+
+        '<div class="brand">'+esc(p.brand||'—')+(p.sku?' · '+esc(p.sku):'')+'</div>'+
+        '<div class="cost">得物 ¥'+(p.price_rmb==null?'—':money(p.price_rmb))+' · 成本 RM'+(p.price_myr==null?'—':money(p.price_myr))+profitHtml+((p.images&&p.images.length>1)?' · 📷'+p.images.length:'')+'　'+badge(p.status)+'</div>'+
+        '<div class="ctl">'+
+          '<input type="number" inputmode="decimal" placeholder="售价RM" value="'+(p.sell_myr==null?'':p.sell_myr)+'" id="sell_'+p.id+'">'+
+          (p.price_myr!=null?'<button class="mini ghost" onclick="calcPrice('+p.id+')">算价</button>':'')+
+          '<button class="mini" onclick="saveItem('+p.id+')">保存</button>'+
+          (p.status==='已上架'?'<button class="mini ghost" onclick="setStatus('+p.id+',\'下架\')">下架</button>':'<button class="mini" onclick="setStatus('+p.id+',\'已上架\')">上架</button>')+
+          '<button class="mini ghost" onclick="openEdit('+p.id+')">编辑</button>'+
+          '<button class="mini del" onclick="delItem('+p.id+')">删</button>'+
+        '</div></div></div>';
+    }).join('');
+  }
+  function extractUrl(s){ const m=(s||'').match(/https?:\/\/[^\s，。、]+/); return m?m[0]:null; }
+  // 前端本地先猜个临时名占位（后台解析好会覆盖）
+  function clientQuickName(input,url){
+    let t=input||''; if(url) t=t.split(url).join(' ');
+    t=t.replace(/【[^】]*】/g,' ').replace(/[A-Za-z0-9_]+发现一件好物[，,]?/g,' ')
+       .replace(/点击链接直接打开/g,' ').replace(/复制此?(条)?(链接|信息|口令)[\s\S]*$/g,' ')
+       .replace(/[a-z0-9]{6,}(?=\s)/gi,' ').replace(/\s+/g,' ').trim();
+    return t?('⏳ '+t.slice(0,40)):'⏳ 解析中…';
+  }
+  // 按 reqId 精确查库：只要有哪次请求送达了，这行就查得到
+  async function findByRef(reqId){
+    try{
+      const url=SUPABASE_URL+'/rest/v1/products_369?client_ref=eq.'+encodeURIComponent(reqId)+'&select=id,name_cn&limit=1';
+      const r=await fetch(url,{headers:headers()}); if(!r.ok) return null;
+      const rows=await r.json(); return (rows&&rows[0])||null;
+    }catch(_e){ return null; }
+  }
+  // ★ 用「快」的 REST 直接插占位行（和加载列表同一个通道，请求极短，弱网也过得去）。
+  //   插入后数据库触发器在服务器端调解析函数把名字/价格/图回填。前端全程不碰「慢」的函数端点。
+  async function restInsert(input,reqId){
+    const url=extractUrl(input);
+    const row={ name_cn:clientQuickName(input,url), source:'dewu', status:'待选', source_url:url, raw_text:input.slice(0,4000), client_ref:reqId, created_by:tgId() };
+    const ctrl=new AbortController(); const timer=setTimeout(()=>ctrl.abort(),12000);
+    const r=await fetch(SUPABASE_URL+'/rest/v1/products_369',{method:'POST',headers:headers(),body:JSON.stringify(row),signal:ctrl.signal}).finally(()=>clearTimeout(timer));
+    if(r.status===409){ return await findByRef(reqId); }   // 同 reqId 已入库，去重
+    if(!r.ok) throw new Error('REST '+r.status);
+    const rows=await r.json().catch(()=>null); return (rows&&rows[0])||null;
+  }
+  function parseDone(name){
+    const pending=!name||/^[⏳⚠]/.test(name);
+    showMsg('ok', pending
+      ? '✅ 已入库，正在后台解析商品信息+抓图，稍等自动补上…'
+      : '✅ 已入库：'+name+'　商品图正在后台抓取，稍等自动补上');
+    haptic('medium'); document.getElementById('input').value='';
+    _pollN=0; loadAdmin(); // 名称/价格/图在后台回填，loadAdmin 会自动轮询直到补全
+  }
+  async function parseNow(){
+    const input=document.getElementById('input').value.trim();
+    if(!input){ showMsg('warn','先贴点内容再解析。'); return; }
+    hideMsg(); const btn=document.getElementById('go'), goTxt=document.getElementById('goTxt');
+    btn.disabled=true; goTxt.innerHTML='<span class="spin"></span>';
+    // 一次解析用同一个 reqId，弱网就反复重发直到有一发送达；唯一索引去重，不会重复入库。
+    const reqId='r'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+    const MAX=6;
+    try{
+      let done=null;
+      for(let i=0;i<MAX;i++){
+        const hit=await findByRef(reqId); if(hit){ done=hit; break; } // 前面哪发其实成了
+        try{ done=await restInsert(input,reqId); if(done) break; }
+        catch(_e){ /* 这发没送达，继续 */ }
+        if(i<MAX-1){ showMsg('warn','网络不稳，正在自动重试上传…（'+(i+2)+'/'+MAX+'）'); await new Promise(r=>setTimeout(r,2500)); }
+      }
+      hideMsg();
+      if(done){ parseDone(done.name_cn); return; }
+      const hit=await findByRef(reqId);
+      if(hit){ parseDone(hit.name_cn); return; }
+      showMsg('bad','这个网络反复连不上服务器（试了'+MAX+'次都没送达）。请换个网络、或到信号好的地方再试一次。');
+    }
+    finally{ btn.disabled=false; goTxt.textContent='解析入库'; loadAdmin(); }
+  }
+  async function patch(id,fields){ const r=await fetch(SUPABASE_URL+'/rest/v1/products_369?id=eq.'+id,{method:'PATCH',headers:headers(),body:JSON.stringify(fields)}); return r.ok; }
+  async function saveItem(id){
+    const v=document.getElementById('sell_'+id).value.trim(); const sell=v===''?null:Number(v);
+    if(v!==''&&!Number.isFinite(sell)){ toast('售价填数字'); return; }
+    if(await patch(id,{sell_myr:sell})){ toast('已保存售价'); loadAdmin(); } else toast('保存失败');
+  }
+  async function setStatus(id,status){
+    const el=document.getElementById('sell_'+id); const v=el?el.value.trim():''; const fields={status};
+    if(v!==''){ const n=Number(v); if(Number.isFinite(n)) fields.sell_myr=n; }
+    const row=AROWS.find(p=>p.id===id);
+    const hasPrice = v!=='' || (row && row.sell_myr!=null);
+    if(status==='已上架'&&!hasPrice){ toast('先填售价再上架'); return; }
+    if(await patch(id,fields)){ toast(status==='已上架'?'已上架 🎉':'已下架'); haptic('medium'); loadAdmin(); } else toast('操作失败');
+  }
+  async function delItem(id){
+    if(!confirm('确定删除这条货品？')) return;
+    const r=await fetch(SUPABASE_URL+'/rest/v1/products_369?id=eq.'+id,{method:'DELETE',headers:headers()});
+    if(r.ok){ toast('已删除'); loadAdmin(); } else toast('删除失败');
+  }
+  // 后台完整编辑
+  function openEdit(id){
+    const p=AROWS.find(x=>x.id===id); if(!p) return;
+    const v=(x)=>x==null?'':esc(x);
+    document.getElementById('editContent').innerHTML=
+      '<h2 style="font-size:17px;margin:0 0 14px">编辑货品</h2>'+
+      '<img class="epreview" id="e_prev" src="'+(p.image_url?esc(p.image_url):'')+'" referrerpolicy="no-referrer" onerror="this.style.visibility=\'hidden\'">'+
+      '<div class="fld"><label>商品名</label><input id="e_name" value="'+v(p.name_cn)+'"></div>'+
+      '<div class="frow"><div class="fld"><label>品牌</label><input id="e_brand" value="'+v(p.brand)+'"></div>'+
+        '<div class="fld"><label>货号 SKU</label><input id="e_sku" value="'+v(p.sku)+'"></div></div>'+
+      '<div class="fld"><label>图库（每行一个链接，第一张是主图）</label>'+
+        '<input type="file" id="e_file" accept="image/*" style="display:none" onchange="doUpload(this)">'+
+        '<div class="upbtn" onclick="document.getElementById(\'e_file\').click()"><span id="upTxt">📷 上传本地图片（自己拍/存的，更安全）</span></div>'+
+        '<textarea id="e_imgs" style="min-height:76px" oninput="ePrev()">'+
+        esc(((p.images&&p.images.length)?p.images:(p.image_url?[p.image_url]:[])).join("\n"))+'</textarea></div>'+
+      '<div class="frow"><div class="fld"><label>得物价 ¥</label><input id="e_rmb" type="number" inputmode="decimal" value="'+v(p.price_rmb)+'"></div>'+
+        '<div class="fld"><label>售价 RM</label><input id="e_sell" type="number" inputmode="decimal" value="'+v(p.sell_myr)+'"></div></div>'+
+      '<div class="fld"><label>状态</label><select id="e_status">'+
+        ['待选','已上架','下架'].map(s=>'<option'+(p.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select></div>'+
+      '<button class="btn" onclick="saveEdit('+id+')">保存修改</button>'+
+      '<div style="height:10px"></div>'+
+      '<button class="btn" style="background:transparent;border:1px solid var(--line);color:var(--bad)" onclick="delItem('+id+');closeEdit()">删除这条</button>';
+    document.getElementById('edit').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
+  }
+  function closeEdit(){ document.getElementById('edit').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
+  function eImgs(){ return document.getElementById('e_imgs').value.split('\n').map(s=>s.trim()).filter(Boolean); }
+  function ePrev(){ const im=eImgs()[0]||''; const el=document.getElementById('e_prev'); el.src=im; el.style.visibility=im?'visible':'hidden'; }
+  // 上传前先在浏览器里把大图压到 ≤1600px（省流量、少失败、存储更省）
+  function downscale(file,max){
+    return new Promise((res)=>{
+      if(!/^image\//.test(file.type)||/gif$/i.test(file.type)){ res(file); return; }
+      const img=new Image(), url=URL.createObjectURL(file);
+      img.onload=()=>{ let w=img.naturalWidth,h=img.naturalHeight; const sc=Math.min(1,max/Math.max(w,h));
+        if(sc>=1){ URL.revokeObjectURL(url); res(file); return; }
+        const c=document.createElement('canvas'); c.width=Math.round(w*sc); c.height=Math.round(h*sc);
+        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+        c.toBlob(b=>{ URL.revokeObjectURL(url); res(b||file); },'image/jpeg',0.85); };
+      img.onerror=()=>{ URL.revokeObjectURL(url); res(file); };
+      img.src=url;
+    });
+  }
+  async function doUpload(inp){
+    const f0=inp.files&&inp.files[0]; if(!f0) return;
+    const txt=document.getElementById('upTxt'), old=txt.innerHTML; txt.innerHTML='<span class="spin"></span> 上传中…';
+    try{
+      const f=await downscale(f0,1600);
+      const path='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)+'.jpg';
+      const r=await fetch(SUPABASE_URL+'/storage/v1/object/product-369/'+path,{method:'POST',
+        headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Content-Type':f.type||'image/jpeg','x-upsert':'true'},body:f});
+      if(!r.ok) throw new Error('上传失败('+r.status+')，图太大或网络问题');
+      const pub=SUPABASE_URL+'/storage/v1/object/public/product-369/'+path;
+      const ta=document.getElementById('e_imgs'); ta.value=(ta.value.trim()?ta.value.trim()+'\n':'')+pub; ePrev();
+      toast('图片已上传 ✅'); haptic('light');
+    }catch(e){ toast(String(e&&e.message||e)); }
+    finally{ txt.innerHTML=old; inp.value=''; }
+  }
+  async function saveEdit(id){
+    const num=(x)=>{ const t=x.trim(); return t===''?null:(Number.isFinite(Number(t))?Number(t):null); };
+    const status=document.getElementById('e_status').value;
+    const sell=num(document.getElementById('e_sell').value);
+    if(status==='已上架'&&sell==null){ toast('上架必须有售价'); return; }
+    const imgs=eImgs();
+    const fields={
+      name_cn:document.getElementById('e_name').value.trim()||'(无名)',
+      brand:document.getElementById('e_brand').value.trim()||null,
+      sku:document.getElementById('e_sku').value.trim()||null,
+      images:imgs.length?imgs:null,
+      image_url:imgs[0]||null,
+      price_rmb:num(document.getElementById('e_rmb').value),
+      sell_myr:sell, status:status,
+    };
+    if(await patch(id,fields)){ toast('已保存 ✅'); haptic('medium'); closeEdit(); loadAdmin(); } else toast('保存失败');
+  }
+
+  // 启动
+  updateBadge();
+  load();
+</script>
+</body>
+</html>
