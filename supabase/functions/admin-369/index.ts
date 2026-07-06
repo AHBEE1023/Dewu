@@ -5,7 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const PIN = Deno.env.get("ADMIN_PIN_369") || "3690";
 // 只允许改这些字段，防止越权写 created_by / client_ref 之类
-const PATCH_FIELDS = ["name_cn", "brand", "sku", "images", "image_url", "price_rmb", "price_myr", "sell_myr", "status", "orig_myr", "hot", "soldout"];
+const PATCH_FIELDS = ["name_cn", "brand", "sku", "images", "image_url", "price_rmb", "price_myr", "sell_myr", "status", "orig_myr", "hot", "soldout", "category"];
 
 Deno.serve(async (req) => {
   const cors = {
@@ -69,17 +69,42 @@ Deno.serve(async (req) => {
         return json({ ok: true, row }, 200, cors);
       }
 
-      case "sales": { // 成交流水 + 汇总
+      case "sales": { // 成交流水（近50笔）+ 本月/累计汇总
         const { data: rows, error: e1 } = await supabase.from("sales_369")
           .select("*").order("sold_at", { ascending: false }).limit(50);
         if (e1) return json({ ok: false, error: e1.message }, 500, cors);
-        let n = 0, rev = 0, profit = 0;
-        for (const r of rows || []) {
-          n += r.qty;
-          if (r.sold_myr != null) rev += Number(r.sold_myr) * r.qty;
-          if (r.sold_myr != null) profit += (Number(r.sold_myr) - (r.cost_myr != null ? Number(r.cost_myr) : 0)) * r.qty;
+        const { data: all, error: e2 } = await supabase.from("sales_369").select("qty,sold_myr,cost_myr,sold_at");
+        if (e2) return json({ ok: false, error: e2.message }, 500, cors);
+        const now = new Date(), y = now.getUTCFullYear(), m = now.getUTCMonth();
+        const agg = () => ({ n: 0, rev: 0, profit: 0 });
+        const month = agg(), total = agg();
+        for (const r of all || []) {
+          const buckets = [total];
+          const d = new Date(r.sold_at);
+          if (d.getUTCFullYear() === y && d.getUTCMonth() === m) buckets.push(month);
+          for (const b of buckets) {
+            b.n += r.qty;
+            if (r.sold_myr != null) {
+              b.rev += Number(r.sold_myr) * r.qty;
+              b.profit += (Number(r.sold_myr) - (r.cost_myr != null ? Number(r.cost_myr) : 0)) * r.qty;
+            }
+          }
         }
-        return json({ ok: true, rows, agg: { n, rev, profit } }, 200, cors);
+        return json({ ok: true, rows, month, total }, 200, cors);
+      }
+
+      case "unsale": { // 撤销一笔误记的成交：删流水 + 回退已售数
+        const sid = Number(body.saleId);
+        if (!sid) return json({ ok: false, error: "缺 saleId" }, 400, cors);
+        const { data: s0 } = await supabase.from("sales_369").select("*").eq("id", sid).maybeSingle();
+        if (!s0) return json({ ok: false, error: "这笔记录不存在" }, 404, cors);
+        const { error: e1 } = await supabase.from("sales_369").delete().eq("id", sid);
+        if (e1) return json({ ok: false, error: e1.message }, 500, cors);
+        if (s0.product_id) {
+          const { data: p } = await supabase.from("products_369").select("sold_count").eq("id", s0.product_id).maybeSingle();
+          if (p) await supabase.from("products_369").update({ sold_count: Math.max(0, (p.sold_count || 0) - s0.qty) }).eq("id", s0.product_id);
+        }
+        return json({ ok: true }, 200, cors);
       }
 
       case "config": { // 店面公告等配置

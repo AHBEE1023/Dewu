@@ -6,6 +6,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <title>369 甄选 · 正品好物</title>
 <meta name="theme-color" content="#f5f6f8" />
+<link rel="preconnect" href="https://cdn.poizon.com" crossorigin />
+<link rel="preconnect" href="https://wgulnumflnumdpqfbjqy.supabase.co" crossorigin />
+<meta property="og:image" content="https://dewu-247team.vercel.app/og.png" />
+<meta name="twitter:card" content="summary_large_image" />
 <meta name="description" content="正品好物 · 假一赔十 · 马来包邮" />
 <meta property="og:title" content="369 甄选 · 正品好物" />
 <meta property="og:description" content="正品好物 · 假一赔十 · 马来包邮" />
@@ -73,6 +77,7 @@
   .chips::-webkit-scrollbar{display:none}
   .chip{flex:0 0 auto;font-size:12.5px;padding:6px 13px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:#5a5f6b;white-space:nowrap}
   .chip.on{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:transparent;font-weight:700}
+  .chipdiv{flex:0 0 1px;background:var(--line);margin:5px 3px;align-self:stretch}
 
   /* 瀑布流：CSS columns，图片保持原比例 */
   .grid{columns:2;column-gap:9px;padding:6px 12px}
@@ -380,10 +385,10 @@
       <div><span>在售货值</span><b id="ovValue">RM—</b></div>
       <div><span>预估毛利</span><b class="profit" id="ovProfit">RM—</b></div>
     </div>
-    <div class="ovbar">
-      <div><span>已售件数</span><b id="svN">—</b></div>
-      <div><span>总营收</span><b id="svRev">RM—</b></div>
-      <div><span>实赚利润</span><b class="profit" id="svProfit">RM—</b></div>
+    <div class="ovbar" onclick="openSales()" style="cursor:pointer">
+      <div><span>本月已售 👆流水</span><b id="svN">—</b></div>
+      <div><span>本月营收</span><b id="svRev">RM—</b></div>
+      <div><span>本月实赚</span><b class="profit" id="svProfit">RM—</b></div>
     </div>
     <div class="card">
       <label>贴得物链接，或商品页『分享 → 复制』的整段文字</label>
@@ -423,6 +428,10 @@
   <!-- 顾客详情弹层 -->
   <div class="sheet" id="sheet" onclick="if(event.target===this)closeSheet()">
     <div class="sheet-in"><div class="close"><button onclick="closeSheet()">✕</button></div><div id="sheetContent"></div></div>
+  </div>
+  <!-- 成交流水弹层 -->
+  <div class="sheet" id="salesSheet" onclick="if(event.target===this)closeSales()">
+    <div class="sheet-in"><div class="close"><button onclick="closeSales()">✕</button></div><div id="salesContent" style="padding:6px 18px calc(22px + var(--safe-b))"></div></div>
   </div>
   <!-- 后台编辑弹层 -->
   <div class="sheet" id="edit" onclick="if(event.target===this)closeEdit()">
@@ -509,6 +518,7 @@
   function handleBack(){
     const on=(id)=>document.getElementById(id).classList.contains('show');
     if(on('lightbox')){ closeLightbox(); return; }
+    if(on('salesSheet')){ closeSales(); return; }
     if(on('edit')){ closeEdit(); return; }
     if(on('sheet')){ closeSheet(); return; }
     if(mode==='admin'){ setMode('shop'); return; }
@@ -517,7 +527,7 @@
   function updateBack(){
     if(!(tg&&tg.BackButton)) return;
     const on=(id)=>document.getElementById(id).classList.contains('show');
-    const need=on('lightbox')||on('edit')||on('sheet')||mode==='admin'||tab!=='shop';
+    const need=on('lightbox')||on('salesSheet')||on('edit')||on('sheet')||mode==='admin'||tab!=='shop';
     try{ need?tg.BackButton.show():tg.BackButton.hide(); }catch(e){}
   }
   if(tg&&tg.BackButton){ try{ tg.BackButton.onClick(handleBack); }catch(e){} }
@@ -582,7 +592,7 @@
   // ===== 数据 =====
   let ALL=[];
   let sort='new'; const SORTS=[['new','综合'],['plow','价格↑'],['phigh','价格↓']];
-  let brandFilter='';
+  let brandFilter='', catFilter='';
   // 店面读专用视图：数据库层面只发布「已上架 + 安全字段」，成本根本不出库
   let _fresh=false;
   async function load(){
@@ -621,13 +631,19 @@
   }
 
   function buildChips(){
+    const cats=[...new Set(ALL.map(p=>p.category).filter(Boolean))];
     const brands=[...new Set(ALL.map(p=>p.brand).filter(Boolean))];
     const box=document.getElementById('chips');
-    if(!brands.length){ box.innerHTML=''; return; }
-    box.innerHTML=['<span class="chip'+(brandFilter===''?' on':'')+'" onclick="setBrand(\'\')">全部</span>']
-      .concat(brands.map(b=>'<span class="chip'+(brandFilter===b?' on':'')+'" onclick="setBrand(\''+esc(b).replace(/'/g,"\\'")+'\')">'+esc(b)+'</span>')).join('');
+    if(!cats.length&&!brands.length){ box.innerHTML=''; return; }
+    const q=(v)=>esc(v).replace(/'/g,"\\'");
+    let h='<span class="chip'+(!catFilter&&!brandFilter?' on':'')+'" onclick="setCat(\'\');setBrand(\'\')">全部</span>';
+    if(cats.length>1) h+=cats.map(c=>'<span class="chip'+(catFilter===c?' on':'')+'" onclick="setCat(\''+q(c)+'\')">'+esc(c)+'</span>').join('');
+    if(brands.length){ h+='<span class="chipdiv"></span>'+brands.map(b=>'<span class="chip'+(brandFilter===b?' on':'')+'" onclick="setBrand(\''+q(b)+'\')">'+esc(b)+'</span>').join(''); }
+    box.innerHTML=h;
   }
-  function setBrand(b){ brandFilter=b; buildChips(); render(); }
+  function setBrand(b){ brandFilter=(brandFilter===b?'':b); buildChips(); render(); }
+  function setCat(c){ catFilter=(catFilter===c?'':c); buildChips(); render(); }
+  function resetFilters(){ catFilter=''; brandFilter=''; clearSearch(); buildChips(); }
   function renderSeg(){
     document.getElementById('seg').innerHTML=SORTS.map(s=>
       '<button class="'+(sort===s[0]?'on':'')+'" onclick="setSort(\''+s[0]+'\')">'+s[1]+'</button>').join('');
@@ -652,6 +668,7 @@
   function render(){
     const q=(document.getElementById('q').value||'').trim().toLowerCase();
     let list=ALL.slice();
+    if(catFilter) list=list.filter(p=>p.category===catFilter);
     if(brandFilter) list=list.filter(p=>p.brand===brandFilter);
     if(q) list=list.filter(p=>((p.name_cn||'')+(p.brand||'')+(p.sku||'')).toLowerCase().includes(q));
     if(sort==='plow') list.sort((a,b)=>(a.sell_myr??1e9)-(b.sell_myr??1e9));
@@ -662,7 +679,7 @@
     const mc=document.getElementById('meCount'); if(mc) mc.textContent=ALL.length||'—';
     document.getElementById('shopCount').textContent=list.length?('共 '+list.length+' 件好物'):'';
     renderRecent();
-    if(!list.length){ grid.innerHTML='<div class="empty"><div class="big">🛍️</div>'+(ALL.length?'没找到相关商品<br><button onclick="clearSearch();setBrand(\'\')" style="margin-top:12px;background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:8px 18px;font-size:13px;font-weight:600">清除筛选</button>':'店铺正在上新<br>稍后再来看看～')+'</div>'; return; }
+    if(!list.length){ grid.innerHTML='<div class="empty"><div class="big">🛍️</div>'+(ALL.length?'没找到相关商品<br><button onclick="resetFilters()" style="margin-top:12px;background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:8px 18px;font-size:13px;font-weight:600">清除筛选</button>':'店铺正在上新<br>稍后再来看看～')+'</div>'; return; }
     grid.innerHTML=list.map(p=>{
       const inCart=!!cart[p.id];
       const nImg=(p.images&&p.images.length)||0;
@@ -951,14 +968,49 @@
     else _pollN=0;
   }
   // ===== 成交 / 公告 =====
+  let SALES=null;
   async function loadSales(){
     try{
       const r=await adminCall('sales');
       if(!(r&&r.ok)) return;
-      document.getElementById('svN').textContent=r.agg.n;
-      document.getElementById('svRev').textContent='RM'+money(Math.round(r.agg.rev*100)/100);
-      document.getElementById('svProfit').textContent='RM'+money(Math.round(r.agg.profit*100)/100);
+      SALES=r;
+      document.getElementById('svN').textContent=r.month.n;
+      document.getElementById('svRev').textContent='RM'+money(Math.round(r.month.rev*100)/100);
+      document.getElementById('svProfit').textContent='RM'+money(Math.round(r.month.profit*100)/100);
+      const box=document.getElementById('salesContent');
+      if(box&&document.getElementById('salesSheet').classList.contains('show')) renderSales();
     }catch(e){}
+  }
+  function openSales(){
+    renderSales();
+    document.getElementById('salesSheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
+  }
+  function closeSales(){ document.getElementById('salesSheet').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
+  function renderSales(){
+    const box=document.getElementById('salesContent'); if(!box) return;
+    if(!SALES){ box.innerHTML='<div class="empty">加载中…</div>'; return; }
+    const f=(x)=>'RM'+money(Math.round(x*100)/100);
+    let h='<h2 style="font-size:17px;margin:0 0 12px">📒 成交流水</h2>'+
+      '<div class="ovbar" style="margin-bottom:10px"><div><span>本月</span><b>'+SALES.month.n+'件 · '+f(SALES.month.rev)+'</b></div><div><span>本月实赚</span><b class="profit">'+f(SALES.month.profit)+'</b></div></div>'+
+      '<div class="ovbar"><div><span>累计</span><b>'+SALES.total.n+'件 · '+f(SALES.total.rev)+'</b></div><div><span>累计实赚</span><b class="profit">'+f(SALES.total.profit)+'</b></div></div>';
+    if(!(SALES.rows&&SALES.rows.length)){ box.innerHTML=h+'<div class="empty">还没有成交记录<br>卖出第一单时在货品上点「已售」</div>'; return; }
+    h+='<div class="sec-title" style="margin-top:14px"><span>最近 '+SALES.rows.length+' 笔</span></div>';
+    h+=SALES.rows.map(r=>{
+      const d=new Date(r.sold_at);
+      const dd=(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+      const pr=r.sold_myr!=null?(Number(r.sold_myr)-(r.cost_myr!=null?Number(r.cost_myr):0))*r.qty:null;
+      return '<div class="spec" style="align-items:center"><span style="width:84px">'+dd+'</span>'+
+        '<b style="flex:1;font-weight:600;font-size:12.5px">'+esc((r.name_cn||'').slice(0,22))+(r.qty>1?' ×'+r.qty:'')+'</b>'+
+        '<span style="width:auto;color:var(--txt);font-weight:700;margin:0 8px">'+(r.sold_myr!=null?f(r.sold_myr*r.qty):'—')+'</span>'+
+        (pr!=null?'<span class="profit" style="width:auto;font-size:12px;margin-right:8px">赚'+f(pr)+'</span>':'')+
+        '<button class="mini ghost" style="padding:4px 8px;font-size:11px" onclick="unsale('+r.id+')">撤销</button></div>';
+    }).join('');
+    box.innerHTML=h;
+  }
+  async function unsale(saleId){
+    if(!confirm('撤销这笔成交？记录会删除，已售数会回退')) return;
+    const r=await adminCall('unsale',{saleId:saleId}).catch(()=>null);
+    if(r&&r.ok){ toast('已撤销'); haptic('light'); loadSales(); loadAdmin(); } else toast('撤销失败');
   }
   async function loadNoticeInput(){
     try{
@@ -1092,7 +1144,7 @@
       '<div class="frow"><div class="fld"><label>品牌</label><input id="e_brand" value="'+v(p.brand)+'"></div>'+
         '<div class="fld"><label>货号 SKU</label><input id="e_sku" value="'+v(p.sku)+'"></div></div>'+
       '<div class="fld"><label>图库（点小图=设主图 · 点✕=删除 · 也可直接改链接）</label>'+
-        '<input type="file" id="e_file" accept="image/*" style="display:none" onchange="doUpload(this)">'+
+        '<input type="file" id="e_file" accept="image/*" multiple style="display:none" onchange="doUpload(this)">'+
         '<div class="upbtn" onclick="document.getElementById(\'e_file\').click()"><span id="upTxt">📷 上传本地图片（自己拍/存的，更安全）</span></div>'+
         '<textarea id="e_imgs" style="min-height:76px" oninput="ePrev()">'+
         esc(((p.images&&p.images.length)?p.images:(p.image_url?[p.image_url]:[])).join("\n"))+'</textarea>'+
@@ -1104,8 +1156,10 @@
           '<label style="display:flex;gap:6px;align-items:center;margin:0;color:var(--txt);font-size:13.5px"><input type="checkbox" id="e_hot" style="width:auto;accent-color:#ff7a00"'+(p.hot?' checked':'')+'>🔥 热卖</label>'+
           '<label style="display:flex;gap:6px;align-items:center;margin:0;color:var(--txt);font-size:13.5px"><input type="checkbox" id="e_soldout" style="width:auto;accent-color:var(--bad)"'+(p.soldout?' checked':'')+'>售罄</label>'+
         '</div></div></div>'+
-      '<div class="fld"><label>状态</label><select id="e_status">'+
+      '<div class="frow"><div class="fld"><label>状态</label><select id="e_status">'+
         ['待选','已上架','下架'].map(s=>'<option'+(p.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select></div>'+
+      '<div class="fld"><label>分类</label><select id="e_cat">'+
+        ['玩偶手办','包包','服饰','鞋靴','饰品手表','美妆个护','其他'].map(c=>'<option'+(p.category===c?' selected':'')+'>'+c+'</option>').join('')+'</select></div></div>'+
       '<button class="btn" onclick="saveEdit('+id+')">保存修改</button>'+
       '<div style="height:10px"></div>'+
       (p.status==='已上架'?'<button class="btn" style="background:transparent;border:1px solid var(--line);color:var(--txt)" onclick="copyProductLink('+id+')">🔗 复制顾客链接（发群/发朋友）</button><div style="height:10px"></div>':'')+
@@ -1147,18 +1201,22 @@
     });
   }
   async function doUpload(inp){
-    const f0=inp.files&&inp.files[0]; if(!f0) return;
-    const txt=document.getElementById('upTxt'), old=txt.innerHTML; txt.innerHTML='<span class="spin"></span> 上传中…';
+    const files=[...(inp.files||[])]; if(!files.length) return;
+    const txt=document.getElementById('upTxt'), old=txt.innerHTML;
+    let ok=0;
     try{
-      const f=await downscale(f0,1600);
-      const path='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)+'.jpg';
-      const r=await fetch(SUPABASE_URL+'/storage/v1/object/product-369/'+path,{method:'POST',
-        headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Content-Type':f.type||'image/jpeg','x-upsert':'true'},body:f});
-      if(!r.ok) throw new Error('上传失败('+r.status+')，图太大或网络问题');
-      const pub=SUPABASE_URL+'/storage/v1/object/public/product-369/'+path;
-      const ta=document.getElementById('e_imgs'); ta.value=(ta.value.trim()?ta.value.trim()+'\n':'')+pub; ePrev();
-      toast('图片已上传 ✅'); haptic('light');
-    }catch(e){ toast(String(e&&e.message||e)); }
+      for(let i=0;i<files.length;i++){
+        txt.innerHTML='<span class="spin"></span> 上传中 '+(i+1)+'/'+files.length+'…';
+        const f=await downscale(files[i],1600);
+        const path='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)+'.jpg';
+        const r=await fetch(SUPABASE_URL+'/storage/v1/object/product-369/'+path,{method:'POST',
+          headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Content-Type':f.type||'image/jpeg','x-upsert':'true'},body:f});
+        if(!r.ok) throw new Error('第'+(i+1)+'张上传失败('+r.status+')');
+        const pub=SUPABASE_URL+'/storage/v1/object/public/product-369/'+path;
+        const ta=document.getElementById('e_imgs'); ta.value=(ta.value.trim()?ta.value.trim()+'\n':'')+pub; ok++;
+      }
+      ePrev(); toast('已上传 '+ok+' 张 ✅'); haptic('light');
+    }catch(e){ ePrev(); toast(String(e&&e.message||e)); }
     finally{ txt.innerHTML=old; inp.value=''; }
   }
   // 在编辑页按当前倍率快速算售价（得物价¥ → 成本RM → ×倍率，尾数9 同样生效）
@@ -1188,6 +1246,7 @@
       orig_myr:num(document.getElementById('e_orig').value),
       hot:document.getElementById('e_hot').checked,
       soldout:document.getElementById('e_soldout').checked,
+      category:document.getElementById('e_cat').value||null,
     };
     if(await patch(id,fields)){ toast('已保存 ✅'); haptic('medium'); closeEdit(); loadAdmin(); } else toast('保存失败');
   }
