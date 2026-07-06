@@ -222,7 +222,9 @@
   .lbscroll{display:flex;width:100%;height:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
   .lbscroll::-webkit-scrollbar{display:none}
   .lbslide{flex:0 0 100%;display:flex;align-items:center;justify-content:center;scroll-snap-align:start}
-  .lbslide img{max-width:100%;max-height:100%;object-fit:contain;touch-action:pinch-zoom}
+  .lbslide img{max-width:100%;max-height:100%;object-fit:contain;touch-action:none;transition:transform .18s ease;will-change:transform}
+  .lbslide img.zoomed{transition:none}
+  .lbhint{position:fixed;top:calc(16px + env(safe-area-inset-top,0px));left:0;right:0;text-align:center;color:#ffffff80;font-size:11px;letter-spacing:1px;pointer-events:none}
   .lbcount{position:fixed;bottom:calc(26px + var(--safe-b));left:0;right:0;text-align:center;color:#ffffffb3;font-size:13px;font-weight:600;pointer-events:none}
   #lightbox .lbx{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:14px;background:#0008;border:1px solid #ffffff33;color:#fff;width:36px;height:36px;border-radius:50%;font-size:17px;z-index:2}
   /* 回到顶部 */
@@ -502,6 +504,7 @@
     <button class="lbx" onclick="closeLightbox()">✕</button>
     <div class="lbscroll" id="lbscroll" onscroll="lbCount()"></div>
     <div class="lbcount" id="lbcount"></div>
+    <div class="lbhint">双击放大 · 左右滑动切换</div>
   </div>
   <button id="top2" class="hidden" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 
@@ -735,7 +738,7 @@
   }
   function thumb(p){
     return p.image_url
-      ? '<img src="'+esc(im(p.image_url,500))+'" referrerpolicy="no-referrer" loading="lazy" onload="this.classList.add(\'ld\')" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" alt=""><div class="noimg" style="display:none">🖼️</div>'
+      ? '<img src="'+esc(im(p.image_url,400))+'" referrerpolicy="no-referrer" loading="lazy" onload="this.classList.add(\'ld\')" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" alt=""><div class="noimg" style="display:none">🖼️</div>'
       : '<div class="noimg">🖼️</div>';
   }
   function render(){
@@ -805,9 +808,12 @@
       priceBlock='<div class="sheet-price"><small>RM</small> '+money(p.sell_myr)+
         (hasOrig?'<span class="del" style="font-size:13px;vertical-align:4px">RM'+money(p.orig_myr)+'</span><span class="savetag">省RM'+money(p.orig_myr-p.sell_myr)+'</span>'
                 :'<span class="tagship" style="font-size:11px;vertical-align:6px">包邮</span>')+
-        (p.sold_count>0?'<span class="soldn" style="font-size:12px;vertical-align:4px">已售'+p.sold_count+'</span>':'')+
         '</div>';
     } else priceBlock='<div class="sheet-price" style="font-size:18px">价格请点下方问价</div>';
+    const proof=[];
+    if(p.sold_count>0) proof.push('已售 '+p.sold_count);
+    if(p.views>10) proof.push(p.views+' 人看过');
+    const proofHtml=proof.length?'<div style="font-size:11.5px;color:var(--sub);margin:2px 0 0;letter-spacing:.3px">'+proof.join(' · ')+'</div>':'';
     const specs=[];
     if(p.brand) specs.push(['品牌',esc(p.brand)]);
     if(p.sku) specs.push(['货号',esc(p.sku)]);
@@ -815,7 +821,7 @@
     specs.push(['配送','马来包邮 · 约 7–15 天送达']);
     document.getElementById('sheetContent').innerHTML=
       galleryHtml(p)+
-      '<div class="sheet-body"><h2>'+esc(p.name_cn||'')+'</h2>'+priceBlock+
+      '<div class="sheet-body"><h2>'+esc(p.name_cn||'')+'</h2>'+priceBlock+proofHtml+
       '<div class="svcbox">'+
         '<div><b>正品保证</b>支持验货</div>'+
         '<div><b>假一赔十</b>放心买</div>'+
@@ -870,7 +876,8 @@
   function openLightbox(i){
     if(!_gimgs.length) return;
     const sc=document.getElementById('lbscroll');
-    sc.innerHTML=_gimgs.map(u=>'<div class="lbslide"><img src="'+esc(u)+'" referrerpolicy="no-referrer" onclick="event.stopPropagation()" alt=""></div>').join('');
+    sc.innerHTML=_gimgs.map(u=>'<div class="lbslide"><img src="'+esc(u)+'" referrerpolicy="no-referrer" alt=""></div>').join('');
+    sc.querySelectorAll('img').forEach(el=>lbBindZoom(el));
     const c=document.getElementById('lbcount');
     c.style.display=_gimgs.length>1?'':'none';
     c.textContent=(i+1)+'/'+_gimgs.length;
@@ -884,6 +891,28 @@
     document.getElementById('lbcount').textContent=(Math.min(i,_gimgs.length-1)+1)+'/'+_gimgs.length;
   }
   function closeLightbox(){ document.getElementById('lightbox').classList.remove('show'); updateBack(); }
+  // 双击放大 2.5x（以点按位置为中心），放大时单指拖动平移，再双击复原；单击关闭
+  function lbBindZoom(el){
+    let z=1,tx=0,ty=0,drag=null,lastTap=0,moved=false;
+    const apply=()=>{ el.style.transform=z>1?('translate('+tx+'px,'+ty+'px) scale('+z+')'):''; el.classList.toggle('zoomed',z>1); };
+    const clamp=()=>{ const r=el.getBoundingClientRect?el:null; const m=(z-1)*Math.min(el.clientWidth,window.innerWidth)/2+40;
+      tx=Math.max(-m,Math.min(m,tx)); ty=Math.max(-m,Math.min(m,ty)); };
+    el.addEventListener('click',(e)=>{ e.stopPropagation();
+      const now=Date.now();
+      if(now-lastTap<320){ // 双击：放大/复原
+        if(z===1){ z=2.5;
+          const r=el.getBoundingClientRect();
+          tx=(r.left+r.width/2-e.clientX)*1.5; ty=(r.top+r.height/2-e.clientY)*1.5; clamp();
+        } else { z=1; tx=ty=0; }
+        apply(); lastTap=0; return;
+      }
+      lastTap=now;
+      setTimeout(()=>{ if(lastTap&&Date.now()-lastTap>=310&&z===1&&!moved) closeLightbox(); lastTap=0; },330);
+    });
+    el.addEventListener('pointerdown',(e)=>{ if(z===1) return; drag={x:e.clientX-tx,y:e.clientY-ty}; moved=false; el.setPointerCapture(e.pointerId); });
+    el.addEventListener('pointermove',(e)=>{ if(!drag) return; tx=e.clientX-drag.x; ty=e.clientY-drag.y; moved=true; clamp(); apply(); });
+    el.addEventListener('pointerup',()=>{ drag=null; setTimeout(()=>moved=false,50); });
+  }
   function gdots(){
     const s=document.getElementById('gscroll'); if(!s) return;
     const i=Math.round(s.scrollLeft/s.clientWidth);
@@ -1050,12 +1079,14 @@
   }
   let AROWS=[], _pollTimer=null, _pollN=0;
   const isPending=p=>/^⏳/.test(p&&p.name_cn||'');
+  let _adminFail=false;
   async function loadAdmin(){
     if(!AROWS.length) document.getElementById('list').innerHTML='<div class="empty">加载中…</div>';
     try{
       const r=await adminCall('list');
-      AROWS=(r&&r.ok&&r.rows)||[];
-    }catch(e){ AROWS=[]; }
+      if(!(r&&r.ok)) throw new Error('bad');
+      AROWS=r.rows||[]; _adminFail=false;
+    }catch(e){ if(!AROWS.length) _adminFail=true; }
     const up=AROWS.filter(p=>p.status==='已上架').length, wait=AROWS.filter(p=>p.sell_myr==null).length;
     document.getElementById('stAll').textContent=AROWS.length;
     document.getElementById('stUp').textContent=up;
@@ -1197,7 +1228,11 @@
     document.getElementById('count').onclick=aFilter!=='all'?(()=>setAFilter(aFilter)):null;
     document.getElementById('count').style.cursor=aFilter!=='all'?'pointer':'';
     const box=document.getElementById('list');
-    if(!rows.length){ box.innerHTML='<div class="empty">'+(AROWS.length?'这个筛选下没有货品':'还没有货品，上面贴内容解析入库')+'</div>'; renderSelBar(); return; }
+    if(!rows.length){
+      box.innerHTML='<div class="empty">'+(AROWS.length?'这个筛选下没有货品':(_adminFail
+        ?'加载失败，网络不太顺<br><button class="mini" style="margin-top:10px;padding:9px 22px" onclick="loadAdmin()">重试</button>'
+        :'还没有货品，上面贴内容解析入库'))+'</div>'; renderSelBar(); return;
+    }
     box.innerHTML=rows.map(p=>{
       const img=p.image_url?'<img src="'+esc(im(p.image_url,200))+'" referrerpolicy="no-referrer" onerror="this.style.visibility=\'hidden\'" alt="">':'<img alt="">';
       const profit=(p.sell_myr!=null&&p.price_myr!=null)?(p.sell_myr-p.price_myr):null;
