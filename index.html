@@ -6,9 +6,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <title>369 甄选 · 正品好物</title>
 <meta name="theme-color" content="#0e0f13" />
-<meta name="description" content="得物同源 · 正品保证 · 马来包邮" />
+<meta name="description" content="正品好物 · 假一赔十 · 马来包邮" />
 <meta property="og:title" content="369 甄选 · 正品好物" />
-<meta property="og:description" content="得物同源 · 正品保证 · 马来包邮" />
+<meta property="og:description" content="正品好物 · 假一赔十 · 马来包邮" />
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root{
@@ -189,7 +189,8 @@
   .ahead{display:flex;align-items:center;gap:10px;margin:6px 0 12px}
   .ahead h1{font-size:19px;margin:0;font-weight:800}.ahead p{margin:1px 0 0;font-size:12px;color:var(--sub)}
   .stats{display:flex;gap:10px;margin-bottom:14px}
-  .stat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center}
+  .stat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center;transition:transform .08s}
+  .stat:active{transform:scale(.96)}
   .stat b{font-size:22px;font-weight:900;display:block}.stat span{font-size:11px;color:var(--sub)}
   .stat.up b{color:var(--ok)}.stat.wait b{color:var(--accent2)}
   .stat.active{border-color:var(--accent2);box-shadow:0 0 0 1px var(--accent2) inset}
@@ -257,16 +258,16 @@
 </style>
 </head>
 <body>
-  <button id="switch" onclick="toggleMode()"><span id="switchTxt">后台</span></button>
+  <button id="switch" class="hidden" onclick="toggleMode()"><span id="switchTxt">后台</span></button>
 
   <!-- ============ 顾客店面 ============ -->
   <div id="shopView">
     <div class="hero">
       <div class="brand">
-        <div class="logo">369</div>
-        <div><h1 id="shopName">369 甄选</h1><p id="heroSub">得物同源 · 正品保证</p></div>
+        <div class="logo" onclick="logoTap()">369</div>
+        <div><h1 id="shopName">369 甄选</h1><p id="heroSub">品牌正品 · 马来包邮</p></div>
       </div>
-      <div class="trust"><span>✅ 正品保证</span><span>📦 得物货源</span><span>🚚 马来包邮</span></div>
+      <div class="trust"><span>✅ 正品保证</span><span>🛡️ 假一赔十</span><span>🚚 马来包邮</span></div>
     </div>
     <div class="sticky">
       <div class="searchrow">
@@ -300,7 +301,7 @@
   <div id="meView" class="hidden">
     <div class="logo">369</div>
     <h2 id="meShop">369 甄选</h2>
-    <p>正品好物 · 得物同源 · 马来发货</p>
+    <p>正品好物 · 精选好货 · 马来直邮</p>
     <div class="mestats">
       <div><b id="meCount">—</b><span>在售好物</span></div>
       <div><b>100%</b><span>正品保证</span></div>
@@ -312,7 +313,7 @@
     <a class="mcard" id="shareCard" href="#" onclick="shareShop();return false" style="text-decoration:none;color:inherit">
       <div class="ic">🔗</div><div class="mt"><b>分享店铺</b><div>把好物链接发给朋友</div></div><span>复制 →</span>
     </a>
-    <div class="mcard"><div class="ic">✅</div><div class="mt"><b>正品保证</b><div>货源直采得物，假一赔十</div></div></div>
+    <div class="mcard"><div class="ic">✅</div><div class="mt"><b>正品保证</b><div>件件正品，假一赔十，支持验货</div></div></div>
     <div class="mcard"><div class="ic">🚚</div><div class="mt"><b>马来包邮</b><div>下单后 7–15 天到手</div></div></div>
   </div>
 
@@ -376,7 +377,7 @@
   const SUPABASE_ANON_KEY = 'sb_publishable_bmLjilJuTOfkFKIn-tLIIw_ynG4h4de';
   const SHOP_NAME = '369 甄选';
   const CONTACT_WA = '';      // 你的 WhatsApp 号（如 60123456789）；留空走 Telegram 分享
-  const ADMIN_PIN = '';       // 进后台密码；留空 = 免密直接进（想加密码填个数字即可）
+  const ADMIN_PIN = '3690';   // 进后台密码（记得改成自己的）；留空 = 免密直接进
 
   const tg = window.Telegram && window.Telegram.WebApp;
   if (tg) { try { tg.ready(); tg.expand(); tg.setHeaderColor && tg.setHeaderColor('#0e0f13'); } catch(e){} }
@@ -441,6 +442,16 @@
     try{ need?tg.BackButton.show():tg.BackButton.hide(); }catch(e){}
   }
   if(tg&&tg.BackButton){ try{ tg.BackButton.onClick(handleBack); }catch(e){} }
+
+  // ===== 后台隐藏入口：连点 logo 5 次才显示「后台」按钮，顾客看不到 =====
+  let adminEntry = localStorage.getItem('a369_entry')==='1';
+  function refreshSwitch(){ document.getElementById('switch').classList.toggle('hidden', !adminEntry && mode!=='admin'); }
+  let _logoTaps=0,_logoTimer;
+  function logoTap(){
+    if(adminEntry) return;
+    _logoTaps++; clearTimeout(_logoTimer); _logoTimer=setTimeout(()=>{_logoTaps=0;},1600);
+    if(_logoTaps>=5){ _logoTaps=0; adminEntry=true; localStorage.setItem('a369_entry','1'); refreshSwitch(); toast('后台入口已开启'); haptic('medium'); }
+  }
 
   // ===== 视角切换 =====
   let mode='shop';
@@ -529,7 +540,7 @@
     if(sort==='plow') list.sort((a,b)=>(a.sell_myr??1e9)-(b.sell_myr??1e9));
     else if(sort==='phigh') list.sort((a,b)=>(b.sell_myr??-1)-(a.sell_myr??-1));
     const grid=document.getElementById('grid');
-    const hs=document.getElementById('heroSub'); if(hs) hs.textContent='得物同源 · 正品保证'+(ALL.length?' · '+ALL.length+' 件在售':'');
+    const hs=document.getElementById('heroSub'); if(hs) hs.textContent='品牌正品 · 假一赔十'+(ALL.length?' · '+ALL.length+' 件在售':'');
     const mc=document.getElementById('meCount'); if(mc) mc.textContent=ALL.length||'—';
     document.getElementById('shopCount').textContent=list.length?('共 '+list.length+' 件好物'):'';
     renderRecent();
@@ -559,13 +570,13 @@
     const specs=[];
     if(p.brand) specs.push(['品牌',esc(p.brand)]);
     if(p.sku) specs.push(['货号',esc(p.sku)]);
-    specs.push(['货源','得物直采 · 正品保证']);
+    specs.push(['保障','正品保证 · 假一赔十 · 支持验货']);
     specs.push(['配送','马来包邮 · 约 7–15 天送达']);
     document.getElementById('sheetContent').innerHTML=
       galleryHtml(p)+
       '<div class="sheet-body"><h2>'+esc(p.name_cn||'')+'</h2>'+priceBlock+
       '<div class="svcbox">'+
-        '<div><b>✅ 正品</b>得物直采</div>'+
+        '<div><b>✅ 正品</b>支持验货</div>'+
         '<div><b>🛡️ 保障</b>假一赔十</div>'+
         '<div><b>🚚 包邮</b>7–15 天到手</div>'+
       '</div>'+
@@ -667,7 +678,19 @@
   let MARKUP=Number(localStorage.getItem('markup369')||'1.5'); if(!(MARKUP>=1)) MARKUP=1.5;
   function saveMarkup(){ const v=Number(document.getElementById('markup').value); if(v>=1){ MARKUP=v; localStorage.setItem('markup369',String(v)); } else { document.getElementById('markup').value=MARKUP; } }
   function suggest(p){ return (p&&p.price_myr!=null)?Math.max(1,Math.ceil(p.price_myr*MARKUP)):null; } // 成本×倍率，向上取整到整数 RM
-  function calcPrice(id){ const p=AROWS.find(x=>x.id===id); const s=suggest(p); if(s==null){ toast('这条没成本价，先编辑填得物价'); return; } const el=document.getElementById('sell_'+id); if(el){ el.value=s; el.focus(); } }
+  function calcPrice(id){ const p=AROWS.find(x=>x.id===id); const s=suggest(p); if(s==null){ toast('这条没成本价，先编辑填得物价'); return; } const el=document.getElementById('sell_'+id); if(el){ el.value=s; el.focus(); liveProfit(id); } }
+  // 输入售价时实时预览利润，不用先保存再看
+  function liveProfit(id){
+    const p=AROWS.find(x=>x.id===id); const el=document.getElementById('lp_'+id); if(!p||!el) return;
+    const v=Number((document.getElementById('sell_'+id)||{}).value);
+    if(!Number.isFinite(v)||v<=0||p.price_myr==null||v===Number(p.sell_myr)){ el.textContent=''; return; }
+    const pr=v-p.price_myr, mg=Math.round(pr/v*100);
+    el.innerHTML=' → '+(pr>=0?'<span class="profit">赚 RM'+money(Math.round(pr*100)/100)+' '+mg+'%</span>':'<span style="color:var(--bad)">亏 RM'+money(Math.round(-pr*100)/100)+'</span>');
+  }
+  function copyProductLink(id){
+    const url=location.origin+location.pathname+'?p='+id;
+    if(navigator.clipboard){ navigator.clipboard.writeText(url).then(()=>toast('顾客链接已复制 ✅')).catch(()=>toast(url)); } else toast(url);
+  }
   async function batchPrice(){
     const todo=AROWS.filter(p=>p.sell_myr==null && p.price_myr!=null);
     if(!todo.length){ toast('没有可自动定价的（需未定价且有成本）'); return; }
@@ -732,9 +755,9 @@
       return '<div class="item'+(isPending(p)?' pending':'')+'">'+img+'<div class="info">'+
         '<div class="name">'+esc(p.name_cn||'(无名)')+'</div>'+
         '<div class="brand">'+esc(p.brand||'—')+(p.sku?' · '+esc(p.sku):'')+'</div>'+
-        '<div class="cost">得物 ¥'+(p.price_rmb==null?'—':money(p.price_rmb))+' · 成本 RM'+(p.price_myr==null?'—':money(p.price_myr))+profitHtml+((p.images&&p.images.length>1)?' · 📷'+p.images.length:'')+'　'+badge(p.status)+'</div>'+
+        '<div class="cost">得物 ¥'+(p.price_rmb==null?'—':money(p.price_rmb))+' · 成本 RM'+(p.price_myr==null?'—':money(p.price_myr))+profitHtml+((p.images&&p.images.length>1)?' · 📷'+p.images.length:'')+'　'+badge(p.status)+'<span id="lp_'+p.id+'"></span></div>'+
         '<div class="ctl">'+
-          '<input type="number" inputmode="decimal" placeholder="售价RM" value="'+(p.sell_myr==null?'':p.sell_myr)+'" id="sell_'+p.id+'">'+
+          '<input type="number" inputmode="decimal" placeholder="售价RM" value="'+(p.sell_myr==null?'':p.sell_myr)+'" id="sell_'+p.id+'" oninput="liveProfit('+p.id+')">'+
           (p.price_myr!=null?'<button class="mini ghost" onclick="calcPrice('+p.id+')">算价</button>':'')+
           '<button class="mini" onclick="saveItem('+p.id+')">保存</button>'+
           (p.status==='已上架'?'<button class="mini ghost" onclick="setStatus('+p.id+',\'下架\')">下架</button>':'<button class="mini" onclick="setStatus('+p.id+',\'已上架\')">上架</button>')+
@@ -843,6 +866,7 @@
         ['待选','已上架','下架'].map(s=>'<option'+(p.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select></div>'+
       '<button class="btn" onclick="saveEdit('+id+')">保存修改</button>'+
       '<div style="height:10px"></div>'+
+      (p.status==='已上架'?'<button class="btn" style="background:transparent;border:1px solid var(--line);color:var(--txt)" onclick="copyProductLink('+id+')">🔗 复制顾客链接（发群/发朋友）</button><div style="height:10px"></div>':'')+
       '<button class="btn" style="background:transparent;border:1px solid var(--line);color:var(--bad)" onclick="delItem('+id+');closeEdit()">删除这条</button>';
     document.getElementById('edit').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
   }
@@ -898,6 +922,7 @@
 
   // 启动
   updateBadge();
+  refreshSwitch();
   load();
 </script>
 </body>
