@@ -436,6 +436,8 @@
 
   function tgId(){ try{ const u=tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user; return u&&u.id?u.id:null; }catch(e){ return null; } }
   function headers(){ return { 'apikey':SUPABASE_ANON_KEY, 'Authorization':'Bearer '+SUPABASE_ANON_KEY, 'Content-Type':'application/json', 'Prefer':'return=representation' }; }
+  // 调 Edge Function 用的头：不带 Prefer（不在函数 CORS 白名单里，带了会被浏览器预检拦掉）
+  function fnHeaders(){ return { 'apikey':SUPABASE_ANON_KEY, 'Authorization':'Bearer '+SUPABASE_ANON_KEY, 'Content-Type':'application/json' }; }
   function money(v){ return Number(v).toLocaleString(undefined,{maximumFractionDigits:2}); }
   function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
   function haptic(t){ try{ tg&&tg.HapticFeedback&&tg.HapticFeedback.impactOccurred(t||'light'); }catch(e){} }
@@ -479,7 +481,7 @@
   // ===== 后台通道：密码在服务端校验，读写都走 admin-369 函数 =====
   function getPin(){ return localStorage.getItem('a369_pin')||''; }
   async function adminCall(action,payload){
-    const r=await fetch(FN+'/admin-369',{method:'POST',headers:{...headers(),'x-admin-pin':getPin()},body:JSON.stringify(Object.assign({action:action},payload||{}))});
+    const r=await fetch(FN+'/admin-369',{method:'POST',headers:{...fnHeaders(),'x-admin-pin':getPin()},body:JSON.stringify(Object.assign({action:action},payload||{}))});
     if(r.status===401){ localStorage.removeItem('a369_pin'); toast('后台密码失效，请重新进入'); if(mode==='admin') setMode('shop'); throw new Error('PIN'); }
     return await r.json();
   }
@@ -491,7 +493,7 @@
       if(!getPin()){
         const p=prompt('后台密码'); if(p===null) return;
         let r=null;
-        try{ r=await fetch(FN+'/admin-369',{method:'POST',headers:{...headers(),'x-admin-pin':p.trim()},body:JSON.stringify({action:'ping'})}); }catch(e){}
+        try{ r=await fetch(FN+'/admin-369',{method:'POST',headers:{...fnHeaders(),'x-admin-pin':p.trim()},body:JSON.stringify({action:'ping'})}); }catch(e){}
         if(!r){ toast('网络不稳，再试一次'); return; }
         if(r.status===401){ toast('密码不对'); return; }
         localStorage.setItem('a369_pin',p.trim());
@@ -747,7 +749,7 @@
     const p=AROWS.find(x=>x.id===id); if(!p) return;
     if(!(p.raw_text||p.source_url)){ toast('这条没存原始内容，点「编辑」手填吧'); return; }
     await patch(id,{name_cn:'⏳ 重新解析中…'});
-    try{ fetch(SUPABASE_URL+'/functions/v1/parse-dewu-link',{method:'POST',headers:headers(),body:JSON.stringify({rowId:id})}); }catch(e){}
+    try{ fetch(FN+'/parse-dewu-link',{method:'POST',headers:fnHeaders(),body:JSON.stringify({rowId:id})}); }catch(e){}
     toast('已重新解析，稍等自动补上'); haptic('light');
     _pollN=0; loadAdmin();
   }

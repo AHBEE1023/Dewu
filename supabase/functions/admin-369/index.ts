@@ -10,7 +10,7 @@ const PATCH_FIELDS = ["name_cn", "brand", "sku", "images", "image_url", "price_r
 Deno.serve(async (req) => {
   const cors = {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-admin-pin",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-admin-pin, prefer",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
   };
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
