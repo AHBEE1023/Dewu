@@ -161,10 +161,24 @@
   .shopcount{font-size:12px;color:var(--sub);padding:2px 18px 6px}
   .gslide img{cursor:zoom-in}
   /* 全屏看图 */
-  #lightbox{position:fixed;inset:0;background:#000;display:none;z-index:100;align-items:center;justify-content:center}
-  #lightbox.show{display:flex}
-  #lightbox img{max-width:100%;max-height:100%;object-fit:contain;touch-action:pinch-zoom}
+  #lightbox{position:fixed;inset:0;background:#000;display:none;z-index:100}
+  #lightbox.show{display:block}
+  .lbscroll{display:flex;width:100%;height:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+  .lbscroll::-webkit-scrollbar{display:none}
+  .lbslide{flex:0 0 100%;display:flex;align-items:center;justify-content:center;scroll-snap-align:start}
+  .lbslide img{max-width:100%;max-height:100%;object-fit:contain;touch-action:pinch-zoom}
+  .lbcount{position:fixed;bottom:calc(26px + var(--safe-b));left:0;right:0;text-align:center;color:#ffffffb3;font-size:13px;font-weight:600;pointer-events:none}
   #lightbox .lbx{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:14px;background:#0008;border:1px solid #ffffff33;color:#fff;width:36px;height:36px;border-radius:50%;font-size:17px;z-index:2}
+  /* 回到顶部 */
+  #top2{position:fixed;right:14px;bottom:calc(var(--nav-h) + var(--safe-b) + 18px);width:40px;height:40px;border-radius:50%;
+    background:#ffffffee;backdrop-filter:blur(8px);box-shadow:0 3px 14px rgba(24,26,32,.16);border:none;color:var(--txt);font-size:17px;z-index:14}
+  #top2:active{transform:scale(.92)}
+  /* 首次加载卡片入场 */
+  .grid.anim .prod{animation:cardIn .32s ease both}
+  @keyframes cardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  .grid.anim .prod:nth-child(2){animation-delay:.04s}.grid.anim .prod:nth-child(3){animation-delay:.08s}
+  .grid.anim .prod:nth-child(4){animation-delay:.12s}.grid.anim .prod:nth-child(5){animation-delay:.16s}
+  .grid.anim .prod:nth-child(6){animation-delay:.2s}
   .sheet-body{padding:16px 18px calc(22px + var(--safe-b))}
   .sheet-body h2{font-size:17px;margin:0 0 6px;line-height:1.4;font-weight:800}
   .sheet-price{font-size:26px;font-weight:900;color:var(--price);margin-bottom:4px;letter-spacing:-.5px}
@@ -390,8 +404,13 @@
     <div class="sheet-in"><div class="close"><button onclick="closeEdit()">✕</button></div><div id="editContent" style="padding:0 18px calc(22px + var(--safe-b))"></div></div>
   </div>
 
-  <!-- 全屏看图 -->
-  <div id="lightbox" onclick="closeLightbox()"><button class="lbx" onclick="closeLightbox()">✕</button><img id="lbimg" src="" referrerpolicy="no-referrer" alt=""></div>
+  <!-- 全屏看图（可左右滑动切换） -->
+  <div id="lightbox" onclick="closeLightbox()">
+    <button class="lbx" onclick="closeLightbox()">✕</button>
+    <div class="lbscroll" id="lbscroll" onscroll="lbCount()"></div>
+    <div class="lbcount" id="lbcount"></div>
+  </div>
+  <button id="top2" class="hidden" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 
   <div class="toast" id="toast"></div>
 
@@ -442,6 +461,13 @@
   // 调 Edge Function 用的头：不带 Prefer（不在函数 CORS 白名单里，带了会被浏览器预检拦掉）
   function fnHeaders(){ return { 'apikey':SUPABASE_ANON_KEY, 'Authorization':'Bearer '+SUPABASE_ANON_KEY, 'Content-Type':'application/json' }; }
   function money(v){ return Number(v).toLocaleString(undefined,{maximumFractionDigits:2}); }
+  // 得物 CDN 支持阿里云 OSS 缩图：列表用小图省流量提速，看大图才加载原图
+  function im(u,w){
+    if(!u) return u;
+    if(/(cdn\.poizon\.com|dewucdn\.com)/.test(u) && u.indexOf('?')<0)
+      return u+'?x-oss-process=image/resize,w_'+w+'/format,webp';
+    return u;
+  }
   function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
   function haptic(t){ try{ tg&&tg.HapticFeedback&&tg.HapticFeedback.impactOccurred(t||'light'); }catch(e){} }
   let toastTimer;
@@ -523,6 +549,7 @@
     show('checkout', t==='cart' && cartItems().length>0 && !hasMB());
     document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on', b.dataset.tab===t));
     window.scrollTo(0,0);
+    document.getElementById('top2').classList.add('hidden');
     if(t==='cart') renderCart();
     haptic('light'); updateBack(); updateMainButton();
   }
@@ -532,13 +559,14 @@
   let sort='new'; const SORTS=[['new','综合'],['plow','价格↑'],['phigh','价格↓']];
   let brandFilter='';
   // 店面读专用视图：数据库层面只发布「已上架 + 安全字段」，成本根本不出库
+  let _fresh=false;
   async function load(){
     if(!ALL.length) skeleton();
     try{
       const r=await fetch(SUPABASE_URL+'/rest/v1/products_369_shop?select=*&order=created_at.desc&limit=300',{headers:headers()});
       ALL=r.ok?await r.json():[];
     }catch(e){ ALL=[]; }
-    buildChips(); renderSeg(); render(); updateBadge(); checkDeepLink();
+    _fresh=true; buildChips(); renderSeg(); render(); updateBadge(); checkDeepLink();
   }
   let _deepDone=false;
   function checkDeepLink(){
@@ -546,7 +574,10 @@
     const id=Number(new URLSearchParams(location.search).get('p'));
     if(id&&ALL.find(x=>x.id===id)){ _deepDone=true; if(mode!=='shop')setMode('shop'); setTab('shop'); openSheet(id); }
   }
-  function skeleton(){ document.getElementById('grid').innerHTML=Array(6).fill('<div class="sk"><div class="b t1"></div><div class="b t2"></div><div class="b t3"></div></div>').join(''); }
+  function skeleton(){
+    const r=['1/1','3/4','4/5','1/1','3/4','1/1'];
+    document.getElementById('grid').innerHTML=r.map(a=>'<div class="sk"><div class="b t1" style="aspect-ratio:'+a+'"></div><div class="b t2"></div><div class="b t3"></div></div>').join('');
+  }
 
   function buildChips(){
     const brands=[...new Set(ALL.map(p=>p.brand).filter(Boolean))];
@@ -567,7 +598,7 @@
   function priceHtml(p){ return p.sell_myr!=null?'<div class="price"><small>RM</small>'+money(p.sell_myr)+'<span class="tagship">包邮</span></div>':'<div class="ask">点击问价</div>'; }
   function thumb(p){
     return p.image_url
-      ? '<img src="'+esc(p.image_url)+'" referrerpolicy="no-referrer" loading="lazy" onload="this.classList.add(\'ld\')" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" alt=""><div class="noimg" style="display:none">🖼️</div>'
+      ? '<img src="'+esc(im(p.image_url,500))+'" referrerpolicy="no-referrer" loading="lazy" onload="this.classList.add(\'ld\')" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" alt=""><div class="noimg" style="display:none">🖼️</div>'
       : '<div class="noimg">🖼️</div>';
   }
   function render(){
@@ -578,6 +609,7 @@
     if(sort==='plow') list.sort((a,b)=>(a.sell_myr??1e9)-(b.sell_myr??1e9));
     else if(sort==='phigh') list.sort((a,b)=>(b.sell_myr??-1)-(a.sell_myr??-1));
     const grid=document.getElementById('grid');
+    grid.classList.toggle('anim',_fresh); _fresh=false; // 只在数据刚拉回来时做入场动画，搜索筛选时不闪
     const hs=document.getElementById('heroSub'); if(hs) hs.textContent='品牌正品 · 假一赔十'+(ALL.length?' · '+ALL.length+' 件在售':'');
     const mc=document.getElementById('meCount'); if(mc) mc.textContent=ALL.length||'—';
     document.getElementById('shopCount').textContent=list.length?('共 '+list.length+' 件好物'):'';
@@ -637,7 +669,7 @@
     const list=same.concat(pool.filter(x=>!(x.brand&&x.brand===p.brand))).slice(0,8);
     return '<div style="margin:18px 0 9px;font-size:13px;font-weight:700;color:var(--sub)">'+(same.length?'🛍 同品牌好物':'🛍 猜你喜欢')+'</div>'+
       '<div class="rscroll">'+list.map(x=>'<div class="ritem" style="width:84px" onclick="openSheet('+x.id+')">'+
-        (x.image_url?'<img style="width:84px;height:84px" src="'+esc(x.image_url)+'" referrerpolicy="no-referrer" loading="lazy" alt="">':'<img style="width:84px;height:84px" alt="">')+
+        (x.image_url?'<img style="width:84px;height:84px" src="'+esc(im(x.image_url,300))+'" referrerpolicy="no-referrer" loading="lazy" alt="">':'<img style="width:84px;height:84px" alt="">')+
         '<div>'+esc(x.name_cn||'')+'</div>'+
         (x.sell_myr!=null?'<div style="color:var(--accent2);font-weight:800;margin-top:1px">RM'+money(x.sell_myr)+'</div>':'')+
       '</div>').join('')+'</div>';
@@ -653,15 +685,31 @@
   }
   function galleryHtml(p){
     const imgs=(p.images&&p.images.length)?p.images:(p.image_url?[p.image_url]:[]);
+    _gimgs=imgs; // 全屏看图用原图，可左右滑
     if(!imgs.length) return '';
-    const lb=(u)=>"openLightbox('"+esc(u).replace(/'/g,"\\'")+"')";
-    if(imgs.length===1) return '<img class="sheet-img" style="cursor:zoom-in" src="'+esc(imgs[0])+'" referrerpolicy="no-referrer" onclick="'+lb(imgs[0])+'" alt="">';
+    if(imgs.length===1) return '<img class="sheet-img" style="cursor:zoom-in" src="'+esc(im(imgs[0],800))+'" referrerpolicy="no-referrer" onclick="openLightbox(0)" alt="">';
     return '<div class="gwrap"><div class="gscroll" id="gscroll" onscroll="gdots()">'+
-      imgs.map(u=>'<div class="gslide"><img src="'+esc(u)+'" referrerpolicy="no-referrer" loading="lazy" onclick="'+lb(u)+'" alt=""></div>').join('')+
+      imgs.map((u,i)=>'<div class="gslide"><img src="'+esc(im(u,800))+'" referrerpolicy="no-referrer" loading="lazy" onclick="openLightbox('+i+')" alt=""></div>').join('')+
       '</div><div class="gcount" id="gcount">1/'+imgs.length+'</div>'+
       '<div class="gdots" id="gdots">'+imgs.map((_,i)=>'<span class="gdot'+(i===0?' on':'')+'"></span>').join('')+'</div></div>';
   }
-  function openLightbox(u){ const el=document.getElementById('lightbox'); document.getElementById('lbimg').src=u; el.classList.add('show'); updateBack(); }
+  let _gimgs=[];
+  function openLightbox(i){
+    if(!_gimgs.length) return;
+    const sc=document.getElementById('lbscroll');
+    sc.innerHTML=_gimgs.map(u=>'<div class="lbslide"><img src="'+esc(u)+'" referrerpolicy="no-referrer" onclick="event.stopPropagation()" alt=""></div>').join('');
+    const c=document.getElementById('lbcount');
+    c.style.display=_gimgs.length>1?'':'none';
+    c.textContent=(i+1)+'/'+_gimgs.length;
+    document.getElementById('lightbox').classList.add('show');
+    requestAnimationFrame(()=>{ sc.scrollLeft=i*sc.clientWidth; });
+    updateBack();
+  }
+  function lbCount(){
+    const sc=document.getElementById('lbscroll');
+    const i=Math.round(sc.scrollLeft/sc.clientWidth);
+    document.getElementById('lbcount').textContent=(Math.min(i,_gimgs.length-1)+1)+'/'+_gimgs.length;
+  }
   function closeLightbox(){ document.getElementById('lightbox').classList.remove('show'); updateBack(); }
   function gdots(){
     const s=document.getElementById('gscroll'); if(!s) return;
@@ -680,7 +728,7 @@
     if(!items.length) return;
     box.innerHTML='<div class="rt">👀 最近看过</div><div class="rscroll">'+items.map(p=>
       '<div class="ritem" onclick="openSheet('+p.id+')">'+
-      (p.image_url?'<img src="'+esc(p.image_url)+'" referrerpolicy="no-referrer" loading="lazy" alt="">':'<img alt="">')+
+      (p.image_url?'<img src="'+esc(im(p.image_url,200))+'" referrerpolicy="no-referrer" loading="lazy" alt="">':'<img alt="">')+
       '<div>'+esc(p.name_cn||'')+'</div></div>').join('')+'</div>';
   }
 
@@ -702,7 +750,7 @@
     updateMainButton();
     if(!items.length){ box.innerHTML='<div class="empty"><div class="big">🛒</div>心愿单还是空的<br>去店面挑几件喜欢的吧～<br><button onclick="setTab(\'shop\')" style="margin-top:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff;border-radius:12px;padding:11px 26px;font-size:14px;font-weight:800">🛍 去逛逛</button></div>'; return; }
     box.innerHTML=items.map(p=>
-      '<div class="crow">'+(p.image_url?'<img src="'+esc(p.image_url)+'" referrerpolicy="no-referrer" alt="">':'<img alt="">')+
+      '<div class="crow">'+(p.image_url?'<img src="'+esc(im(p.image_url,200))+'" referrerpolicy="no-referrer" alt="">':'<img alt="">')+
       '<div class="ci"><div class="cn">'+esc(p.name_cn||'')+'</div>'+
       '<div class="cp">'+(p.sell_myr!=null?'RM'+money(p.sell_myr):'询价')+'</div>'+
       '<div class="qty"><button onclick="setQty('+p.id+',-1)">−</button><span>'+cart[p.id]+'</span><button onclick="setQty('+p.id+',1)">+</button>'+
@@ -856,7 +904,7 @@
     const box=document.getElementById('list');
     if(!rows.length){ box.innerHTML='<div class="empty">'+(AROWS.length?'这个筛选下没有货品':'还没有货品，上面贴内容解析入库')+'</div>'; renderSelBar(); return; }
     box.innerHTML=rows.map(p=>{
-      const img=p.image_url?'<img src="'+esc(p.image_url)+'" referrerpolicy="no-referrer" onerror="this.style.visibility=\'hidden\'" alt="">':'<img alt="">';
+      const img=p.image_url?'<img src="'+esc(im(p.image_url,200))+'" referrerpolicy="no-referrer" onerror="this.style.visibility=\'hidden\'" alt="">':'<img alt="">';
       const profit=(p.sell_myr!=null&&p.price_myr!=null)?(p.sell_myr-p.price_myr):null;
       const margin=(profit!=null&&p.sell_myr>0)?Math.round(profit/p.sell_myr*100):null;
       const profitHtml=profit!=null?' · <span class="profit">赚 RM'+money(profit)+(margin!=null?' '+margin+'%':'')+'</span>':'';
@@ -941,7 +989,7 @@
     const v=(x)=>x==null?'':esc(x);
     document.getElementById('editContent').innerHTML=
       '<h2 style="font-size:17px;margin:0 0 14px">编辑货品</h2>'+
-      '<img class="epreview" id="e_prev" src="'+(p.image_url?esc(p.image_url):'')+'" referrerpolicy="no-referrer" onerror="this.style.visibility=\'hidden\'">'+
+      '<img class="epreview" id="e_prev" src="'+(p.image_url?esc(im(p.image_url,400)):'')+'" referrerpolicy="no-referrer" onerror="this.style.visibility=\'hidden\'">'+
       '<div class="fld"><label>商品名</label><input id="e_name" value="'+v(p.name_cn)+'"></div>'+
       '<div class="frow"><div class="fld"><label>品牌</label><input id="e_brand" value="'+v(p.brand)+'"></div>'+
         '<div class="fld"><label>货号 SKU</label><input id="e_sku" value="'+v(p.sku)+'"></div></div>'+
@@ -964,11 +1012,11 @@
   }
   function closeEdit(){ document.getElementById('edit').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
   function eImgs(){ return document.getElementById('e_imgs').value.split('\n').map(s=>s.trim()).filter(Boolean); }
-  function ePrev(){ const im=eImgs()[0]||''; const el=document.getElementById('e_prev'); el.src=im; el.style.visibility=im?'visible':'hidden'; eThumbs(); }
+  function ePrev(){ const u=eImgs()[0]||''; const el=document.getElementById('e_prev'); el.src=u?im(u,400):''; el.style.visibility=u?'visible':'hidden'; eThumbs(); }
   function eThumbs(){
     const box=document.getElementById('ethumbs'); if(!box) return;
     box.innerHTML=eImgs().map((u,i)=>'<div class="eth">'+
-      '<img src="'+esc(u)+'" referrerpolicy="no-referrer" onerror="this.style.opacity=.25" onclick="eMain('+i+')" alt="">'+
+      '<img src="'+esc(im(u,200))+'" referrerpolicy="no-referrer" onerror="this.style.opacity=.25" onclick="eMain('+i+')" alt="">'+
       (i===0?'<span class="ethmain">主图</span>':'')+
       '<button class="ethx" onclick="eRm('+i+')">✕</button></div>').join('');
   }
@@ -1040,6 +1088,10 @@
 
   // 切回 App 时自动刷新数据（Telegram 里没有下拉刷新，这个替代它）
   document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ mode==='admin'?loadAdmin():load(); } });
+  // 滚得深了显示「回到顶部」（只在店面 Tab）
+  window.addEventListener('scroll',()=>{
+    document.getElementById('top2').classList.toggle('hidden', window.scrollY<600 || tab!=='shop' || mode!=='shop');
+  },{passive:true});
 
   // 启动
   updateBadge();
