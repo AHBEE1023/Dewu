@@ -82,12 +82,14 @@ Deno.serve(async (req) => {
 
 async function fillRow(supabase, apiKey, rowId, material0, sourceUrl, linkOnly) {
   try {
-    let material = material0, fromPage = false, gallery = null, st = null;
+    let material = material0, fromPage = false, gallery = null, st = null, pageParams = null, pageVariants = null;
     if (sourceUrl) {
       const page = await fetchDewuPage(sourceUrl);
       console.log("[dbg] row", rowId, "blocked=", page.blocked, "st=", JSON.stringify(page.st || null).slice(0, 120));
       if (!page.blocked) {
         st = page.st;
+        pageParams = page.params && page.params.length ? page.params : null;
+        pageVariants = page.variants && page.variants.length ? page.variants : null;
         gallery = page.images && page.images.length ? page.images : (page.image ? [page.image] : null);
         // 页面抓得到就把网页文字一起给 AI 备用——分享文字里没有价格，价格只在网页里
         if (linkOnly) { material = page.text; fromPage = true; }
@@ -122,6 +124,12 @@ async function fillRow(supabase, apiKey, rowId, material0, sourceUrl, linkOnly) 
     }
     const imageUrl = (gallery && gallery[0]) || emptyToNull(parsed && parsed.image_url);
     if (imageUrl) { upd.image_url = imageUrl; upd.images = gallery && gallery.length ? gallery : [imageUrl]; }
+    // 参数/规格只在行里还没有时写入——重解析不冲掉店主的勾选和定价
+    if (pageParams || pageVariants) {
+      const { data: cur } = await supabase.from("products_369").select("params,variants").eq("id", rowId).maybeSingle();
+      if (pageParams && !(cur && cur.params && cur.params.length)) upd.params = pageParams;
+      if (pageVariants && !(cur && cur.variants && cur.variants.length)) upd.variants = pageVariants;
+    }
     await supabase.from("products_369").update(upd).eq("id", rowId);
   } catch (e) {
     const s = String(e);
@@ -172,10 +180,43 @@ async function fetchDewuPageOnce(url) {
       image: extractMain(html),
       priceHint: extractPriceHints(html),
       st: extractStructured(html),
+      params: extractParams(html),
+      variants: extractVariants(html),
     };
   } catch (_e) {
     return { blocked: true };
   }
+}
+
+// 商品参数表：key-value 对（发售价格另有用途，跳过）；默认 on:false，后台勾选才对顾客显示
+function extractParams(html) {
+  const seen = new Set(), out = [];
+  for (const m of html.matchAll(/"key":"((?:[^"\\]|\\.){1,14})","value":"((?:[^"\\]|\\.){1,60})"/g)) {
+    let k = m[1], v = m[2];
+    try { k = JSON.parse('"' + k + '"'); } catch (_e) {}
+    try { v = JSON.parse('"' + v + '"'); } catch (_e) {}
+    k = k.trim(); v = v.replace(/\s+/g, " ").trim();
+    if (!k || !v || k === "发售价格" || seen.has(k)) continue;
+    seen.add(k);
+    out.push({ k, v, on: false });
+    if (out.length >= 14) break;
+  }
+  return out;
+}
+// 规格 SKU 列表：propertyValues + authPrice（skuAuthPriceList 里单位是分）
+function extractVariants(html) {
+  const seen = new Set(), out = [];
+  for (const m of html.matchAll(/\{"skuId":\d+,"authPrice":(\d+)[^{}]*?"propertyValues":"((?:[^"\\]|\\.){1,60})"/g)) {
+    let name = m[2];
+    try { name = JSON.parse('"' + name + '"'); } catch (_e) {}
+    name = name.replace(/\s+/g, " ").trim();
+    const rmb = Math.round(+m[1]) / 100;
+    if (!name || !Number.isFinite(rmb) || rmb <= 0 || seen.has(name)) continue;
+    seen.add(name);
+    out.push({ name, rmb, sell: null, on: false });
+    if (out.length >= 20) break;
+  }
+  return out;
 }
 
 // ===== 纯代码结构化解析（零 AI）=====
