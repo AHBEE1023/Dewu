@@ -10,6 +10,9 @@
 <link rel="preconnect" href="https://wgulnumflnumdpqfbjqy.supabase.co" crossorigin />
 <meta property="og:image" content="https://dewu-247team.vercel.app/og.png" />
 <meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" type="image/png" href="/icon-192.png" />
+<link rel="apple-touch-icon" href="/icon-192.png" />
+<link rel="manifest" href="/manifest.json" />
 <meta name="description" content="正品好物 · 假一赔十 · 马来包邮" />
 <meta property="og:title" content="369 甄选 · 正品好物" />
 <meta property="og:description" content="正品好物 · 假一赔十 · 马来包邮" />
@@ -46,6 +49,16 @@
   .brand p{margin:1px 0 0;font-size:11px;color:var(--sub)}
   .trust{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
   .trust span{font-size:10.5px;color:#c25e00;background:rgba(255,176,32,.13);padding:3px 9px;border-radius:6px;font-weight:600}
+
+  /* 🛒 如何购买步骤卡 / 首次进店提示 */
+  .howto{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:16px;text-align:left;margin-bottom:12px}
+  .howto b{font-size:14.5px;display:block;margin-bottom:11px}
+  .howto .st{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:#454a55;line-height:1.5;padding:5px 0}
+  .howto .st i{flex:0 0 auto;width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-style:normal;font-size:11.5px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .tipbar{margin:10px 16px 0;background:#eef4ff;border-radius:10px;padding:9px 12px;font-size:12.5px;color:#2b5fc7;font-weight:600;display:flex;align-items:center;gap:8px}
+  .tipbar .tx{flex:1;line-height:1.45}
+  .tipbar .tgo{color:#2b5fc7;text-decoration:underline;font-weight:700}
+  .tipbar .tclose{border:none;background:none;color:#2b5fc7;font-size:14px;padding:2px 4px}
 
   /* 📢 公告栏 */
   .notice{margin:10px 16px 0;background:linear-gradient(90deg,rgba(255,90,60,.09),rgba(255,176,32,.1));border-radius:10px;padding:8px 12px;font-size:12.5px;color:#c25e00;font-weight:600;display:flex;align-items:center;gap:7px}
@@ -316,6 +329,7 @@
       </div>
       <div class="trust"><span>✅ 正品保证</span><span>🛡️ 假一赔十</span><span>🚚 马来包邮</span></div>
     </div>
+    <div class="tipbar hidden" id="tipbar">👋<div class="tx">第一次来？看中就点 ➕ 加心愿单，一键发给客服就能下单。<span class="tgo" onclick="dismissTip();setTab('me')">看怎么买 →</span></div><button class="tclose" onclick="dismissTip()">✕</button></div>
     <div class="notice hidden" id="notice">📢<div class="mq" id="noticeMq"></div></div>
     <div class="sticky">
       <div class="searchrow">
@@ -341,7 +355,7 @@
   <div id="checkout" class="checkout hidden">
     <div class="box">
       <div class="tot"><div class="l" id="cartCountLabel">共 0 件</div><div class="v" id="cartTotal">RM 0</div></div>
-      <a id="cartSend" href="#">发给客服 →</a>
+      <a id="cartSend" href="#" onclick="askClearCart()">发给客服 →</a>
     </div>
   </div>
 
@@ -354,6 +368,13 @@
       <div><b id="meCount">—</b><span>在售好物</span></div>
       <div><b>100%</b><span>正品保证</span></div>
       <div><b>7–15</b><span>天到手</span></div>
+    </div>
+    <div class="howto">
+      <b>🛒 如何购买</b>
+      <div class="st"><i>1</i><span>逛店面，看中就点 ➕ 加入心愿单</span></div>
+      <div class="st"><i>2</i><span>到「心愿单」核对货品和数量</span></div>
+      <div class="st"><i>3</i><span>点「发给客服」，订单一键发出</span></div>
+      <div class="st"><i>4</i><span>和客服确认后付款，马来直邮 7–15 天到手</span></div>
     </div>
     <a class="mcard" id="waCard" href="#" style="text-decoration:none;color:inherit">
       <div class="ic">💬</div><div class="mt"><b>WhatsApp 客服</b><div>问价 / 下单 / 物流</div></div><span>联系 →</span>
@@ -476,6 +497,7 @@
           else if(tg.openLink) tg.openLink(url);
           else window.open(url,'_blank');
         }catch(e){ window.open(url,'_blank'); }
+        askClearCart();
       });
     }catch(e){}
   }
@@ -483,7 +505,7 @@
     if(!hasMB()) return;
     try{
       if(mode==='shop' && tab==='cart' && cartItems().length){
-        const n=Object.values(cart).reduce((a,b)=>a+b,0);
+        const n=cartItems().filter(p=>!p.soldout).reduce((a,p)=>a+cart[p.id],0);
         tg.MainButton.setText('发给客服 · '+n+' 件 · RM '+money(cartTotal()));
         tg.MainButton.show();
       } else tg.MainButton.hide();
@@ -819,20 +841,30 @@
   function setQty(id,d){ cart[id]=(cart[id]||0)+d; if(cart[id]<=0) delete cart[id]; saveCart(); render(); renderCart(); }
   function rmCart(id){ delete cart[id]; saveCart(); render(); renderCart(); }
   function updateBadge(){ const n=Object.values(cart).reduce((a,b)=>a+b,0); const b=document.getElementById('navBadge'); b.textContent=n; b.classList.toggle('hidden',n===0); }
-  function cartTotal(){ return cartItems().reduce((s,p)=>s+(p.sell_myr!=null?Number(p.sell_myr)*cart[p.id]:0),0); }
+  function cartTotal(){ return cartItems().reduce((s,p)=>s+((!p.soldout&&p.sell_myr!=null)?Number(p.sell_myr)*cart[p.id]:0),0); }
+  function orderNo(){ const d=new Date(); return '#'+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+(100+Math.floor(Math.random()*900)); }
+  // 发单后问一声要不要清空（等用户从分享/WhatsApp 跳回来）
+  function askClearCart(){
+    setTimeout(()=>{
+      if(!cartItems().length) return;
+      if(confirm('订单已发给客服 ✅\n要把心愿单清空吗？（等回复期间也可以留着）')){
+        cart={}; saveCart(); render(); renderCart();
+      }
+    },1600);
+  }
   function renderCart(){
     const items=cartItems(); const box=document.getElementById('cartList');
     show('checkout', tab==='cart' && items.length>0 && !hasMB());
     updateMainButton();
     if(!items.length){ box.innerHTML='<div class="empty"><div class="big">🛒</div>心愿单还是空的<br>去店面挑几件喜欢的吧～<br><button onclick="setTab(\'shop\')" style="margin-top:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff;border-radius:12px;padding:11px 26px;font-size:14px;font-weight:800">🛍 去逛逛</button></div>'; return; }
     box.innerHTML=items.map(p=>
-      '<div class="crow">'+(p.image_url?'<img src="'+esc(im(p.image_url,200))+'" referrerpolicy="no-referrer" alt="">':'<img alt="">')+
+      '<div class="crow"'+(p.soldout?' style="opacity:.65"':'')+'>'+(p.image_url?'<img src="'+esc(im(p.image_url,200))+'" referrerpolicy="no-referrer" alt="">':'<img alt="">')+
       '<div class="ci"><div class="cn">'+esc(p.name_cn||'')+'</div>'+
-      '<div class="cp">'+(p.sell_myr!=null?'RM'+money(p.sell_myr):'询价')+'</div>'+
+      '<div class="cp"'+(p.soldout?' style="color:var(--sub)"':'')+'>'+(p.sell_myr!=null?'RM'+money(p.sell_myr):'询价')+(p.soldout?' <span class="badge down" style="font-size:10px">已售罄，不计入</span>':'')+'</div>'+
       '<div class="qty"><button onclick="setQty('+p.id+',-1)">−</button><span>'+cart[p.id]+'</span><button onclick="setQty('+p.id+',1)">+</button>'+
       '<button class="rm" onclick="rmCart('+p.id+')">移除</button></div></div></div>').join('');
-    const n=Object.values(cart).reduce((a,b)=>a+b,0), tot=cartTotal();
-    document.getElementById('cartCountLabel').textContent='共 '+n+' 件'+(cartItems().some(p=>p.sell_myr==null)?'（含询价品）':'');
+    const n=items.filter(p=>!p.soldout).reduce((a,p)=>a+cart[p.id],0), tot=cartTotal();
+    document.getElementById('cartCountLabel').textContent='共 '+n+' 件'+(items.some(p=>p.sell_myr==null&&!p.soldout)?'（含询价品）':'');
     document.getElementById('cartTotal').textContent='RM '+money(tot);
     document.getElementById('cartSend').href=cartWaHref();
   }
@@ -841,10 +873,11 @@
     return CONTACT_WA?('https://wa.me/'+CONTACT_WA+'?text='+encodeURIComponent(t)):('https://t.me/share/url?url='+encodeURIComponent(t));
   }
   function cartWaHref(){
-    const items=cartItems();
-    let t='你好，我想要以下 '+Object.values(cart).reduce((a,b)=>a+b,0)+' 件商品（'+SHOP_NAME+'）：\n';
+    const items=cartItems().filter(p=>!p.soldout);
+    const n=items.reduce((a,p)=>a+cart[p.id],0);
+    let t='你好，我想下单（'+SHOP_NAME+'）订单 '+orderNo()+'：\n';
     items.forEach((p,i)=>{ t+=(i+1)+'. '+(p.name_cn||'')+(p.sku?'（'+p.sku+'）':'')+' ×'+cart[p.id]+(p.sell_myr!=null?' RM'+money(p.sell_myr):' 询价')+'\n'; });
-    const tot=cartTotal(); if(tot>0) t+='合计约 RM'+money(tot);
+    const tot=cartTotal(); if(tot>0) t+='合计约 RM'+money(tot)+'（共 '+n+' 件）';
     return CONTACT_WA?('https://wa.me/'+CONTACT_WA+'?text='+encodeURIComponent(t)):('https://t.me/share/url?url='+encodeURIComponent(t));
   }
 
@@ -994,7 +1027,8 @@
       '<div class="ovbar" style="margin-bottom:10px"><div><span>本月</span><b>'+SALES.month.n+'件 · '+f(SALES.month.rev)+'</b></div><div><span>本月实赚</span><b class="profit">'+f(SALES.month.profit)+'</b></div></div>'+
       '<div class="ovbar"><div><span>累计</span><b>'+SALES.total.n+'件 · '+f(SALES.total.rev)+'</b></div><div><span>累计实赚</span><b class="profit">'+f(SALES.total.profit)+'</b></div></div>';
     if(!(SALES.rows&&SALES.rows.length)){ box.innerHTML=h+'<div class="empty">还没有成交记录<br>卖出第一单时在货品上点「已售」</div>'; return; }
-    h+='<div class="sec-title" style="margin-top:14px"><span>最近 '+SALES.rows.length+' 笔</span></div>';
+    h+='<div style="display:flex;gap:8px;margin:12px 0 2px"><button class="mini ghost" style="flex:1;padding:9px" onclick="exportSalesCSV()">⬇️ 导出账本 CSV</button><button class="mini ghost" style="flex:1;padding:9px" onclick="exportProductsCSV()">⬇️ 导出货单 CSV</button></div>';
+    h+='<div class="sec-title" style="margin-top:10px"><span>最近 '+SALES.rows.length+' 笔</span></div>';
     h+=SALES.rows.map(r=>{
       const d=new Date(r.sold_at);
       const dd=(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
@@ -1006,6 +1040,30 @@
         '<button class="mini ghost" style="padding:4px 8px;font-size:11px" onclick="unsale('+r.id+')">撤销</button></div>';
     }).join('');
     box.innerHTML=h;
+  }
+  function dlCSV(name,rows){
+    try{
+      const csv='\ufeff'+rows.map(r=>r.map(x=>'"'+String(x==null?'':x).replace(/"/g,'""')+'"').join(',')).join('\n');
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+      a.download=name; document.body.appendChild(a); a.click(); a.remove();
+      toast('已导出 '+name+'（Telegram 里下载不了就用浏览器开后台）');
+    }catch(e){ toast('导出失败：'+e); }
+  }
+  function exportSalesCSV(){
+    if(!(SALES&&SALES.rows&&SALES.rows.length)){ toast('还没有成交记录'); return; }
+    const rows=[['日期','货品','数量','成交价RM','成本RM','利润RM']];
+    SALES.rows.forEach(r=>{
+      const pr=r.sold_myr!=null?(Number(r.sold_myr)-(r.cost_myr!=null?Number(r.cost_myr):0))*r.qty:'';
+      rows.push([new Date(r.sold_at).toLocaleString(),r.name_cn,r.qty,r.sold_myr,r.cost_myr,pr]);
+    });
+    dlCSV('369成交账本.csv',rows);
+  }
+  function exportProductsCSV(){
+    if(!AROWS.length){ toast('没有货品'); return; }
+    const rows=[['ID','名称','品牌','分类','货号','得物价¥','成本RM','售价RM','原价RM','状态','已售','热卖','售罄']];
+    AROWS.forEach(p=>rows.push([p.id,p.name_cn,p.brand,p.category,p.sku,p.price_rmb,p.price_myr,p.sell_myr,p.orig_myr,p.status,p.sold_count,p.hot?'是':'',p.soldout?'是':'']));
+    dlCSV('369货品清单.csv',rows);
   }
   async function unsale(saleId){
     if(!confirm('撤销这笔成交？记录会删除，已售数会回退')) return;
@@ -1257,6 +1315,10 @@
   window.addEventListener('scroll',()=>{
     document.getElementById('top2').classList.toggle('hidden', window.scrollY<600 || tab!=='shop' || mode!=='shop');
   },{passive:true});
+
+  // 首次进店提示（关掉就不再出现）
+  function dismissTip(){ localStorage.setItem('tip369','1'); document.getElementById('tipbar').classList.add('hidden'); }
+  if(!localStorage.getItem('tip369')) document.getElementById('tipbar').classList.remove('hidden');
 
   // 启动
   updateBadge();
