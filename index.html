@@ -198,6 +198,22 @@
   .imgbadge{position:absolute;top:8px;left:8px;background:#00000073;backdrop-filter:blur(4px);color:#fff;font-size:10px;font-weight:600;padding:2.5px 8px;border-radius:20px;z-index:2;letter-spacing:.5px}
   .newbadge{position:absolute;top:8px;right:8px;background:var(--ink);color:#fff;font-size:9.5px;font-weight:700;padding:3px 8px;border-radius:4px;z-index:2;letter-spacing:1px}
   .shopcount{font-size:12px;color:var(--sub);padding:2px 18px 6px}
+  /* 本周主打橱窗 */
+  .feat{margin:12px 12px 0;background:var(--card);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:transform .1s}
+  .feat:active{transform:scale(.985)}
+  .feat .fimg{position:relative;height:172px;background:#fff}
+  .feat .fimg img{width:100%;height:100%;object-fit:cover;display:block}
+  .feat .ftag{position:absolute;top:10px;left:10px;background:var(--ink);color:#fff;font-size:9.5px;letter-spacing:1.5px;padding:4px 10px;border-radius:4px;font-weight:700}
+  .feat .finfo{display:flex;align-items:center;gap:10px;padding:11px 13px}
+  .feat .fname{flex:1;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .feat .fprice{color:var(--price);font-weight:800;font-size:15.5px;letter-spacing:-.3px}
+  .feat .fprice small{font-size:10px;font-weight:700;margin-right:1px}
+  /* 分区标题（细线 + 字距）*/
+  .sechead{display:flex;align-items:center;gap:12px;margin:16px 16px 0;color:#7c7e87;font-size:11px;letter-spacing:2.5px;font-weight:600;white-space:nowrap}
+  .sechead::before,.sechead::after{content:'';flex:1;height:1px;background:var(--line)}
+  /* 页尾品牌落款 */
+  .pfoot{text-align:center;color:#c6c8ce;font-size:10.5px;letter-spacing:3px;padding:28px 16px 10px;font-weight:600}
+  .pfoot span{display:block;margin-top:7px;letter-spacing:1px;font-weight:500;color:#d2d4d9}
   .gslide img{cursor:zoom-in}
   /* 全屏看图 */
   #lightbox{position:fixed;inset:0;background:#000;z-index:100;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s ease,visibility .2s}
@@ -337,7 +353,7 @@
       <div class="trust"><span>正品保证 · 假一赔十 · 马来包邮 · 支持验货</span></div>
     </div>
     <div class="tipbar hidden" id="tipbar"><div class="tx">第一次来？看中就点 + 加心愿单，一键发给客服即可下单。<span class="tgo" onclick="dismissTip();setTab('me')">看怎么买</span></div><button class="tclose" onclick="dismissTip()">✕</button></div>
-    <div class="notice hidden" id="notice">📢<div class="mq" id="noticeMq"></div></div>
+    <div class="notice hidden" id="notice"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex:0 0 auto"><path d="M3 10v4a1 1 0 0 0 1 1h3l6 4V5L7 9H4a1 1 0 0 0-1 1Z"/><path d="M17 9a4 4 0 0 1 0 6"/></svg><div class="mq" id="noticeMq"></div></div>
     <div class="sticky">
       <div class="searchrow">
         <div class="qwrap">
@@ -349,8 +365,10 @@
     </div>
     <div class="chips" id="chips"></div>
     <div class="recent hidden" id="recent"></div>
-    <div class="shopcount" id="shopCount"></div>
+    <div class="feat hidden" id="feat"></div>
+    <div class="sechead" id="gridHead">严选好物 · CURATED</div>
     <div class="grid" id="grid"></div>
+    <div class="pfoot" id="pfoot">369 PREMIUM SELECT<span>正品保证 · 假一赔十 · 马来直邮</span></div>
   </div>
 
   <!-- ============ 心愿单 ============ -->
@@ -731,8 +749,19 @@
     grid.classList.toggle('anim',_fresh); _fresh=false; // 只在数据刚拉回来时做入场动画，搜索筛选时不闪
     const hs=document.getElementById('heroSub'); if(hs) hs.textContent='PREMIUM SELECT'+(ALL.length?' · '+ALL.length+' ITEMS':'');
     const mc=document.getElementById('meCount'); if(mc) mc.textContent=ALL.length||'—';
-    document.getElementById('shopCount').textContent=list.length?('共 '+list.length+' 件好物'):'';
     renderRecent();
+    // 本周主打橱窗：无筛选时展示第一件热卖（橱窗里的不再重复出现在瀑布流）
+    const filtered=!!(q||catFilter||brandFilter);
+    const featEl=document.getElementById('feat');
+    const fp=(!filtered&&sort==='new')?ALL.find(p=>p.hot&&!p.soldout):null;
+    if(fp){
+      featEl.classList.remove('hidden');
+      featEl.onclick=()=>openSheet(fp.id);
+      featEl.innerHTML='<div class="fimg">'+(fp.image_url?'<img src="'+esc(im(fp.image_url,800))+'" referrerpolicy="no-referrer" alt="">':'')+'<span class="ftag">FEATURED · 本周主打</span></div>'+
+        '<div class="finfo"><div class="fname">'+esc(fp.name_cn||'')+'</div><div class="fprice"><small>RM</small>'+money(fp.sell_myr)+'</div></div>';
+      list=list.filter(p=>p.id!==fp.id);
+    } else featEl.classList.add('hidden');
+    document.getElementById('gridHead').textContent=filtered?('筛选结果 · '+list.length+' 件'):'严选好物 · CURATED';
     if(!list.length){ grid.innerHTML='<div class="empty"><div class="big">🛍️</div>'+(ALL.length?'没找到相关商品<br><button onclick="resetFilters()" style="margin-top:12px;background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:8px 18px;font-size:13px;font-weight:600">清除筛选</button>':'店铺正在上新<br>稍后再来看看～')+'</div>'; return; }
     grid.innerHTML=list.map(p=>{
       const inCart=!!cart[p.id];
@@ -801,7 +830,7 @@
     if(!pool.length) return '';
     const same=pool.filter(x=>x.brand&&x.brand===p.brand);
     const list=same.concat(pool.filter(x=>!(x.brand&&x.brand===p.brand))).slice(0,8);
-    return '<div style="margin:18px 0 9px;font-size:13px;font-weight:700;color:var(--sub)">'+(same.length?'🛍 同品牌好物':'🛍 猜你喜欢')+'</div>'+
+    return '<div style="margin:18px 0 9px;font-size:11.5px;font-weight:600;color:#7c7e87;letter-spacing:2px">'+(same.length?'同品牌好物 · MORE':'猜你喜欢 · PICKS')+'</div>'+
       '<div class="rscroll">'+list.map(x=>'<div class="ritem" style="width:84px" onclick="openSheet('+x.id+')">'+
         (x.image_url?'<img style="width:84px;height:84px" src="'+esc(im(x.image_url,300))+'" referrerpolicy="no-referrer" loading="lazy" alt="">':'<img style="width:84px;height:84px" alt="">')+
         '<div>'+esc(x.name_cn||'')+'</div>'+
@@ -860,7 +889,7 @@
     const items=recentIds.map(id=>ALL.find(p=>p.id===id)).filter(Boolean);
     box.classList.toggle('hidden',!items.length);
     if(!items.length) return;
-    box.innerHTML='<div class="rt">👀 最近看过</div><div class="rscroll">'+items.map(p=>
+    box.innerHTML='<div class="rt" style="letter-spacing:1.5px">最近看过 · RECENT</div><div class="rscroll">'+items.map(p=>
       '<div class="ritem" onclick="openSheet('+p.id+')">'+
       (p.image_url?'<img src="'+esc(im(p.image_url,200))+'" referrerpolicy="no-referrer" loading="lazy" alt="">':'<img alt="">')+
       '<div>'+esc(p.name_cn||'')+'</div></div>').join('')+'</div>';
