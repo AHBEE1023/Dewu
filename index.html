@@ -43,6 +43,20 @@
   .trust{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
   .trust span{font-size:10.5px;color:#c25e00;background:rgba(255,176,32,.13);padding:3px 9px;border-radius:6px;font-weight:600}
 
+  /* 📢 公告栏 */
+  .notice{margin:10px 16px 0;background:linear-gradient(90deg,rgba(255,90,60,.09),rgba(255,176,32,.1));border-radius:10px;padding:8px 12px;font-size:12.5px;color:#c25e00;font-weight:600;display:flex;align-items:center;gap:7px}
+  .notice .mq{flex:1;overflow:hidden;white-space:nowrap}
+  .notice .mq span{display:inline-block}
+  .notice .mq.roll span{padding-left:100%;animation:mq 14s linear infinite}
+  @keyframes mq{to{transform:translateX(-100%)}}
+  /* 🔥 热卖 / 售罄 / 划线价 / 已售 */
+  .hotbadge{position:absolute;top:8px;right:8px;background:linear-gradient(135deg,#ff3824,#ff7a00);color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px;z-index:2}
+  .soldcover{position:absolute;inset:0;background:rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;z-index:3}
+  .soldcover span{background:#0000008c;color:#fff;font-size:13px;font-weight:700;padding:7px 18px;border-radius:20px;backdrop-filter:blur(2px)}
+  .del{font-size:11px;color:var(--sub);text-decoration:line-through;margin-left:6px;font-weight:500}
+  .soldn{font-size:10.5px;color:var(--sub);margin-left:6px;font-weight:500}
+  .savetag{font-size:10.5px;font-weight:700;color:#fff;background:var(--price);border-radius:4px;padding:2px 7px;margin-left:8px;vertical-align:4px}
+
   .sticky{position:sticky;top:0;background:var(--bg);z-index:8;padding:10px 16px 4px}
   .searchrow{display:flex;gap:8px}
   .searchrow input{flex:1;background:var(--card);border:1px solid var(--line);border-radius:20px;color:var(--txt);padding:10px 16px;font-size:14px;outline:none;font-family:inherit;box-shadow:var(--shadow)}
@@ -297,6 +311,7 @@
       </div>
       <div class="trust"><span>✅ 正品保证</span><span>🛡️ 假一赔十</span><span>🚚 马来包邮</span></div>
     </div>
+    <div class="notice hidden" id="notice">📢<div class="mq" id="noticeMq"></div></div>
     <div class="sticky">
       <div class="searchrow">
         <div class="qwrap">
@@ -365,6 +380,11 @@
       <div><span>在售货值</span><b id="ovValue">RM—</b></div>
       <div><span>预估毛利</span><b class="profit" id="ovProfit">RM—</b></div>
     </div>
+    <div class="ovbar">
+      <div><span>已售件数</span><b id="svN">—</b></div>
+      <div><span>总营收</span><b id="svRev">RM—</b></div>
+      <div><span>实赚利润</span><b class="profit" id="svProfit">RM—</b></div>
+    </div>
     <div class="card">
       <label>贴得物链接，或商品页『分享 → 复制』的整段文字</label>
       <textarea id="input" placeholder="把得物 App 商品页『分享』复制的整段文字贴进来，最稳。"></textarea>
@@ -375,6 +395,11 @@
       </div>
     </div>
     <div class="msg" id="msg"></div>
+    <div class="card">
+      <label>📢 店面公告（顾客店面顶部显示，留空 = 不显示）</label>
+      <input class="asearch" id="noticeInput" placeholder="例：🎉 本周新到 Jellycat，下单送小礼物" style="margin-bottom:0">
+      <button class="btn" onclick="saveNotice()">保存公告</button>
+    </div>
     <div class="card">
       <input class="asearch" id="aq" placeholder="搜货品…" oninput="renderAdmin()">
       <div class="pricebar">
@@ -567,6 +592,22 @@
       ALL=r.ok?await r.json():[];
     }catch(e){ ALL=[]; }
     _fresh=true; buildChips(); renderSeg(); render(); updateBadge(); checkDeepLink();
+    loadNotice();
+  }
+  async function loadNotice(){
+    try{
+      const r=await fetch(SUPABASE_URL+'/rest/v1/config_369?key=eq.notice&select=value',{headers:headers()});
+      const rows=r.ok?await r.json():[];
+      setNotice((rows[0]&&rows[0].value)||'');
+    }catch(e){}
+  }
+  function setNotice(t){
+    t=(t||'').trim(); window._notice=t;
+    const box=document.getElementById('notice'), mq=document.getElementById('noticeMq');
+    box.classList.toggle('hidden',!t);
+    if(!t){ mq.innerHTML=''; return; }
+    mq.classList.toggle('roll', t.length>16); // 长公告滚动，短的静止
+    mq.innerHTML='<span>'+esc(t)+'</span>';
   }
   let _deepDone=false;
   function checkDeepLink(){
@@ -595,7 +636,14 @@
   function onSearch(){ document.getElementById('qclear').classList.toggle('show',!!document.getElementById('q').value); render(); }
   function clearSearch(){ const q=document.getElementById('q'); q.value=''; document.getElementById('qclear').classList.remove('show'); render(); q.focus(); }
 
-  function priceHtml(p){ return p.sell_myr!=null?'<div class="price"><small>RM</small>'+money(p.sell_myr)+'<span class="tagship">包邮</span></div>':'<div class="ask">点击问价</div>'; }
+  function priceHtml(p){
+    if(p.sell_myr==null) return '<div class="ask">点击问价</div>';
+    let h='<div class="price"><small>RM</small>'+money(p.sell_myr);
+    if(p.orig_myr!=null&&Number(p.orig_myr)>Number(p.sell_myr)) h+='<span class="del">RM'+money(p.orig_myr)+'</span>';
+    else h+='<span class="tagship">包邮</span>';
+    if(p.sold_count>0) h+='<span class="soldn">已售'+p.sold_count+'</span>';
+    return h+'</div>';
+  }
   function thumb(p){
     return p.image_url
       ? '<img src="'+esc(im(p.image_url,500))+'" referrerpolicy="no-referrer" loading="lazy" onload="this.classList.add(\'ld\')" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" alt=""><div class="noimg" style="display:none">🖼️</div>'
@@ -619,11 +667,12 @@
       const inCart=!!cart[p.id];
       const nImg=(p.images&&p.images.length)||0;
       const isNew=p.created_at&&(Date.now()-new Date(p.created_at).getTime())<3*86400000;
+      const corner=p.hot?'<span class="hotbadge">🔥 热卖</span>':(isNew?'<span class="newbadge">NEW</span>':'');
       return '<div class="prod">'+
         '<div class="thumb" onclick="openSheet('+p.id+')">'+thumb(p)+
-          (nImg>1?'<span class="imgbadge">📷 '+nImg+'</span>':'')+
-          (isNew?'<span class="newbadge">NEW</span>':'')+
-          '<button class="addbtn'+(inCart?' in':'')+'" onclick="event.stopPropagation();addCart('+p.id+')">'+(inCart?'✓':'+')+'</button>'+
+          (nImg>1?'<span class="imgbadge">📷 '+nImg+'</span>':'')+corner+
+          (p.soldout?'<div class="soldcover"><span>已售罄</span></div>':
+            '<button class="addbtn'+(inCart?' in':'')+'" onclick="event.stopPropagation();addCart('+p.id+')">'+(inCart?'✓':'+')+'</button>')+
         '</div>'+
         '<div class="pinfo" onclick="openSheet('+p.id+')"><div class="pname">'+esc(p.name_cn||'')+'</div>'+
         '<div class="pbrand">'+esc(p.brand||'—')+'</div>'+priceHtml(p)+'</div>'+
@@ -634,9 +683,15 @@
   function openSheet(id){
     const p=ALL.find(x=>x.id===id); if(!p) return;
     markRecent(id);
-    const priceBlock=p.sell_myr!=null
-      ? '<div class="sheet-price"><small>RM</small> '+money(p.sell_myr)+'<span class="tagship" style="font-size:11px;vertical-align:6px">包邮</span></div>'
-      : '<div class="sheet-price" style="font-size:18px">价格请点下方问价</div>';
+    let priceBlock;
+    if(p.sell_myr!=null){
+      const hasOrig=p.orig_myr!=null&&Number(p.orig_myr)>Number(p.sell_myr);
+      priceBlock='<div class="sheet-price"><small>RM</small> '+money(p.sell_myr)+
+        (hasOrig?'<span class="del" style="font-size:13px;vertical-align:4px">RM'+money(p.orig_myr)+'</span><span class="savetag">省RM'+money(p.orig_myr-p.sell_myr)+'</span>'
+                :'<span class="tagship" style="font-size:11px;vertical-align:6px">包邮</span>')+
+        (p.sold_count>0?'<span class="soldn" style="font-size:12px;vertical-align:4px">已售'+p.sold_count+'</span>':'')+
+        '</div>';
+    } else priceBlock='<div class="sheet-price" style="font-size:18px">价格请点下方问价</div>';
     const specs=[];
     if(p.brand) specs.push(['品牌',esc(p.brand)]);
     if(p.sku) specs.push(['货号',esc(p.sku)]);
@@ -654,10 +709,12 @@
       relatedHtml(p)+
       '<button onclick="shareProduct('+p.id+')" style="width:100%;margin-top:4px;background:none;border:none;color:var(--sub);font-size:13px;font-weight:600;padding:10px">🔗 分享这件好物</button>'+
       '</div>'+
-      '<div class="sheet-bar">'+
-        '<button class="sbtn add" onclick="addCart('+p.id+');this.textContent=\'✓ 已在心愿单\';toast(\'已加入心愿单\')">'+(cart[p.id]?'✓ 已在心愿单':'⭐ 加心愿单')+'</button>'+
-        '<a class="sbtn buy" href="'+askHref(p)+'" target="_blank" rel="noopener">💬 问价 / 下单</a>'+
-      '</div>';
+      (p.soldout
+        ?'<div class="sheet-bar"><button class="sbtn add" style="opacity:.55" disabled>已售罄</button><a class="sbtn buy" href="'+askHref(p)+'" target="_blank" rel="noopener">💬 问补货</a></div>'
+        :'<div class="sheet-bar">'+
+          '<button class="sbtn add" onclick="addCart('+p.id+');this.textContent=\'✓ 已在心愿单\';toast(\'已加入心愿单\')">'+(cart[p.id]?'✓ 已在心愿单':'⭐ 加心愿单')+'</button>'+
+          '<a class="sbtn buy" href="'+askHref(p)+'" target="_blank" rel="noopener">💬 问价 / 下单</a>'+
+        '</div>');
     const si=document.querySelector('#sheet .sheet-in'); if(si) si.scrollTop=0;
     document.getElementById('sheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
   }
@@ -737,6 +794,8 @@
   function saveCart(){ localStorage.setItem('cart369',JSON.stringify(cart)); updateBadge(); updateMainButton(); }
   function cartItems(){ return Object.keys(cart).map(id=>ALL.find(p=>p.id==id)).filter(Boolean); }
   function addCart(id){
+    const p=ALL.find(x=>x.id==id);
+    if(p&&p.soldout){ toast('这件已售罄，问客服等补货吧'); return; }
     cart[id]=(cart[id]||0)+1; saveCart(); haptic('light'); render(); if(tab==='cart')renderCart();
     const b=document.getElementById('navBadge'); b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump');
   }
@@ -885,10 +944,45 @@
     const mk=document.getElementById('markup'); if(mk) mk.value=MARKUP;
     const nn=document.getElementById('nine'); if(nn) nn.checked=NINE;
     renderAdmin();
+    loadSales(); loadNoticeInput();
     // 有「解析中」的货就自动轮询，等服务器后台把名字/价格/图补上（最多约 1 分钟）
     clearTimeout(_pollTimer);
     if(AROWS.some(isPending) && _pollN<20){ _pollN++; _pollTimer=setTimeout(loadAdmin,3000); }
     else _pollN=0;
+  }
+  // ===== 成交 / 公告 =====
+  async function loadSales(){
+    try{
+      const r=await adminCall('sales');
+      if(!(r&&r.ok)) return;
+      document.getElementById('svN').textContent=r.agg.n;
+      document.getElementById('svRev').textContent='RM'+money(Math.round(r.agg.rev*100)/100);
+      document.getElementById('svProfit').textContent='RM'+money(Math.round(r.agg.profit*100)/100);
+    }catch(e){}
+  }
+  async function loadNoticeInput(){
+    try{
+      const r=await fetch(SUPABASE_URL+'/rest/v1/config_369?key=eq.notice&select=value',{headers:headers()});
+      const rows=r.ok?await r.json():[];
+      const el=document.getElementById('noticeInput');
+      if(el&&document.activeElement!==el) el.value=(rows[0]&&rows[0].value)||'';
+    }catch(e){}
+  }
+  async function saveNotice(){
+    const v=document.getElementById('noticeInput').value.trim();
+    const r=await adminCall('config',{key:'notice',value:v}).catch(()=>null);
+    if(r&&r.ok){ toast(v?'公告已发布 📢':'公告已清空'); haptic('medium'); setNotice(v); } else toast('保存失败');
+  }
+  async function markSold(id){
+    const p=AROWS.find(x=>x.id===id); if(!p) return;
+    const v=prompt('这一单的成交价 RM（一件）', p.sell_myr!=null?String(p.sell_myr):'');
+    if(v===null) return;
+    const price=Number(v);
+    if(!Number.isFinite(price)||price<=0){ toast('价格填数字'); return; }
+    const so=confirm('这件卖完了吗？\n「确定」= 标记售罄（店面显示已售罄）\n「取消」= 还有货，继续在售');
+    const r=await adminCall('sale',{id:id,price:price,qty:1,soldout:so}).catch(()=>null);
+    if(r&&r.ok){ toast('已记一笔成交 🎉 赚 RM'+money(Math.round((price-(p.price_myr||0))*100)/100)+(so?'，已标售罄':'')); haptic('medium'); loadAdmin(); }
+    else toast('记录失败');
   }
   function badge(s){ return s==='已上架'?'<span class="badge up">已上架</span>':s==='下架'?'<span class="badge down">已下架</span>':'<span class="badge wait">待选</span>'; }
   function renderAdmin(){
@@ -912,6 +1006,7 @@
           '<input type="number" inputmode="decimal" placeholder="售价RM" value="'+(p.sell_myr==null?'':p.sell_myr)+'" id="sell_'+p.id+'" oninput="liveProfit('+p.id+')">'+
           (p.price_myr!=null?'<button class="mini ghost" onclick="calcPrice('+p.id+')">算价</button>':'')+
           (/^⚠/.test(p.name_cn||'')?'<button class="mini" onclick="reparse('+p.id+')">🔄 重解析</button>':'')+
+          (p.sell_myr!=null?'<button class="mini" style="background:var(--ok)" onclick="markSold('+p.id+')">已售</button>':'')+
           '<button class="mini" onclick="saveItem('+p.id+')">保存</button>'+
           (p.status==='已上架'?'<button class="mini ghost" onclick="setStatus('+p.id+',\'下架\')">下架</button>':'<button class="mini" onclick="setStatus('+p.id+',\'已上架\')">上架</button>')+
           '<button class="mini ghost" onclick="openEdit('+p.id+')">编辑</button>'+
@@ -921,7 +1016,10 @@
         (selMode?'<div class="selc">'+(SEL.has(p.id)?'✔':'')+'</div>':'')+img+'<div class="info">'+
         '<div class="name">'+esc(p.name_cn||'(无名)')+'</div>'+
         '<div class="brand">'+esc(p.brand||'—')+(p.sku?' · '+esc(p.sku):'')+'</div>'+
-        '<div class="cost">得物 ¥'+(p.price_rmb==null?'—':money(p.price_rmb))+' · 成本 RM'+(p.price_myr==null?'—':money(p.price_myr))+profitHtml+((p.images&&p.images.length>1)?' · 📷'+p.images.length:'')+'　'+badge(p.status)+'<span id="lp_'+p.id+'"></span></div>'+
+        '<div class="cost">得物 ¥'+(p.price_rmb==null?'—':money(p.price_rmb))+' · 成本 RM'+(p.price_myr==null?'—':money(p.price_myr))+profitHtml+((p.images&&p.images.length>1)?' · 📷'+p.images.length:'')+(p.sold_count?' · 已售'+p.sold_count:'')+'　'+badge(p.status)+
+        (p.hot?' <span class="badge" style="color:#ff7a00;border-color:#ffb02088">🔥热卖</span>':'')+
+        (p.soldout?' <span class="badge down">售罄</span>':'')+
+        '<span id="lp_'+p.id+'"></span></div>'+
         ctl+'</div></div>';
     }).join('');
     renderSelBar();
@@ -1001,6 +1099,11 @@
         '<div class="ethumbs" id="ethumbs"></div></div>'+
       '<div class="frow"><div class="fld"><label>得物价 ¥</label><input id="e_rmb" type="number" inputmode="decimal" value="'+v(p.price_rmb)+'"></div>'+
         '<div class="fld"><label>售价 RM <button class="mini ghost" style="padding:2px 8px;font-size:10.5px;margin-left:4px" onclick="eCalc()">×'+MARKUP+' 算</button></label><input id="e_sell" type="number" inputmode="decimal" value="'+v(p.sell_myr)+'"></div></div>'+
+      '<div class="frow"><div class="fld"><label>原价 RM（划线价，留空不显示）</label><input id="e_orig" type="number" inputmode="decimal" value="'+v(p.orig_myr)+'"></div>'+
+        '<div class="fld"><label>营销标记</label><div style="display:flex;gap:16px;padding:11px 2px">'+
+          '<label style="display:flex;gap:6px;align-items:center;margin:0;color:var(--txt);font-size:13.5px"><input type="checkbox" id="e_hot" style="width:auto;accent-color:#ff7a00"'+(p.hot?' checked':'')+'>🔥 热卖</label>'+
+          '<label style="display:flex;gap:6px;align-items:center;margin:0;color:var(--txt);font-size:13.5px"><input type="checkbox" id="e_soldout" style="width:auto;accent-color:var(--bad)"'+(p.soldout?' checked':'')+'>售罄</label>'+
+        '</div></div></div>'+
       '<div class="fld"><label>状态</label><select id="e_status">'+
         ['待选','已上架','下架'].map(s=>'<option'+(p.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select></div>'+
       '<button class="btn" onclick="saveEdit('+id+')">保存修改</button>'+
@@ -1082,6 +1185,9 @@
       price_rmb:rmb,
       price_myr:rmb!=null?Math.round(rmb*RATE_RMB_TO_MYR*100)/100:null, // 改得物价时成本同步换算，不再留旧成本
       sell_myr:sell, status:status,
+      orig_myr:num(document.getElementById('e_orig').value),
+      hot:document.getElementById('e_hot').checked,
+      soldout:document.getElementById('e_soldout').checked,
     };
     if(await patch(id,fields)){ toast('已保存 ✅'); haptic('medium'); closeEdit(); loadAdmin(); } else toast('保存失败');
   }

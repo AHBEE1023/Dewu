@@ -5,7 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const PIN = Deno.env.get("ADMIN_PIN_369") || "3690";
 // 只允许改这些字段，防止越权写 created_by / client_ref 之类
-const PATCH_FIELDS = ["name_cn", "brand", "sku", "images", "image_url", "price_rmb", "price_myr", "sell_myr", "status"];
+const PATCH_FIELDS = ["name_cn", "brand", "sku", "images", "image_url", "price_rmb", "price_myr", "sell_myr", "status", "orig_myr", "hot", "soldout"];
 
 Deno.serve(async (req) => {
   const cors = {
@@ -49,6 +49,46 @@ Deno.serve(async (req) => {
           .from("products_369").update(fields).eq("id", id).select().maybeSingle();
         if (error) return json({ ok: false, error: error.message }, 500, cors);
         return json({ ok: true, row: data }, 200, cors);
+      }
+
+      case "sale": { // 标记已售：记一笔成交（快照成本），累加 sold_count，可选顺手标售罄/下架
+        const id = Number(body.id);
+        if (!id) return json({ ok: false, error: "缺 id" }, 400, cors);
+        const { data: p } = await supabase.from("products_369").select("*").eq("id", id).maybeSingle();
+        if (!p) return json({ ok: false, error: "货不存在" }, 404, cors);
+        const qty = Math.max(1, Number(body.qty) || 1);
+        const price = body.price != null && Number.isFinite(Number(body.price)) ? Number(body.price) : (p.sell_myr != null ? Number(p.sell_myr) : null);
+        const { error: e1 } = await supabase.from("sales_369").insert({
+          product_id: id, name_cn: p.name_cn, qty, sold_myr: price, cost_myr: p.price_myr,
+        });
+        if (e1) return json({ ok: false, error: e1.message }, 500, cors);
+        const upd = { sold_count: (p.sold_count || 0) + qty };
+        if (body.soldout) upd.soldout = true;
+        const { data: row, error: e2 } = await supabase.from("products_369").update(upd).eq("id", id).select().maybeSingle();
+        if (e2) return json({ ok: false, error: e2.message }, 500, cors);
+        return json({ ok: true, row }, 200, cors);
+      }
+
+      case "sales": { // 成交流水 + 汇总
+        const { data: rows, error: e1 } = await supabase.from("sales_369")
+          .select("*").order("sold_at", { ascending: false }).limit(50);
+        if (e1) return json({ ok: false, error: e1.message }, 500, cors);
+        let n = 0, rev = 0, profit = 0;
+        for (const r of rows || []) {
+          n += r.qty;
+          if (r.sold_myr != null) rev += Number(r.sold_myr) * r.qty;
+          if (r.sold_myr != null) profit += (Number(r.sold_myr) - (r.cost_myr != null ? Number(r.cost_myr) : 0)) * r.qty;
+        }
+        return json({ ok: true, rows, agg: { n, rev, profit } }, 200, cors);
+      }
+
+      case "config": { // 店面公告等配置
+        const key = String(body.key || "").slice(0, 40);
+        if (!key) return json({ ok: false, error: "缺 key" }, 400, cors);
+        const { error } = await supabase.from("config_369")
+          .upsert({ key, value: (body.value ?? "").toString().slice(0, 500), updated_at: new Date().toISOString() });
+        if (error) return json({ ok: false, error: error.message }, 500, cors);
+        return json({ ok: true }, 200, cors);
       }
 
       case "del": {
