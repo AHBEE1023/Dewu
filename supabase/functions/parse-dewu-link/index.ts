@@ -1,4 +1,4 @@
-// parse-dewu-link v19: 分享文字也抓网页补价格；提取「发售价格/authPrice」价格线索喂给 AI（authPrice 单位是分）
+// parse-dewu-link v23: 正则优先零成本解析 + 页面抓取重试 + 价格三级优先（发售价/元格式authPrice/分格式众数）+ 检查点日志
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RATE_RMB_TO_MYR = 0.62;
@@ -82,12 +82,14 @@ Deno.serve(async (req) => {
 
 async function fillRow(supabase, apiKey, rowId, material0, sourceUrl, linkOnly) {
   try {
-    let material = material0, fromPage = false, gallery = null;
+    let material = material0, fromPage = false, gallery = null, st = null;
     if (sourceUrl) {
       const page = await fetchDewuPage(sourceUrl);
+      console.log("[dbg] row", rowId, "blocked=", page.blocked, "st=", JSON.stringify(page.st || null).slice(0, 120));
       if (!page.blocked) {
+        st = page.st;
         gallery = page.images && page.images.length ? page.images : (page.image ? [page.image] : null);
-        // v19：不管是不是纯链接，只要页面抓得到就把网页文字一起给 AI——分享文字里没有价格，价格只在网页里
+        // 页面抓得到就把网页文字一起给 AI 备用——分享文字里没有价格，价格只在网页里
         if (linkOnly) { material = page.text; fromPage = true; }
         else if (page.text) { material = material0 + "\n\n【商品网页内容】\n" + page.text; fromPage = true; }
         if (page.priceHint) material = "【价格线索】" + page.priceHint + "\n\n" + material;
@@ -99,7 +101,14 @@ async function fillRow(supabase, apiKey, rowId, material0, sourceUrl, linkOnly) 
       }
     }
 
-    const parsed = await parseWithGemini(apiKey, material, fromPage);
+    // v21：先走零成本纯代码解析——名字+价格都抠到了就不调 AI（免费、不限流、毫秒级）
+    let parsed;
+    console.log("[dbg] row", rowId, "path=", (st && st.name && st.priceRmb != null) ? "regex" : "gemini");
+    if (st && st.name && st.priceRmb != null) {
+      parsed = { name_cn: st.name, brand: st.brand, sku: st.sku, price_rmb: st.priceRmb, image_url: null };
+    } else {
+      parsed = await parseWithGemini(apiKey, material, fromPage);
+    }
     const upd = {};
     if (parsed && parsed.name_cn) {
       const priceRmb = toNum(parsed.price_rmb);
@@ -123,7 +132,16 @@ async function fillRow(supabase, apiKey, rowId, material0, sourceUrl, linkOnly) 
   }
 }
 
+// 得物对数据中心 IP 间歇性限流：失败自动重试一次再认输
 async function fetchDewuPage(url) {
+  for (let a = 0; a < 2; a++) {
+    const r = await fetchDewuPageOnce(url);
+    if (!r.blocked) return r;
+    if (a === 0) await new Promise((r2) => setTimeout(r2, 1500));
+  }
+  return { blocked: true };
+}
+async function fetchDewuPageOnce(url) {
   try {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 12000);
@@ -153,10 +171,54 @@ async function fetchDewuPage(url) {
       images: extractImages(html),
       image: extractMain(html),
       priceHint: extractPriceHints(html),
+      st: extractStructured(html),
     };
   } catch (_e) {
     return { blocked: true };
   }
+}
+
+// ===== 纯代码结构化解析（零 AI）=====
+// 抠页面 JSON 里的转义字符串值
+function jstr(html, key) {
+  const m = html.match(new RegExp('"' + key + '"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"'));
+  if (!m) return null;
+  let v = m[1];
+  try { v = JSON.parse('"' + v + '"'); } catch (_e) { /* 原样用 */ }
+  v = v.replace(/\s+/g, " ").trim();
+  return v || null;
+}
+// 从标题开头猜品牌：「泡泡玛特 POP MART …」「COACH蔻驰 …」「JELLYCAT …」
+function guessBrand(title) {
+  if (!title) return null;
+  const m = title.match(/^([一-龥·]{1,10}\s+[A-Z][A-Z .&'’-]{1,24}(?=\s)|[A-Za-z]+[一-龥·]{1,10}(?=\s)|[A-Z][A-Z0-9 .&'’-]{2,24}(?=\s))/);
+  return m ? m[1].trim() : null;
+}
+function extractStructured(html) {
+  const name = jstr(html, "structureTitle") || jstr(html, "originalTitle");
+  const sku = jstr(html, "articleNumber");
+  // 价格三级优先：发售价格(元) → 紧邻 originalTitle 的 authPrice(元) → skuAuthPriceList 的 authPrice 众数(分)/100
+  let priceRmb = null;
+  const m1 = html.match(/"key"\s*:\s*"发售价格"\s*,\s*"value"\s*:\s*"¥?([\d.,]+)"/);
+  if (m1) priceRmb = Number(m1[1].replace(/,/g, ""));
+  if (!Number.isFinite(priceRmb) || priceRmb == null) {
+    const m2 = html.match(/"authPrice"\s*:\s*(\d+(?:\.\d+)?)\s*,\s*"originalTitle"/);
+    if (m2) priceRmb = Number(m2[1]);
+  }
+  if (!Number.isFinite(priceRmb) || priceRmb == null) {
+    const ap = [...html.matchAll(/"authPrice"\s*:\s*(\d{3,})/g)].map((m) => +m[1]);
+    if (ap.length) {
+      const freq = new Map();
+      for (const v of ap) freq.set(v, (freq.get(v) || 0) + 1);
+      priceRmb = [...freq.entries()].sort((a, b) => b[1] - a[1])[0][0] / 100;
+    }
+  }
+  return {
+    name,
+    sku,
+    priceRmb: Number.isFinite(priceRmb) ? priceRmb : null,
+    brand: guessBrand(name),
+  };
 }
 
 // 从页面 JSON 里直接抠价格线索：发售价格（元）+ authPrice 众数（分）
