@@ -336,6 +336,19 @@
   .vchip .vp{display:block;font-size:11px;color:var(--price);font-weight:700;margin-top:2px}
   .vchip.on .vp{color:#ffd8d8}
 
+  /* 得物好评墙（详情） */
+  .rvwrap{margin:14px 0 2px}
+  .rvhead{font-size:11px;color:#7c7e87;letter-spacing:2px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:7px}
+  .rvhead b{color:var(--txt);letter-spacing:0;font-size:12.5px;font-weight:700}
+  .rvscroll{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+  .rvscroll::-webkit-scrollbar{display:none}
+  .rvscroll img{height:150px;width:auto;border-radius:10px;border:1px solid var(--line);flex:0 0 auto;background:#fff;object-fit:cover}
+  /* 后台好评上传 */
+  .rvthumbs{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 2px}
+  .rvthumbs .rt2{position:relative}
+  .rvthumbs .rt2 img{width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--line);display:block;background:var(--card2)}
+  .rvthumbs .rt2 button{position:absolute;top:-7px;right:-7px;width:19px;height:19px;border-radius:50%;border:1px solid var(--line);background:#000d;color:#fff;font-size:10px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}
+
   /* 定价工具条 */
   .pricebar{display:flex;align-items:center;gap:8px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:9px 11px;margin-bottom:12px;flex-wrap:wrap}
   .pricebar label{margin:0;font-size:12px;color:var(--sub)}
@@ -852,6 +865,7 @@
         '<div><b>假一赔十</b>放心买</div>'+
         '<div><b>直邮包邮</b>7–15 天</div>'+
       '</div>'+
+      reviewHtml(p)+
       '<div class="specs">'+specs.map(s=>'<div class="spec"><span>'+s[0]+'</span><b>'+s[1]+'</b></div>').join('')+'</div>'+
       relatedHtml(p)+
       '<button onclick="shareProduct('+p.id+')" style="width:100%;margin-top:4px;background:none;border:none;color:var(--sub);font-size:12.5px;font-weight:500;padding:10px;letter-spacing:1px">分享这件好物</button>'+
@@ -891,6 +905,15 @@
     haptic('light');
   }
   function pickedOf(id){ return _picked[id]||null; }
+  function reviewHtml(p){
+    const rs=Array.isArray(p.review_shots)?p.review_shots.filter(Boolean):[];
+    if(!rs.length) return '';
+    _rvLb=rs;
+    return '<div class="rvwrap"><div class="rvhead"><b>得物真实评价</b> · REVIEWS</div>'+
+      '<div class="rvscroll">'+rs.map((u,i)=>'<img src="'+esc(im(u,400))+'" referrerpolicy="no-referrer" loading="lazy" onclick="openReviewLb('+i+')" alt="">').join('')+'</div></div>';
+  }
+  let _rvLb=[];
+  function openReviewLb(i){ _gimgs=_rvLb; openLightbox(i); } // 复用全屏看图（可放大/左右滑）
   function closeSheet(){ document.getElementById('sheet').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
   function shareProduct(id){
     const p=ALL.find(x=>x.id===id); if(!p) return;
@@ -1379,6 +1402,10 @@
         '<textarea id="e_imgs" style="min-height:76px" oninput="ePrev()">'+
         esc(((p.images&&p.images.length)?p.images:(p.image_url?[p.image_url]:[])).join("\n"))+'</textarea>'+
         '<div class="ethumbs" id="ethumbs"></div></div>'+
+      '<div class="fld"><label>⭐ 得物好评截图（顾客详情页展示，展示你在得物 App 截的评价/买家秀图）</label>'+
+        '<input type="file" id="e_rvfile" accept="image/*" multiple style="display:none" onchange="rvUpload(this)">'+
+        '<div class="upbtn" onclick="document.getElementById(\'e_rvfile\').click()"><span id="rvUpTxt">📷 上传得物好评截图（可多选）</span></div>'+
+        '<div class="rvthumbs" id="rvthumbs"></div></div>'+
       '<div class="frow"><div class="fld"><label>得物价 ¥</label><input id="e_rmb" type="number" inputmode="decimal" value="'+v(p.price_rmb)+'"></div>'+
         '<div class="fld"><label>售价 RM <button class="mini ghost" style="padding:2px 8px;font-size:10.5px;margin-left:4px" onclick="eCalc()">×'+MARKUP+' 算</button></label><input id="e_sell" type="number" inputmode="decimal" value="'+v(p.sell_myr)+'"></div></div>'+
       '<div class="frow"><div class="fld"><label>原价 RM（划线价，留空不显示）</label><input id="e_orig" type="number" inputmode="decimal" value="'+v(p.orig_myr)+'"></div>'+
@@ -1401,6 +1428,8 @@
       (p.status==='已上架'?'<button class="btn" style="background:transparent;border:1px solid var(--line);color:var(--txt)" onclick="copyProductLink('+id+')">🔗 复制顾客链接（发群/发朋友）</button><div style="height:10px"></div>':'')+
       '<button class="btn" style="background:transparent;border:1px solid var(--line);color:var(--bad)" onclick="delItem('+id+');closeEdit()">删除这条</button>';
     eThumbs();
+    _rvShots=Array.isArray(p.review_shots)?p.review_shots.slice():[];
+    rvThumbs();
     document.getElementById('edit').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
   }
   function closeEdit(){ document.getElementById('edit').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
@@ -1475,6 +1504,29 @@
     if(NINE&&s>10) s=s+((9-s%10)+10)%10;
     document.getElementById('e_sell').value=s; haptic('light');
   }
+  let _rvShots=[];
+  function rvThumbs(){
+    const box=document.getElementById('rvthumbs'); if(!box) return;
+    box.innerHTML=_rvShots.map((u,i)=>'<div class="rt2"><img src="'+esc(im(u,200))+'" referrerpolicy="no-referrer" onerror="this.style.opacity=.25"><button onclick="rvRm('+i+')">✕</button></div>').join('');
+  }
+  function rvRm(i){ _rvShots.splice(i,1); rvThumbs(); }
+  async function rvUpload(inp){
+    const files=[...(inp.files||[])]; if(!files.length) return;
+    const txt=document.getElementById('rvUpTxt'), old=txt.innerHTML; let ok=0;
+    try{
+      for(let i=0;i<files.length;i++){
+        txt.innerHTML='<span class="spin"></span> 上传中 '+(i+1)+'/'+files.length+'…';
+        const f=await downscale(files[i],1400);
+        const path='rv'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)+'.jpg';
+        const r=await fetch(SUPABASE_URL+'/storage/v1/object/product-369/'+path,{method:'POST',
+          headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Content-Type':f.type||'image/jpeg','x-upsert':'true'},body:f});
+        if(!r.ok) throw new Error('第'+(i+1)+'张上传失败('+r.status+')');
+        _rvShots.push(SUPABASE_URL+'/storage/v1/object/public/product-369/'+path); ok++;
+      }
+      rvThumbs(); toast('已上传 '+ok+' 张好评 ✅'); haptic('light');
+    }catch(e){ rvThumbs(); toast(String(e&&e.message||e)); }
+    finally{ txt.innerHTML=old; inp.value=''; }
+  }
   async function saveEdit(id){
     const num=(x)=>{ const t=x.trim(); return t===''?null:(Number.isFinite(Number(t))?Number(t):null); };
     const status=document.getElementById('e_status').value;
@@ -1496,6 +1548,7 @@
       soldout:document.getElementById('e_soldout').checked,
       category:document.getElementById('e_cat').value||null,
     };
+    fields.review_shots=_rvShots.length?_rvShots:null;
     const p0=AROWS.find(x=>x.id===id);
     if(p0&&p0.params&&p0.params.length){
       const ck={}; document.querySelectorAll('.pk').forEach(el=>ck[+el.dataset.i]=el.checked);
