@@ -1304,14 +1304,22 @@
     const url=(document.getElementById('trendIn').value.match(/https?:\/\/[^\s，。、]+/)||[])[0];
     if(!url){ toast('没找到链接'); return; }
     const btn=document.getElementById('trendGo'), tx=document.getElementById('trendGoTxt');
-    btn.disabled=true; tx.innerHTML='<span class="spin"></span>';
-    try{
-      const r=await adminCall('trend',{url:url});
-      if(!(r&&r.ok)){ toast(r&&r.error||'抓取失败'); return; }
-      _trend=r.trend; _trendPick=new Set(_trend.images.map((_,i)=>i)); // 默认全选
-      renderTrend();
-    }catch(e){ if(!String(e).includes('PIN')) toast('网络不稳，重试'); }
-    finally{ btn.disabled=false; tx.textContent='抓取贴文'; }
+    const box=document.getElementById('trendResult');
+    btn.disabled=true;
+    // 得物对服务器IP间歇限流：前端自动重试最多3次（叠加函数内2次），扛过限流窗
+    for(let i=0;i<3;i++){
+      tx.innerHTML='<span class="spin"></span>'+(i>0?' 重试'+i:'');
+      try{
+        const r=await adminCall('trend',{url:url});
+        if(r&&r.ok){ _trend=r.trend; _trendPick=new Set(_trend.images.map((_,j)=>j)); renderTrend(); btn.disabled=false; tx.textContent='抓取贴文'; return; }
+        if(!(r&&/限流|抓取失败/.test(r.error||''))){ toast(r&&r.error||'抓取失败'); break; } // 非限流错误不重试
+      }catch(e){ if(String(e).includes('PIN')){ btn.disabled=false; return; } }
+      if(i<2) await new Promise(r2=>setTimeout(r2,2500));
+    }
+    btn.disabled=false; tx.textContent='抓取贴文';
+    box.classList.remove('hidden');
+    box.innerHTML='<div style="font-size:12.5px;color:var(--sub);line-height:1.6">得物这会儿把服务器挡了（间歇限流，跟你网络无关）。<b style="color:var(--txt)">等 10 来秒再点「重试抓取」</b>，多试一两次基本能过。</div>'+
+      '<button class="btn" onclick="trendFetch()">重试抓取</button>';
   }
   function trendToggle(i){ _trendPick.has(i)?_trendPick.delete(i):_trendPick.add(i); renderTrend(); }
   function renderTrend(){
