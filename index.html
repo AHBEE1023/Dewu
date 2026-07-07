@@ -2187,7 +2187,11 @@
   if(!localStorage.getItem('tip369')) document.getElementById('tipbar').classList.remove('hidden');
 
   // PWA：注册 Service Worker（加到主屏、离线也能打开；失败不影响使用）
-  if('serviceWorker' in navigator){ window.addEventListener('load',()=>{ navigator.serviceWorker.register('/sw.js').catch(()=>{}); }); }
+  if('serviceWorker' in navigator){
+    let _swReloaded=false;
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{ if(_swReloaded) return; _swReloaded=true; location.reload(); }); // 新版本接管后自动刷新一次
+    window.addEventListener('load',()=>{ navigator.serviceWorker.register('/sw.js').then(r=>{ try{ r.update(); }catch(e){} }).catch(()=>{}); });
+  }
 
   // 启动
   updateBadge();
