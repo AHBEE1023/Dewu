@@ -98,6 +98,35 @@
   .chip{flex:0 0 auto;font-size:12.5px;padding:6px 13px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:#5a5f6b;white-space:nowrap}
   .chip.on{background:var(--ink);color:#fff;border-color:transparent;font-weight:600}
   .chipdiv{flex:0 0 1px;background:var(--line);margin:5px 3px;align-self:stretch}
+  .subfilter{padding-top:4px}
+  .chip.newchip{background:#fdecec;border-color:#f6cccf;color:var(--price);font-weight:700}
+  .chip.newchip.on{background:var(--price);color:#fff;border-color:transparent}
+  /* 搜索历史 */
+  .shist{margin:8px 4px 0;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:var(--shadow)}
+  .shrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .shrow span{font-size:11px;color:var(--sub);letter-spacing:1px;font-weight:600}
+  .shrow button{background:none;border:none;color:var(--sub);font-size:11.5px}
+  .shchips{display:flex;flex-wrap:wrap;gap:7px}
+  .shchip{font-size:12.5px;padding:5px 12px;border-radius:15px;background:var(--card2);color:#5a5f6b}
+  /* 分享图卡 */
+  .sharelay{position:fixed;inset:0;background:#000000cc;z-index:120;display:none;align-items:center;justify-content:center;padding:20px}
+  .sharelay.show{display:flex}
+  .sharebox{width:100%;max-width:340px;text-align:center}
+  .sharecard{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+  .sharecard .sc-img{width:100%;aspect-ratio:1;object-fit:cover;background:var(--card2);display:block}
+  .sharecard .sc-noimg{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800;color:#fff;letter-spacing:2px}
+  .sharecard .sc-body{padding:15px 16px 17px;text-align:left}
+  .sharecard .sc-name{font-size:15px;font-weight:700;line-height:1.35;margin-bottom:7px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .sharecard .sc-price{color:var(--price);font-size:22px;font-weight:800}.sharecard .sc-price small{font-size:13px;font-weight:700}
+  .sharecard .sc-price .sc-del{color:var(--sub);font-size:12px;font-weight:500;text-decoration:line-through;margin-left:6px}
+  .sharecard .sc-foot{display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+  .sharecard .sc-logo{width:34px;height:34px;border-radius:9px;background:var(--ink);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center}
+  .sharecard .sc-shop b{font-size:13px}.sharecard .sc-shop div{font-size:10.5px;color:var(--sub)}
+  .sharebtns{display:flex;gap:10px;margin-top:16px}
+  .sharebtns button{flex:1;border:none;border-radius:22px;padding:12px;font-size:13.5px;font-weight:700;letter-spacing:.5px}
+  .sharebtns .sb-save{background:var(--price);color:#fff}
+  .sharebtns .sb-link{background:#ffffff22;color:#fff;border:1px solid #ffffff44}
+  .sharex{margin-top:12px;background:none;border:none;color:#ffffffaa;font-size:13px}
 
   /* 瀑布流：CSS columns，图片保持原比例 */
   .grid{columns:2;column-gap:9px;padding:6px 12px}
@@ -413,14 +442,16 @@
     <div class="searchwrap">
       <div class="searchrow">
         <div class="qwrap">
-          <span class="qico">🔍</span><input id="q" placeholder="搜商品名 / 品牌 / 货号…" oninput="onSearch()">
+          <span class="qico">🔍</span><input id="q" placeholder="搜商品名 / 品牌 / 货号…" autocomplete="off" oninput="onSearch()" onfocus="renderSearchHist()" onblur="setTimeout(renderSearchHist,180)" onkeydown="if(event.key==='Enter'){pushSearch(this.value);renderSearchHist();this.blur();}">
           <button class="qclear" id="qclear" onclick="clearSearch()">✕</button>
         </div>
       </div>
+      <div class="shist hidden" id="shist"></div>
     </div>
     <div class="filterbar" id="filterbar">
       <div class="seg" id="seg"></div>
       <div class="chips" id="chips"></div>
+      <div class="chips subfilter" id="subfilter"></div>
     </div>
     <div class="recent hidden" id="recent"></div>
     <div class="feat hidden" id="feat"></div>
@@ -566,6 +597,14 @@
   <div class="sheet" id="sheet" onclick="if(event.target===this)closeSheet()">
     <div class="sheet-in"><div class="close"><button onclick="closeSheet()">✕</button></div><div id="sheetContent"></div></div>
   </div>
+  <!-- 分享图卡弹层（顾客） -->
+  <div class="sharelay" id="sharelay" onclick="if(event.target===this)closeShare()">
+    <div class="sharebox">
+      <div class="sharecard" id="sharecard"></div>
+      <div class="sharebtns"><button class="sb-save" onclick="saveShareImg()">保存图片</button><button class="sb-link" onclick="doNativeShare()">分享链接</button></div>
+      <button class="sharex" onclick="closeShare()">关闭</button>
+    </div>
+  </div>
   <!-- 我的订单弹层（顾客） -->
   <div class="sheet" id="ordersSheet" onclick="if(event.target===this)closeOrders()">
     <div class="sheet-in"><div class="close"><button onclick="closeOrders()">✕</button></div><div id="ordersContent" style="padding:6px 18px calc(22px + var(--safe-b))"></div></div>
@@ -664,6 +703,7 @@
   function handleBack(){
     const on=(id)=>document.getElementById(id).classList.contains('show');
     if(on('lightbox')){ closeLightbox(); return; }
+    if(on('sharelay')){ closeShare(); return; }
     if(on('ordersSheet')){ closeOrders(); return; }
     if(on('salesSheet')){ closeSales(); return; }
     if(on('edit')){ closeEdit(); return; }
@@ -674,7 +714,7 @@
   function updateBack(){
     if(!(tg&&tg.BackButton)) return;
     const on=(id)=>document.getElementById(id).classList.contains('show');
-    const need=on('lightbox')||on('ordersSheet')||on('salesSheet')||on('edit')||on('sheet')||mode==='admin'||tab!=='shop';
+    const need=on('lightbox')||on('sharelay')||on('ordersSheet')||on('salesSheet')||on('edit')||on('sheet')||mode==='admin'||tab!=='shop';
     try{ need?tg.BackButton.show():tg.BackButton.hide(); }catch(e){}
   }
   if(tg&&tg.BackButton){ try{ tg.BackButton.onClick(handleBack); }catch(e){} }
@@ -741,7 +781,14 @@
   // ===== 数据 =====
   let ALL=[];
   let sort='new'; const SORTS=[['new','综合'],['sold','销量'],['plow','价格↑'],['phigh','价格↓']];
-  let brandFilter='', catFilter='';
+  let brandFilter='', catFilter='', priceFilter='', newFilter=false;
+  // 价格快捷区间（马币）
+  const PRICE_RANGES=[['lt80','RM80以下',p=>p.sell_myr!=null&&Number(p.sell_myr)<80],['80-200','RM80–200',p=>p.sell_myr!=null&&Number(p.sell_myr)>=80&&Number(p.sell_myr)<=200],['gt200','RM200以上',p=>p.sell_myr!=null&&Number(p.sell_myr)>200]];
+  // 上次来访时间：boot 时读旧值算「上新」，随即写入本次时间供下次比对
+  let LAST_SEEN=Number(localStorage.getItem('lastseen369')||0);
+  try{ localStorage.setItem('lastseen369',String(Date.now())); }catch(e){}
+  function isNewSince(p){ return LAST_SEEN>0 && p.created_at && new Date(p.created_at).getTime()>LAST_SEEN; }
+  function newCount(){ return ALL.filter(isNewSince).length; }
   // 店面读专用视图：数据库层面只发布「已上架 + 安全字段」，成本根本不出库
   let _fresh=false,_loadFail=false;
   async function load(){
@@ -811,14 +858,40 @@
   }
   function setBrand(b){ brandFilter=(brandFilter===b?'':b); buildChips(); render(); }
   function setCat(c){ catFilter=(catFilter===c?'':c); buildChips(); render(); }
-  function resetFilters(){ catFilter=''; brandFilter=''; clearSearch(); buildChips(); }
+  // 副筛选行：上新 + 价格区间
+  function buildSubfilter(){
+    const box=document.getElementById('subfilter'); if(!box) return;
+    const nc=newCount(); let h='';
+    if(nc>0) h+='<span class="chip newchip'+(newFilter?' on':'')+'" onclick="setNew()">🆕 上新 '+nc+'</span>';
+    if(ALL.some(p=>p.sell_myr!=null)){
+      if(h) h+='<span class="chipdiv"></span>';
+      h+=PRICE_RANGES.map(r=>'<span class="chip'+(priceFilter===r[0]?' on':'')+'" onclick="setPrice(\''+r[0]+'\')">'+r[1]+'</span>').join('');
+    }
+    box.innerHTML=h; box.style.display=h?'':'none';
+  }
+  function setPrice(k){ priceFilter=(priceFilter===k?'':k); buildSubfilter(); render(); haptic('light'); }
+  function setNew(){ newFilter=!newFilter; buildSubfilter(); render(); haptic('light'); }
+  function resetFilters(){ catFilter=''; brandFilter=''; priceFilter=''; newFilter=false; clearSearch(); buildChips(); buildSubfilter(); }
   function renderSeg(){
     document.getElementById('seg').innerHTML=SORTS.map(s=>
       '<button class="'+(sort===s[0]?'on':'')+'" onclick="setSort(\''+s[0]+'\')">'+s[1]+'</button>').join('');
   }
   function setSort(s){ sort=s; renderSeg(); render(); haptic('light'); }
-  function onSearch(){ document.getElementById('qclear').classList.toggle('show',!!document.getElementById('q').value); render(); }
+  function onSearch(){ document.getElementById('qclear').classList.toggle('show',!!document.getElementById('q').value); renderSearchHist(); render(); }
   function clearSearch(){ const q=document.getElementById('q'); q.value=''; document.getElementById('qclear').classList.remove('show'); render(); q.focus(); }
+  // ===== 搜索历史 =====
+  let SQ=[]; try{ SQ=JSON.parse(localStorage.getItem('sq369')||'[]'); }catch(e){}
+  function pushSearch(s){ s=(s||'').trim(); if(s.length<2) return; SQ=[s].concat(SQ.filter(x=>x.toLowerCase()!==s.toLowerCase())).slice(0,10); localStorage.setItem('sq369',JSON.stringify(SQ)); }
+  function clearSearchHist(){ SQ=[]; localStorage.removeItem('sq369'); renderSearchHist(); }
+  function applySearch(s){ const q=document.getElementById('q'); q.value=s; document.getElementById('qclear').classList.add('show'); pushSearch(s); renderSearchHist(); render(); }
+  function renderSearchHist(){
+    const box=document.getElementById('shist'), q=document.getElementById('q');
+    const show=document.activeElement===q && !q.value.trim() && SQ.length>0;
+    box.classList.toggle('hidden',!show);
+    if(!show) return;
+    box.innerHTML='<div class="shrow"><span>最近搜索</span><button onmousedown="event.preventDefault()" onclick="clearSearchHist()">清空</button></div>'+
+      '<div class="shchips">'+SQ.map(s=>'<span class="shchip" onmousedown="event.preventDefault()" onclick="applySearch(\''+esc(s).replace(/'/g,"\\'")+'\')">'+esc(s)+'</span>').join('')+'</div>';
+  }
 
   function priceHtml(p){
     if(p.sell_myr==null) return '<div class="ask">点击问价</div>';
@@ -840,6 +913,8 @@
     let list=ALL.slice();
     if(catFilter) list=list.filter(p=>p.category===catFilter);
     if(brandFilter) list=list.filter(p=>brandOf(p)===brandFilter);
+    if(newFilter) list=list.filter(isNewSince);
+    if(priceFilter){ const r=PRICE_RANGES.find(x=>x[0]===priceFilter); if(r) list=list.filter(r[2]); }
     if(q) list=list.filter(p=>((p.name_cn||'')+(p.brand||'')+(p.sku||'')).toLowerCase().includes(q));
     if(sort==='plow') list.sort((a,b)=>(a.sell_myr??1e9)-(b.sell_myr??1e9));
     else if(sort==='phigh') list.sort((a,b)=>(b.sell_myr??-1)-(a.sell_myr??-1));
@@ -849,9 +924,9 @@
     grid.classList.toggle('anim',_fresh); _fresh=false; // 只在数据刚拉回来时做入场动画，搜索筛选时不闪
     const hs=document.getElementById('heroSub'); if(hs) hs.textContent='PREMIUM SELECT'+(ALL.length?' · '+ALL.length+' ITEMS':'');
     const mc=document.getElementById('meCount'); if(mc) mc.textContent=ALL.length||'—';
-    renderRecent();
+    renderRecent(); buildSubfilter();
     // 橱窗：无筛选时优先展示热卖；没有热卖就兜底展示最新上架，黄金位永不空着
-    const filtered=!!(q||catFilter||brandFilter);
+    const filtered=!!(q||catFilter||brandFilter||priceFilter||newFilter);
     const featEl=document.getElementById('feat');
     let fp=null, ftag='';
     if(!filtered&&sort==='new'){
@@ -868,8 +943,14 @@
     } else featEl.classList.add('hidden');
     document.getElementById('gridHead').textContent=filtered?('筛选结果 · '+list.length+' 件'):'严选好物 · CURATED';
     if(!list.length){
+      // 搜索没结果：给推荐位（在售的，ALL 已按新→旧/热卖），别让顾客走
+      if(q && ALL.length){
+        const sugg=ALL.filter(p=>!p.soldout&&p.image_url).slice(0,6);
+        grid.innerHTML='<div class="empty" style="padding:34px 16px 14px"><div class="big">🔍</div>没找到「'+esc(q)+'」<br><span style="font-size:12.5px">换个关键词，或看看店主推荐 👇</span></div>'+sugg.map(cardHtml).join('');
+        return;
+      }
       const inner=ALL.length
-        ? '没找到相关商品<br><button onclick="resetFilters()" style="margin-top:12px;background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:8px 18px;font-size:13px;font-weight:600">清除筛选</button>'
+        ? '这个筛选下暂时没有货<br><button onclick="resetFilters()" style="margin-top:12px;background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:8px 18px;font-size:13px;font-weight:600">清除筛选</button>'
         : (_loadFail
           ? '网络不太顺，没加载出来<br><button onclick="load()" style="margin-top:12px;background:var(--ink);border:none;color:#fff;border-radius:20px;padding:10px 26px;font-size:13px;font-weight:600;letter-spacing:1px">重试</button>'
           : '店铺正在上新<br>稍后再来看看～');
@@ -881,7 +962,7 @@
     const inCart=!!cart[p.id];
     const nImg=(p.images&&p.images.length)||0;
     const isNew=p.created_at&&(Date.now()-new Date(p.created_at).getTime())<3*86400000;
-    const corner=p.hot?'<span class="hotbadge">HOT</span>':(isNew?'<span class="newbadge">NEW</span>':'');
+    const corner=p.hot?'<span class="hotbadge">HOT</span>':(isNewSince(p)?'<span class="newbadge">上新</span>':(isNew?'<span class="newbadge">NEW</span>':''));
     return '<div class="prod">'+
       '<div class="thumb" onclick="openSheet('+p.id+')">'+thumb(p)+
         (nImg>1?'<span class="imgbadge">'+nImg+' 图</span>':'')+corner+
@@ -988,13 +1069,69 @@
   let _rvLb=[];
   function openReviewLb(i){ _gimgs=_rvLb; openLightbox(i); } // 复用全屏看图（可放大/左右滑）
   function closeSheet(){ document.getElementById('sheet').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
+  // ===== 分享图卡 =====
+  let _shareP=null;
   function shareProduct(id){
     const p=ALL.find(x=>x.id===id); if(!p) return;
-    const url=location.origin+location.pathname+'?p='+id;
+    _shareP=p;
+    const hasOrig=p.orig_myr!=null&&Number(p.orig_myr)>Number(p.sell_myr);
+    const imgPart=p.image_url
+      ? '<img class="sc-img" src="'+esc(im(p.image_url,700))+'" referrerpolicy="no-referrer" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" alt=""><div class="sc-noimg" style="display:none;background:'+brandColor(p)+'">'+esc(brandOf(p)||SHOP_NAME)+'</div>'
+      : '<div class="sc-noimg" style="background:'+brandColor(p)+'">'+esc(brandOf(p)||SHOP_NAME)+'</div>';
+    document.getElementById('sharecard').innerHTML=imgPart+
+      '<div class="sc-body"><div class="sc-name">'+esc(p.name_cn||'')+'</div>'+
+      (p.sell_myr!=null?'<div class="sc-price"><small>RM</small>'+money(p.sell_myr)+(hasOrig?'<span class="sc-del">RM'+money(p.orig_myr)+'</span>':'')+'</div>':'<div class="sc-price" style="font-size:16px">点链接问价</div>')+
+      '<div class="sc-foot"><div class="sc-logo">369</div><div class="sc-shop"><b>'+esc(SHOP_NAME)+'</b><div>正品保证 · 假一赔十 · 马来直邮</div></div></div></div>';
+    document.getElementById('sharelay').classList.add('show'); document.body.style.overflow='hidden'; haptic('light');
+  }
+  function closeShare(){ document.getElementById('sharelay').classList.remove('show'); document.body.style.overflow=''; }
+  function brandColor(p){ const s=(brandOf(p)||'369')+''; let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))%360; return 'hsl('+h+',42%,62%)'; }
+  function doNativeShare(){
+    const p=_shareP; if(!p) return;
+    const url=location.origin+location.pathname+'?p='+p.id;
     const text=(p.name_cn||'')+(p.sell_myr!=null?' · RM'+money(p.sell_myr):'')+' — '+SHOP_NAME;
     if(navigator.share){ navigator.share({title:SHOP_NAME,text:text,url:url}).catch(()=>{}); return; }
-    if(navigator.clipboard){ navigator.clipboard.writeText(text+' '+url).then(()=>toast('已复制，去粘贴分享')).catch(()=>toast(url)); }
+    if(navigator.clipboard){ navigator.clipboard.writeText(text+' '+url).then(()=>toast('链接已复制，去粘贴分享')).catch(()=>toast(url)); }
     else toast(url);
+  }
+  function loadShareImg(src){ return new Promise(res=>{ const i=new Image(); i.crossOrigin='anonymous'; i.onload=()=>res(i); i.onerror=()=>res(null); i.src=src; }); }
+  // 画一张竖版分享图（图片跨域取不到就用品牌色兜底，保证不 taint、能导出）
+  async function drawShareCanvas(p){
+    const W=1080,H=1420,cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+    const c=cv.getContext('2d'); c.fillStyle='#ffffff'; c.fillRect(0,0,W,H);
+    const IMG=1080;
+    const img=p.image_url?await loadShareImg(im(p.image_url,1080)):null;
+    if(img){ const s=Math.max(IMG/img.width,IMG/img.height),dw=img.width*s,dh=img.height*s; c.drawImage(img,(IMG-dw)/2,(IMG-dh)/2,dw,dh); }
+    else{ c.fillStyle=brandColor(p); c.fillRect(0,0,W,IMG); c.fillStyle='#ffffff'; c.font='700 90px sans-serif'; c.textAlign='center'; c.fillText((brandOf(p)||SHOP_NAME),W/2,IMG/2+30); c.textAlign='left'; }
+    // 文案区
+    c.fillStyle='#141519'; c.font='700 46px sans-serif';
+    const name=(p.name_cn||''); let line='',y=IMG+95,lines=0;
+    for(const ch of name){ if(c.measureText(line+ch).width>W-120||ch==='\n'){ c.fillText(line,60,y); y+=62; line=ch==='\n'?'':ch; if(++lines>=2){ line=''; break; } } else line+=ch; }
+    if(line&&lines<2) c.fillText(line,60,y);
+    // 价格
+    c.fillStyle='#e8232e'; c.font='800 76px sans-serif';
+    c.fillText(p.sell_myr!=null?('RM'+money(p.sell_myr)):'点链接问价',60,IMG+250);
+    if(p.orig_myr!=null&&Number(p.orig_myr)>Number(p.sell_myr)){ const pw=c.measureText('RM'+money(p.sell_myr)).width; c.fillStyle='#b9bcc4'; c.font='500 38px sans-serif'; c.fillText('RM'+money(p.orig_myr),60+pw+24,IMG+250); }
+    // 底栏
+    c.fillStyle='#141519'; c.fillRect(60,IMG+300,72,72);
+    c.fillStyle='#fff'; c.font='800 30px sans-serif'; c.textAlign='center'; c.fillText('369',96,IMG+345); c.textAlign='left';
+    c.fillStyle='#141519'; c.font='700 34px sans-serif'; c.fillText(SHOP_NAME,150,IMG+330);
+    c.fillStyle='#96979f'; c.font='400 26px sans-serif'; c.fillText('正品保证 · 假一赔十 · 马来直邮',150,IMG+368);
+    return cv;
+  }
+  async function saveShareImg(){
+    const p=_shareP; if(!p) return;
+    toast('生成图片中…');
+    try{
+      const cv=await drawShareCanvas(p);
+      cv.toBlob(async(blob)=>{
+        if(!blob){ toast('生成失败，长按上面卡片保存吧'); return; }
+        const file=new File([blob],'369-'+p.id+'.png',{type:'image/png'});
+        try{ if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:SHOP_NAME}); return; } }catch(e){}
+        const url=URL.createObjectURL(blob),a=document.createElement('a'); a.href=url; a.download=file.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),4000);
+        toast('图片已保存 ✅');
+      },'image/png');
+    }catch(e){ toast('生成失败，长按上面卡片保存吧'); }
   }
   function galleryHtml(p){
     const imgs=(p.images&&p.images.length)?p.images:(p.image_url?[p.image_url]:[]);
