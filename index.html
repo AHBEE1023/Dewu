@@ -748,7 +748,7 @@
   // 品牌字段常为空（解析没抓到），从商品名开头兜底提取，让卡片/筛选都能显示品牌
   function brandOf(p){
     if(p&&p.brand&&p.brand.trim()) return p.brand.trim();
-    const m=((p&&p.name_cn)||'').match(/^([A-Za-z][A-Za-z0-9]*(?:\s+[A-Za-z0-9]+){0,2})/);
+    let m=((p&&p.name_cn)||'').match(/^([A-Za-z][A-Za-z0-9]*(?:\s+[A-Za-z]+)?)/); // 最多2个词，且第二词须是字母（不吞"3 Strip"里的3）
     return (m&&m[1].replace(/\s/g,'').length>=3)?m[1].trim():null;
   }
   function buildChips(){
@@ -801,14 +801,19 @@
     const hs=document.getElementById('heroSub'); if(hs) hs.textContent='PREMIUM SELECT'+(ALL.length?' · '+ALL.length+' ITEMS':'');
     const mc=document.getElementById('meCount'); if(mc) mc.textContent=ALL.length||'—';
     renderRecent();
-    // 本周主打橱窗：无筛选时展示第一件热卖（橱窗里的不再重复出现在瀑布流）
+    // 橱窗：无筛选时优先展示热卖；没有热卖就兜底展示最新上架，黄金位永不空着
     const filtered=!!(q||catFilter||brandFilter);
     const featEl=document.getElementById('feat');
-    const fp=(!filtered&&sort==='new')?ALL.find(p=>p.hot&&!p.soldout):null;
+    let fp=null, ftag='';
+    if(!filtered&&sort==='new'){
+      const hot=ALL.find(p=>p.hot&&!p.soldout);
+      if(hot){ fp=hot; ftag='FEATURED · 本周主打'; }
+      else { fp=ALL.find(p=>!p.soldout&&p.image_url); ftag='NEW IN · 新品到店'; } // ALL 按最新排序，取第一件在售
+    }
     if(fp){
       featEl.classList.remove('hidden');
       featEl.onclick=()=>openSheet(fp.id);
-      featEl.innerHTML='<div class="fimg">'+(fp.image_url?'<img src="'+esc(im(fp.image_url,800))+'" referrerpolicy="no-referrer" alt="">':'')+'<span class="ftag">FEATURED · 本周主打</span></div>'+
+      featEl.innerHTML='<div class="fimg">'+(fp.image_url?'<img src="'+esc(im(fp.image_url,800))+'" referrerpolicy="no-referrer" alt="">':'')+'<span class="ftag">'+ftag+'</span></div>'+
         '<div class="finfo"><div class="fname">'+esc(fp.name_cn||'')+'</div><div class="fprice"><small>RM</small>'+money(fp.sell_myr)+'</div></div>';
       list=list.filter(p=>p.id!==fp.id);
     } else featEl.classList.add('hidden');
