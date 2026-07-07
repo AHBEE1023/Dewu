@@ -5,7 +5,12 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <title>369 甄选 · 正品好物</title>
-<meta name="theme-color" content="#f5f6f8" />
+<meta name="theme-color" content="#f5f6f8" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0e0f11" media="(prefers-color-scheme: dark)" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="369甄选" />
 <link rel="preconnect" href="https://cdn.poizon.com" crossorigin />
 <link rel="preconnect" href="https://wgulnumflnumdpqfbjqy.supabase.co" crossorigin />
 <meta property="og:image" content="https://dewu-247team.vercel.app/og.png" />
@@ -156,6 +161,9 @@
   .favbtn svg{width:16px;height:16px}
   .favbtn.on{background:var(--face)}
   .favbtn.on svg{fill:var(--price);stroke:var(--price)}
+  /* 加购/收藏「飞入」微动效 */
+  .fly{position:fixed;width:36px;height:36px;border-radius:50%;background-size:cover;background-position:center;z-index:200;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.28)}
+  .fly.heart{display:flex;align-items:center;justify-content:center;color:var(--price);font-size:22px;background:var(--face);box-shadow:0 6px 18px rgba(232,35,46,.32)}
   .ocard{border:1px solid var(--line);border-radius:15px;padding:13px 14px;margin-bottom:12px;background:var(--card)}
   .ohead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px}
   .ohead b{font-size:14.5px;letter-spacing:.5px}
@@ -268,6 +276,8 @@
   .sheet.show .sheet-in{transform:none}
   .sheet-in{width:100%;max-width:720px;margin:0 auto;background:var(--bg);border-radius:20px 20px 0 0;max-height:92vh;overflow:auto;border-top:1px solid var(--line);overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
   .sheet-img{width:100%;aspect-ratio:1/1;background:var(--card2);object-fit:cover;display:block}
+  .sheet-video{width:100%;max-height:62vh;background:#000;display:block}
+  .playic{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:38px;height:38px;border-radius:50%;background:#00000066;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;padding-left:2px;z-index:2;pointer-events:none}
   /* 详情图库轮播 */
   .gwrap{position:relative;background:var(--imgbg)}
   .gscroll{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;aspect-ratio:1/1;scrollbar-width:none}
@@ -1061,9 +1071,10 @@
     return '<div class="prod">'+
       '<div class="thumb" onclick="openSheet('+p.id+')">'+thumb(p)+
         (nImg>1?'<span class="imgbadge">'+nImg+' 图</span>':'')+corner+
+        (p.video_url?'<span class="playic">▶</span>':'')+
         favBtn(p.id)+
         (p.soldout?'<div class="soldcover"><span>已售罄</span></div>':
-          '<button class="addbtn'+(inCart?' in':'')+'" onclick="event.stopPropagation();addCart('+p.id+')">'+(inCart?'✓':'+')+'</button>')+
+          '<button class="addbtn'+(inCart?' in':'')+'" onclick="event.stopPropagation();cardAdd('+p.id+',this)">'+(inCart?'✓':'+')+'</button>')+
       '</div>'+
       '<div class="pinfo" onclick="openSheet('+p.id+')"><div class="pname">'+esc(p.name_cn||'')+'</div>'+
       '<div class="pbrand">'+esc(brandOf(p)||'—')+'</div>'+priceHtml(p)+'</div>'+
@@ -1106,6 +1117,7 @@
        '<div class="vwrap">'+vs.map((v,i)=>'<button class="vchip'+(v.soldout?' dis':'')+(pk0&&pk0.name===v.name?' on':'')+'" id="vc_'+i+'" '+(v.soldout?'disabled':'onclick="pickVar('+p.id+','+i+')"')+'>'+esc(v.name)+(v.sell!=null?'<span class="vp">RM '+money(v.sell)+'</span>':'')+(v.soldout?'<span class="vp" style="color:#b9bcc4">暂时缺货</span>':'')+'</button>').join('')+'</div>'
       :'';
     document.getElementById('sheetContent').innerHTML=
+      videoHtml(p)+
       galleryHtml(p)+
       '<div class="sheet-body"><h2>'+esc(p.name_cn||'')+'</h2>'+priceBlock+proofHtml+varHtml+
       '<div class="svcbox">'+
@@ -1254,6 +1266,11 @@
       },'image/png');
     }catch(e){ toast('生成失败，长按上面卡片保存吧'); }
   }
+  // 主图视频（店主填了直链才显示，海报用主图，点开才加载省流量）
+  function videoHtml(p){
+    if(!p||!p.video_url) return '';
+    return '<video class="sheet-video" src="'+esc(p.video_url)+'" controls playsinline preload="none" poster="'+(p.image_url?esc(im(p.image_url,800)):'')+'"></video>';
+  }
   function galleryHtml(p){
     const imgs=(p.images&&p.images.length)?p.images:(p.image_url?[p.image_url]:[]);
     _gimgs=imgs; // 全屏看图用原图，可左右滑
@@ -1344,7 +1361,7 @@
     const n=Object.keys(fav).length; const b=document.getElementById('favBadge'); b.textContent=n; b.classList.toggle('hidden',n===0);
     const d=document.getElementById('favDot'); if(d) d.classList.toggle('hidden',favDropCount()===0);
   }
-  function favBtn(id){ return '<button class="favbtn'+(isFav(id)?' on':'')+'" onclick="event.stopPropagation();toggleFav('+id+')" aria-label="收藏"><svg viewBox="0 0 24 24" fill="none" stroke="'+(isFav(id)?'var(--price)':'#9499a6')+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.3 4.9 13a4.7 4.7 0 0 1 0-6.6 4.5 4.5 0 0 1 6.5 0l.6.6.6-.6a4.5 4.5 0 0 1 6.5 0 4.7 4.7 0 0 1 0 6.6Z"/></svg></button>'; }
+  function favBtn(id){ return '<button class="favbtn'+(isFav(id)?' on':'')+'" onclick="event.stopPropagation();favClick(this,'+id+')" aria-label="收藏"><svg viewBox="0 0 24 24" fill="none" stroke="'+(isFav(id)?'var(--price)':'#9499a6')+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.3 4.9 13a4.7 4.7 0 0 1 0-6.6 4.5 4.5 0 0 1 6.5 0l.6.6.6-.6a4.5 4.5 0 0 1 6.5 0 4.7 4.7 0 0 1 0 6.6Z"/></svg></button>'; }
   function refreshSheetFav(id){ const b=document.getElementById('sheetFav'); if(b) b.outerHTML=sheetFavBtn(id); }
   function sheetFavBtn(id){ return '<button id="sheetFav" onclick="toggleFav('+id+')" style="width:100%;margin-top:4px;background:none;border:none;color:'+(isFav(id)?'var(--price)':'var(--sub)')+';font-size:12.5px;font-weight:600;padding:8px;letter-spacing:1px">'+(isFav(id)?'♥ 已收藏':'♡ 收藏这件')+'</button>'; }
   function renderFav(){
@@ -1362,6 +1379,30 @@
   function saveCart(){ localStorage.setItem('cart369',JSON.stringify(cart)); updateBadge(); updateMainButton(); }
   function cartItems(){ return Object.keys(cart).map(id=>ALL.find(p=>p.id==id)).filter(Boolean); }
   let cartVar={}; try{ cartVar=JSON.parse(localStorage.getItem('cartvar369')||'{}'); }catch(e){}
+  // 「飞入」动画：从来源元素抛物线飞到底部对应 Tab，落地时图标弹一下
+  function flyEffect(srcEl,tab,imgUrl){
+    try{
+      if(!srcEl||!srcEl.getBoundingClientRect) return;
+      const nav=document.querySelector('#nav button[data-tab="'+tab+'"]'); if(!nav) return;
+      const s=srcEl.getBoundingClientRect(); if(!s.width) return;
+      const d=nav.getBoundingClientRect();
+      const fly=document.createElement('div'); fly.className='fly';
+      if(imgUrl){ fly.style.backgroundImage='url("'+imgUrl+'")'; } else { fly.classList.add('heart'); fly.textContent='♥'; }
+      const x0=s.left+s.width/2-18, y0=s.top+s.height/2-18;
+      fly.style.left=x0+'px'; fly.style.top=y0+'px';
+      document.body.appendChild(fly);
+      const dx=(d.left+d.width/2)-(x0+18), dy=(d.top+d.height/2)-(y0+18);
+      const anim=fly.animate([
+        {transform:'translate(0,0) scale(1)',opacity:1},
+        {transform:'translate('+(dx*0.55)+'px,'+(dy*0.35-40)+'px) scale(.9)',opacity:1,offset:.55},
+        {transform:'translate('+dx+'px,'+dy+'px) scale(.2)',opacity:.35}
+      ],{duration:640,easing:'cubic-bezier(.4,0,.6,1)'});
+      anim.onfinish=()=>{ fly.remove(); const ic=nav.querySelector('.i'); if(ic){ ic.classList.remove('bump'); void ic.offsetWidth; ic.classList.add('bump'); } };
+      setTimeout(()=>{ if(fly.parentNode) fly.remove(); },950);
+    }catch(e){}
+  }
+  function cardAdd(id,btn){ const p=ALL.find(x=>x.id==id); if(p&&!p.soldout) flyEffect(btn,'cart',p.image_url?im(p.image_url,120):null); addCart(id); }
+  function favClick(btn,id){ if(!isFav(id)) flyEffect(btn,'fav',null); toggleFav(id); }
   function addCart(id){
     const p=ALL.find(x=>x.id==id);
     if(p&&p.soldout){ toast('这件已售罄，问客服等补货吧'); return; }
@@ -1940,6 +1981,7 @@
           '<label style="display:flex;gap:6px;align-items:center;margin:0;color:var(--txt);font-size:13.5px"><input type="checkbox" id="e_hot" style="width:auto;accent-color:#ff7a00"'+(p.hot?' checked':'')+'>🔥 热卖</label>'+
           '<label style="display:flex;gap:6px;align-items:center;margin:0;color:var(--txt);font-size:13.5px"><input type="checkbox" id="e_soldout" style="width:auto;accent-color:var(--bad)"'+(p.soldout?' checked':'')+'>售罄</label>'+
         '</div></div></div>'+
+      '<div class="fld"><label>🎬 主图视频（选填 · 直链 .mp4，填了详情页顶部会播放）</label><input id="e_video" value="'+v(p.video_url)+'" placeholder="https://….mp4"></div>'+
       ((p.params&&p.params.length)?'<div class="fld"><label>商品参数（勾选的才在店面显示）</label><div style="background:var(--card2);border-radius:10px;padding:6px 10px">'+
         p.params.map((x,i)=>'<label class="ckrow"><input type="checkbox" class="pk" data-i="'+i+'"'+(x.on?' checked':'')+'><span>'+esc(x.k)+'：'+esc(x.v)+'</span></label>').join('')+'</div></div>':'')+
       ((p.variants&&p.variants.length)?'<div class="fld"><label>规格（勾选显示 · 填售价后顾客可选规格看价）<button class="mini ghost" style="padding:2px 8px;font-size:10.5px;margin-left:6px" onclick="vFill()">按倍率生成售价</button></label>'+
@@ -2074,6 +2116,7 @@
       hot:document.getElementById('e_hot').checked,
       soldout:document.getElementById('e_soldout').checked,
       category:document.getElementById('e_cat').value||null,
+      video_url:(document.getElementById('e_video').value||'').trim()||null,
     };
     fields.review_shots=_rvShots.length?_rvShots:null;
     const p0=AROWS.find(x=>x.id===id);
@@ -2101,6 +2144,9 @@
   // 首次进店提示（关掉就不再出现）
   function dismissTip(){ localStorage.setItem('tip369','1'); document.getElementById('tipbar').classList.add('hidden'); }
   if(!localStorage.getItem('tip369')) document.getElementById('tipbar').classList.remove('hidden');
+
+  // PWA：注册 Service Worker（加到主屏、离线也能打开；失败不影响使用）
+  if('serviceWorker' in navigator){ window.addEventListener('load',()=>{ navigator.serviceWorker.register('/sw.js').catch(()=>{}); }); }
 
   // 启动
   updateBadge();
