@@ -605,6 +605,9 @@
       return u+'?x-oss-process=image/resize,w_'+w+'/format,webp';
     return u;
   }
+  // 图加载失败时的优雅占位（浅灰底 + 图标），避免空白方块
+  const IMG_PH='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect width="400" height="400" fill="#f1f1f4"/><g fill="none" stroke="#d2d5dc" stroke-width="7"><rect x="150" y="158" width="100" height="84" rx="8"/><circle cx="176" cy="184" r="9"/><path d="M150 226l30-26 22 18 26-24 22 20"/></g></svg>');
+  function imgFB(el){ el.onerror=null; el.src=IMG_PH; el.style.objectFit='cover'; }
   function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
   function haptic(t){ try{ tg&&tg.HapticFeedback&&tg.HapticFeedback.impactOccurred(t||'light'); }catch(e){} }
   let toastTimer;
@@ -814,7 +817,7 @@
     if(fp){
       featEl.classList.remove('hidden');
       featEl.onclick=()=>openSheet(fp.id);
-      featEl.innerHTML='<div class="fimg">'+(fp.image_url?'<img src="'+esc(im(fp.image_url,800))+'" referrerpolicy="no-referrer" alt="">':'')+'<span class="ftag">'+ftag+'</span></div>'+
+      featEl.innerHTML='<div class="fimg">'+(fp.image_url?'<img src="'+esc(im(fp.image_url,800))+'" referrerpolicy="no-referrer" onerror="imgFB(this)" alt="">':'')+'<span class="ftag">'+ftag+'</span></div>'+
         '<div class="finfo"><div class="fname">'+esc(fp.name_cn||'')+'</div><div class="fprice"><small>RM</small>'+money(fp.sell_myr)+'</div><span class="fcta">查看 →</span></div>';
       list=list.filter(p=>p.id!==fp.id);
     } else featEl.classList.add('hidden');
@@ -909,7 +912,7 @@
     const list=same.concat(pool.filter(x=>!(pb&&brandOf(x)===pb))).slice(0,8);
     return '<div style="margin:18px 0 9px;font-size:11.5px;font-weight:600;color:#7c7e87;letter-spacing:2px">'+(same.length?'同品牌好物 · MORE':'猜你喜欢 · PICKS')+'</div>'+
       '<div class="rscroll">'+list.map(x=>'<div class="ritem" style="width:84px" onclick="openSheet('+x.id+')">'+
-        (x.image_url?'<img style="width:84px;height:84px" src="'+esc(im(x.image_url,300))+'" referrerpolicy="no-referrer" loading="lazy" alt="">':'<img style="width:84px;height:84px" alt="">')+
+        (x.image_url?'<img style="width:84px;height:84px" src="'+esc(im(x.image_url,300))+'" referrerpolicy="no-referrer" loading="lazy" onerror="imgFB(this)" alt="">':'<img style="width:84px;height:84px" alt="">')+
         '<div>'+esc(x.name_cn||'')+'</div>'+
         (x.sell_myr!=null?'<div style="color:var(--price);font-weight:700;margin-top:1px">RM'+money(x.sell_myr)+'</div>':'')+
       '</div>').join('')+'</div>';
@@ -949,9 +952,9 @@
     const imgs=(p.images&&p.images.length)?p.images:(p.image_url?[p.image_url]:[]);
     _gimgs=imgs; // 全屏看图用原图，可左右滑
     if(!imgs.length) return '';
-    if(imgs.length===1) return '<img class="sheet-img" style="cursor:zoom-in" src="'+esc(im(imgs[0],800))+'" referrerpolicy="no-referrer" onclick="openLightbox(0)" alt="">';
+    if(imgs.length===1) return '<img class="sheet-img" style="cursor:zoom-in" src="'+esc(im(imgs[0],800))+'" referrerpolicy="no-referrer" onerror="imgFB(this)" onclick="openLightbox(0)" alt="">';
     return '<div class="gwrap"><div class="gscroll" id="gscroll" onscroll="gdots()">'+
-      imgs.map((u,i)=>'<div class="gslide"><img src="'+esc(im(u,800))+'" referrerpolicy="no-referrer" loading="lazy" onclick="openLightbox('+i+')" alt=""></div>').join('')+
+      imgs.map((u,i)=>'<div class="gslide"><img src="'+esc(im(u,800))+'" referrerpolicy="no-referrer" loading="lazy" onerror="imgFB(this)" onclick="openLightbox('+i+')" alt=""></div>').join('')+
       '</div><div class="gcount" id="gcount">1/'+imgs.length+'</div>'+
       '<div class="gdots" id="gdots">'+imgs.map((_,i)=>'<span class="gdot'+(i===0?' on':'')+'"></span>').join('')+'</div></div>';
   }
@@ -1013,7 +1016,7 @@
     if(!items.length) return;
     box.innerHTML='<div class="rt" style="letter-spacing:1.5px">最近看过 · RECENT</div><div class="rscroll">'+items.map(p=>
       '<div class="ritem" onclick="openSheet('+p.id+')">'+
-      (p.image_url?'<img src="'+esc(im(p.image_url,200))+'" referrerpolicy="no-referrer" loading="lazy" alt="">':'<img alt="">')+
+      (p.image_url?'<img src="'+esc(im(p.image_url,200))+'" referrerpolicy="no-referrer" loading="lazy" onerror="imgFB(this)" alt="">':'<img alt="">')+
       '<div>'+esc(p.name_cn||'')+'</div></div>').join('')+'</div>';
   }
 
@@ -1050,7 +1053,7 @@
     updateMainButton();
     if(!items.length){ box.innerHTML='<div class="empty"><div class="big">🛒</div>心愿单还是空的<br>去店面挑几件喜欢的吧～<br><button onclick="setTab(\'shop\')" style="margin-top:14px;background:var(--ink);border:none;color:#fff;border-radius:20px;padding:11px 30px;font-size:13.5px;font-weight:600;letter-spacing:1px">去逛逛</button></div>'; return; }
     box.innerHTML=items.map(p=>
-      '<div class="crow"'+(p.soldout?' style="opacity:.65"':'')+'>'+(p.image_url?'<img src="'+esc(im(p.image_url,200))+'" referrerpolicy="no-referrer" alt="">':'<img alt="">')+
+      '<div class="crow"'+(p.soldout?' style="opacity:.65"':'')+'>'+(p.image_url?'<img src="'+esc(im(p.image_url,200))+'" referrerpolicy="no-referrer" onerror="imgFB(this)" alt="">':'<img alt="">')+
       '<div class="ci"><div class="cn">'+esc(p.name_cn||'')+'</div>'+
       '<div class="cp"'+(p.soldout?' style="color:var(--sub)"':'')+'>'+(linePrice(p)!=null?'RM'+money(linePrice(p)):'询价')+(p.soldout?' <span class="badge down" style="font-size:10px">已售罄，不计入</span>':'')+'</div>'+
       (cartVar[p.id]?'<div style="font-size:11px;color:var(--sub);margin-top:2px">规格：'+esc(cartVar[p.id].name)+'</div>':'')+
