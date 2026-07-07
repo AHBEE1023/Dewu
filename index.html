@@ -1311,7 +1311,8 @@
     }).sort((a,b)=>b.sc-a.sc);
   }
   async function trendFetch(){
-    const url=(document.getElementById('trendIn').value.match(/https?:\/\/[^\s，。、]+/)||[])[0];
+    // 得物分享文字里链接后常直接跟中文（…Qb点开链接），必须在中文/全角标点处截断，否则抓的是坏链接
+    const url=(document.getElementById('trendIn').value.match(/https?:\/\/[^\s，。、！？【】…一-鿿]+/)||[])[0];
     if(!url){ toast('没找到链接'); return; }
     const btn=document.getElementById('trendGo'), tx=document.getElementById('trendGoTxt');
     const box=document.getElementById('trendResult');
@@ -1424,7 +1425,7 @@
     }).join('');
     renderSelBar();
   }
-  function extractUrl(s){ const m=(s||'').match(/https?:\/\/[^\s，。、]+/); return m?m[0]:null; }
+  function extractUrl(s){ const m=(s||'').match(/https?:\/\/[^\s，。、！？【】…一-鿿]+/); return m?m[0]:null; }
   function parseDone(name){
     const pending=!name||/^[⏳⚠]/.test(name);
     showMsg('ok', pending
