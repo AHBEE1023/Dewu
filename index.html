@@ -70,7 +70,7 @@
   .notice .mq.roll span{padding-left:100%;animation:mq 14s linear infinite}
   @keyframes mq{to{transform:translateX(-100%)}}
   /* 🔥 热卖 / 售罄 / 划线价 / 已售 */
-  .hotbadge{position:absolute;top:8px;right:8px;background:var(--price);color:#fff;font-size:9.5px;font-weight:700;padding:3px 8px;border-radius:4px;z-index:2;letter-spacing:1px}
+  .hotbadge{position:absolute;top:8px;left:8px;background:var(--price);color:#fff;font-size:9.5px;font-weight:700;padding:3px 8px;border-radius:4px;z-index:2;letter-spacing:1px}
   .soldcover{position:absolute;inset:0;background:rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;z-index:3}
   .soldcover span{background:#0000008c;color:#fff;font-size:13px;font-weight:700;padding:7px 18px;border-radius:20px;backdrop-filter:blur(2px)}
   .del{font-size:11px;color:var(--sub);text-decoration:line-through;margin-left:6px;font-weight:500}
@@ -111,6 +111,10 @@
   .addbtn{position:absolute;right:8px;bottom:8px;width:32px;height:32px;border-radius:50%;border:none;
     background:#ffffffe6;box-shadow:0 2px 8px rgba(0,0,0,.14);color:var(--txt);font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center;z-index:2}
   .addbtn.in{background:var(--ink);color:#fff;box-shadow:0 2px 10px rgba(20,21,25,.3)}
+  .favbtn{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;border:none;background:#ffffffdd;box-shadow:0 2px 8px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;z-index:2;padding:0}
+  .favbtn svg{width:16px;height:16px}
+  .favbtn.on{background:#fff}
+  .favbtn.on svg{fill:var(--price);stroke:var(--price)}
   .pinfo{padding:9px 10px 11px;cursor:pointer}
   .pname{font-size:13px;font-weight:600;line-height:1.42;max-height:2.84em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;margin-bottom:4px}
   .pbrand{font-size:11px;color:var(--sub);margin-bottom:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -199,8 +203,8 @@
   .gdot.on{background:#fff;width:16px;border-radius:3px}
   .gcount{position:absolute;top:10px;right:12px;background:#000a;color:#fff;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;pointer-events:none}
   /* 卡片多图角标 */
-  .imgbadge{position:absolute;top:8px;left:8px;background:#00000073;backdrop-filter:blur(4px);color:#fff;font-size:10px;font-weight:600;padding:2.5px 8px;border-radius:20px;z-index:2;letter-spacing:.5px}
-  .newbadge{position:absolute;top:8px;right:8px;background:var(--ink);color:#fff;font-size:9.5px;font-weight:700;padding:3px 8px;border-radius:4px;z-index:2;letter-spacing:1px}
+  .imgbadge{position:absolute;bottom:8px;left:8px;background:#00000073;backdrop-filter:blur(4px);color:#fff;font-size:10px;font-weight:600;padding:2.5px 8px;border-radius:20px;z-index:2;letter-spacing:.5px}
+  .newbadge{position:absolute;top:8px;left:8px;background:var(--ink);color:#fff;font-size:9.5px;font-weight:700;padding:3px 8px;border-radius:4px;z-index:2;letter-spacing:1px}
   .shopcount{font-size:12px;color:var(--sub);padding:2px 18px 6px}
   /* 本周主打橱窗 */
   .feat{margin:12px 12px 0;background:var(--card);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:transform .1s}
@@ -410,6 +414,13 @@
     <div class="pfoot" id="pfoot">369 PREMIUM SELECT<span>正品保证 · 假一赔十 · 马来直邮</span></div>
   </div>
 
+  <!-- ============ 收藏 ============ -->
+  <div id="favView" class="hidden">
+    <h2 class="vtitle" style="padding:0 4px">我的收藏</h2>
+    <p style="font-size:10px;color:var(--sub);letter-spacing:2.5px;margin:-2px 0 10px;padding:0 4px">FAVORITES</p>
+    <div class="grid" id="favGrid" style="padding:0"></div>
+  </div>
+
   <!-- ============ 心愿单 ============ -->
   <div id="cartView" class="hidden">
     <h2 class="vtitle">我的心愿单</h2>
@@ -454,7 +465,8 @@
   <!-- 底部导航 -->
   <div id="nav">
     <button data-tab="shop" class="on" onclick="setTab('shop')"><span class="i"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5V20a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-9.5"/><path d="M3.2 6.5 5 3.6A1.2 1.2 0 0 1 6 3h12a1.2 1.2 0 0 1 1 .6l1.8 2.9a2.6 2.6 0 0 1-2.3 4 2.7 2.7 0 0 1-2.5-1.7 2.7 2.7 0 0 1-5 0 2.7 2.7 0 0 1-5 0 2.7 2.7 0 0 1-2.5 1.7 2.6 2.6 0 0 1-2.3-4Z"/></svg></span>店面</button>
-    <button data-tab="cart" onclick="setTab('cart')"><span class="i"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.3 4.9 13a4.7 4.7 0 0 1 0-6.6 4.5 4.5 0 0 1 6.5 0l.6.6.6-.6a4.5 4.5 0 0 1 6.5 0 4.7 4.7 0 0 1 0 6.6Z"/></svg></span>心愿单<span class="cartn hidden" id="navBadge">0</span></button>
+    <button data-tab="fav" onclick="setTab('fav')"><span class="i"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.3 4.9 13a4.7 4.7 0 0 1 0-6.6 4.5 4.5 0 0 1 6.5 0l.6.6.6-.6a4.5 4.5 0 0 1 6.5 0 4.7 4.7 0 0 1 0 6.6Z"/></svg></span>收藏<span class="cartn hidden" id="favBadge" style="right:calc(50% - 20px)">0</span></button>
+    <button data-tab="cart" onclick="setTab('cart')"><span class="i"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg></span>心愿单<span class="cartn hidden" id="navBadge">0</span></button>
     <button data-tab="me" onclick="setTab('me')"><span class="i"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8.3 8.3 0 0 1-8.5 8.1 9 9 0 0 1-3.2-.6L4 21l1.6-4.6A7.9 7.9 0 0 1 4 12a8.3 8.3 0 0 1 8.5-8.1A8.3 8.3 0 0 1 21 12Z"/></svg></span>客服</button>
   </div>
 
@@ -679,24 +691,25 @@
   function setMode(m){
     mode=m;
     show('adminView', m==='admin');
-    ['shopView','cartView','checkout','meView','nav'].forEach(id=>document.getElementById(id).classList.toggle('hidden', m==='admin' || (id!=='nav'&&document.getElementById(id).id!==curViewId())));
+    ['shopView','favView','cartView','checkout','meView','nav'].forEach(id=>document.getElementById(id).classList.toggle('hidden', m==='admin' || (id!=='nav'&&document.getElementById(id).id!==curViewId())));
     document.getElementById('switchTxt').textContent = m==='shop'?'后台':'← 店面';
     window.scrollTo(0,0);
     if(m==='admin'){ loadAdmin(); } else { setTab(tab); load(); }
     updateBack(); updateMainButton();
   }
-  function curViewId(){ return tab==='shop'?'shopView':tab==='cart'?'cartView':'meView'; }
+  function curViewId(){ return tab==='shop'?'shopView':tab==='fav'?'favView':tab==='cart'?'cartView':'meView'; }
 
   // ===== 底部 Tab =====
   let tab='shop';
   function setTab(t){
     tab=t;
-    show('shopView', t==='shop'); show('cartView', t==='cart'); show('meView', t==='me');
+    show('shopView', t==='shop'); show('favView', t==='fav'); show('cartView', t==='cart'); show('meView', t==='me');
     show('checkout', t==='cart' && cartItems().length>0 && !hasMB());
     document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on', b.dataset.tab===t));
     window.scrollTo(0,0);
     document.getElementById('top2').classList.add('hidden');
     if(t==='cart') renderCart();
+    if(t==='fav') renderFav();
     haptic('light'); updateBack(); updateMainButton();
   }
 
@@ -835,21 +848,23 @@
           : '店铺正在上新<br>稍后再来看看～');
       grid.innerHTML='<div class="empty"><div class="big">🛍️</div>'+inner+'</div>'; return;
     }
-    grid.innerHTML=list.map(p=>{
-      const inCart=!!cart[p.id];
-      const nImg=(p.images&&p.images.length)||0;
-      const isNew=p.created_at&&(Date.now()-new Date(p.created_at).getTime())<3*86400000;
-      const corner=p.hot?'<span class="hotbadge">HOT</span>':(isNew?'<span class="newbadge">NEW</span>':'');
-      return '<div class="prod">'+
-        '<div class="thumb" onclick="openSheet('+p.id+')">'+thumb(p)+
-          (nImg>1?'<span class="imgbadge">'+nImg+' 图</span>':'')+corner+
-          (p.soldout?'<div class="soldcover"><span>已售罄</span></div>':
-            '<button class="addbtn'+(inCart?' in':'')+'" onclick="event.stopPropagation();addCart('+p.id+')">'+(inCart?'✓':'+')+'</button>')+
-        '</div>'+
-        '<div class="pinfo" onclick="openSheet('+p.id+')"><div class="pname">'+esc(p.name_cn||'')+'</div>'+
-        '<div class="pbrand">'+esc(brandOf(p)||'—')+'</div>'+priceHtml(p)+'</div>'+
-      '</div>';
-    }).join('');
+    grid.innerHTML=list.map(p=>cardHtml(p)).join('');
+  }
+  function cardHtml(p){
+    const inCart=!!cart[p.id];
+    const nImg=(p.images&&p.images.length)||0;
+    const isNew=p.created_at&&(Date.now()-new Date(p.created_at).getTime())<3*86400000;
+    const corner=p.hot?'<span class="hotbadge">HOT</span>':(isNew?'<span class="newbadge">NEW</span>':'');
+    return '<div class="prod">'+
+      '<div class="thumb" onclick="openSheet('+p.id+')">'+thumb(p)+
+        (nImg>1?'<span class="imgbadge">'+nImg+' 图</span>':'')+corner+
+        favBtn(p.id)+
+        (p.soldout?'<div class="soldcover"><span>已售罄</span></div>':
+          '<button class="addbtn'+(inCart?' in':'')+'" onclick="event.stopPropagation();addCart('+p.id+')">'+(inCart?'✓':'+')+'</button>')+
+      '</div>'+
+      '<div class="pinfo" onclick="openSheet('+p.id+')"><div class="pname">'+esc(p.name_cn||'')+'</div>'+
+      '<div class="pbrand">'+esc(brandOf(p)||'—')+'</div>'+priceHtml(p)+'</div>'+
+    '</div>';
   }
 
   const _viewed=new Set();
@@ -897,7 +912,8 @@
       reviewHtml(p)+
       '<div class="specs">'+specs.map(s=>'<div class="spec"><span>'+s[0]+'</span><b>'+s[1]+'</b></div>').join('')+'</div>'+
       relatedHtml(p)+
-      '<button onclick="shareProduct('+p.id+')" style="width:100%;margin-top:4px;background:none;border:none;color:var(--sub);font-size:12.5px;font-weight:500;padding:10px;letter-spacing:1px">分享这件好物</button>'+
+      sheetFavBtn(p.id)+
+      '<button onclick="shareProduct('+p.id+')" style="width:100%;background:none;border:none;color:var(--sub);font-size:12.5px;font-weight:500;padding:10px;letter-spacing:1px">分享这件好物</button>'+
       '</div>'+
       (p.soldout
         ?'<div class="sheet-bar"><button class="sbtn add" style="opacity:.55" disabled>已售罄</button><a class="sbtn buy" href="'+askHref(p)+'" target="_blank" rel="noopener">询问补货</a></div>'
@@ -1023,6 +1039,23 @@
       '<div class="ritem" onclick="openSheet('+p.id+')">'+
       (p.image_url?'<img src="'+esc(im(p.image_url,200))+'" referrerpolicy="no-referrer" loading="lazy" onerror="imgFB(this)" alt="">':'<img alt="">')+
       '<div>'+esc(p.name_cn||'')+'</div></div>').join('')+'</div>';
+  }
+
+  // ===== 收藏 =====
+  let fav=JSON.parse(localStorage.getItem('fav369')||'{}');
+  function isFav(id){ return !!fav[id]; }
+  function saveFav(){ localStorage.setItem('fav369',JSON.stringify(fav)); updateFavBadge(); }
+  function toggleFav(id){ if(fav[id])delete fav[id]; else fav[id]=1; saveFav(); haptic('light');
+    render(); if(tab==='fav')renderFav(); const s=document.getElementById('sheet'); if(s.classList.contains('show'))refreshSheetFav(id); }
+  function updateFavBadge(){ const n=Object.keys(fav).length; const b=document.getElementById('favBadge'); b.textContent=n; b.classList.toggle('hidden',n===0); }
+  function favBtn(id){ return '<button class="favbtn'+(isFav(id)?' on':'')+'" onclick="event.stopPropagation();toggleFav('+id+')" aria-label="收藏"><svg viewBox="0 0 24 24" fill="none" stroke="'+(isFav(id)?'var(--price)':'#9499a6')+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.3 4.9 13a4.7 4.7 0 0 1 0-6.6 4.5 4.5 0 0 1 6.5 0l.6.6.6-.6a4.5 4.5 0 0 1 6.5 0 4.7 4.7 0 0 1 0 6.6Z"/></svg></button>'; }
+  function refreshSheetFav(id){ const b=document.getElementById('sheetFav'); if(b) b.outerHTML=sheetFavBtn(id); }
+  function sheetFavBtn(id){ return '<button id="sheetFav" onclick="toggleFav('+id+')" style="width:100%;margin-top:4px;background:none;border:none;color:'+(isFav(id)?'var(--price)':'var(--sub)')+';font-size:12.5px;font-weight:600;padding:8px;letter-spacing:1px">'+(isFav(id)?'♥ 已收藏':'♡ 收藏这件')+'</button>'; }
+  function renderFav(){
+    const box=document.getElementById('favGrid');
+    const items=Object.keys(fav).map(id=>ALL.find(p=>p.id==id)).filter(Boolean);
+    if(!items.length){ box.innerHTML='<div class="empty"><div class="big">♡</div>还没有收藏<br>逛店面点右上角 ♡ 收着喜欢的<br><button onclick="setTab(\'shop\')" style="margin-top:14px;background:var(--ink);border:none;color:#fff;border-radius:20px;padding:11px 30px;font-size:13.5px;font-weight:600;letter-spacing:1px">去逛逛</button></div>'; return; }
+    box.innerHTML=items.map(p=>cardHtml(p)).join('');
   }
 
   // ===== 心愿单 =====
@@ -1696,6 +1729,7 @@
 
   // 启动
   updateBadge();
+  updateFavBadge();
   refreshSwitch();
   load();
 </script>
