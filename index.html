@@ -745,9 +745,15 @@
     document.getElementById('grid').innerHTML=r.map(a=>'<div class="sk"><div class="b t1" style="aspect-ratio:'+a+'"></div><div class="b t2"></div><div class="b t3"></div></div>').join('');
   }
 
+  // 品牌字段常为空（解析没抓到），从商品名开头兜底提取，让卡片/筛选都能显示品牌
+  function brandOf(p){
+    if(p&&p.brand&&p.brand.trim()) return p.brand.trim();
+    const m=((p&&p.name_cn)||'').match(/^([A-Za-z][A-Za-z0-9]*(?:\s+[A-Za-z0-9]+){0,2})/);
+    return (m&&m[1].replace(/\s/g,'').length>=3)?m[1].trim():null;
+  }
   function buildChips(){
     const cats=[...new Set(ALL.map(p=>p.category).filter(Boolean))];
-    const brands=[...new Set(ALL.map(p=>p.brand).filter(Boolean))];
+    const brands=[...new Set(ALL.map(p=>brandOf(p)).filter(Boolean))];
     const box=document.getElementById('chips');
     if(!cats.length&&!brands.length){ box.innerHTML=''; return; }
     const q=(v)=>esc(v).replace(/'/g,"\\'");
@@ -784,7 +790,7 @@
     const q=(document.getElementById('q').value||'').trim().toLowerCase();
     let list=ALL.slice();
     if(catFilter) list=list.filter(p=>p.category===catFilter);
-    if(brandFilter) list=list.filter(p=>p.brand===brandFilter);
+    if(brandFilter) list=list.filter(p=>brandOf(p)===brandFilter);
     if(q) list=list.filter(p=>((p.name_cn||'')+(p.brand||'')+(p.sku||'')).toLowerCase().includes(q));
     if(sort==='plow') list.sort((a,b)=>(a.sell_myr??1e9)-(b.sell_myr??1e9));
     else if(sort==='phigh') list.sort((a,b)=>(b.sell_myr??-1)-(a.sell_myr??-1));
@@ -827,7 +833,7 @@
             '<button class="addbtn'+(inCart?' in':'')+'" onclick="event.stopPropagation();addCart('+p.id+')">'+(inCart?'✓':'+')+'</button>')+
         '</div>'+
         '<div class="pinfo" onclick="openSheet('+p.id+')"><div class="pname">'+esc(p.name_cn||'')+'</div>'+
-        '<div class="pbrand">'+esc(p.brand||'—')+'</div>'+priceHtml(p)+'</div>'+
+        '<div class="pbrand">'+esc(brandOf(p)||'—')+'</div>'+priceHtml(p)+'</div>'+
       '</div>';
     }).join('');
   }
@@ -854,7 +860,7 @@
     if(p.views>10) proof.push(p.views+' 人看过');
     const proofHtml=proof.length?'<div style="font-size:11.5px;color:var(--sub);margin:2px 0 0;letter-spacing:.3px">'+proof.join(' · ')+'</div>':'';
     const specs=[];
-    if(p.brand) specs.push(['品牌',esc(p.brand)]);
+    if(brandOf(p)) specs.push(['品牌',esc(brandOf(p))]);
     if(p.sku) specs.push(['货号',esc(p.sku)]);
     (p.params||[]).forEach(x=>specs.push([esc(x.k),esc(x.v)]));
     specs.push(['保障','正品保证 · 假一赔十 · 支持验货']);
@@ -892,8 +898,9 @@
   function relatedHtml(p){
     const pool=ALL.filter(x=>x.id!==p.id);
     if(!pool.length) return '';
-    const same=pool.filter(x=>x.brand&&x.brand===p.brand);
-    const list=same.concat(pool.filter(x=>!(x.brand&&x.brand===p.brand))).slice(0,8);
+    const pb=brandOf(p);
+    const same=pool.filter(x=>pb&&brandOf(x)===pb);
+    const list=same.concat(pool.filter(x=>!(pb&&brandOf(x)===pb))).slice(0,8);
     return '<div style="margin:18px 0 9px;font-size:11.5px;font-weight:600;color:#7c7e87;letter-spacing:2px">'+(same.length?'同品牌好物 · MORE':'猜你喜欢 · PICKS')+'</div>'+
       '<div class="rscroll">'+list.map(x=>'<div class="ritem" style="width:84px" onclick="openSheet('+x.id+')">'+
         (x.image_url?'<img style="width:84px;height:84px" src="'+esc(im(x.image_url,300))+'" referrerpolicy="no-referrer" loading="lazy" alt="">':'<img style="width:84px;height:84px" alt="">')+
