@@ -202,13 +202,14 @@
   /* 本周主打橱窗 */
   .feat{margin:12px 12px 0;background:var(--card);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:transform .1s}
   .feat:active{transform:scale(.985)}
-  .feat .fimg{position:relative;height:172px;background:#fff}
+  .feat .fimg{position:relative;height:200px;background:#fff}
   .feat .fimg img{width:100%;height:100%;object-fit:cover;display:block}
   .feat .ftag{position:absolute;top:10px;left:10px;background:var(--ink);color:#fff;font-size:9.5px;letter-spacing:1.5px;padding:4px 10px;border-radius:4px;font-weight:700}
   .feat .finfo{display:flex;align-items:center;gap:10px;padding:11px 13px}
   .feat .fname{flex:1;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .feat .fprice{color:var(--price);font-weight:800;font-size:15.5px;letter-spacing:-.3px}
   .feat .fprice small{font-size:10px;font-weight:700;margin-right:1px}
+  .feat .fcta{flex:0 0 auto;font-size:11px;color:#fff;background:var(--ink);border-radius:16px;padding:6px 13px;font-weight:600;letter-spacing:.5px}
   /* 分区标题（细线 + 字距）*/
   .sechead{display:flex;align-items:center;gap:12px;margin:16px 16px 0;color:#7c7e87;font-size:11px;letter-spacing:2.5px;font-weight:600;white-space:nowrap}
   .sechead::before,.sechead::after{content:'';flex:1;height:1px;background:var(--line)}
@@ -814,7 +815,7 @@
       featEl.classList.remove('hidden');
       featEl.onclick=()=>openSheet(fp.id);
       featEl.innerHTML='<div class="fimg">'+(fp.image_url?'<img src="'+esc(im(fp.image_url,800))+'" referrerpolicy="no-referrer" alt="">':'')+'<span class="ftag">'+ftag+'</span></div>'+
-        '<div class="finfo"><div class="fname">'+esc(fp.name_cn||'')+'</div><div class="fprice"><small>RM</small>'+money(fp.sell_myr)+'</div></div>';
+        '<div class="finfo"><div class="fname">'+esc(fp.name_cn||'')+'</div><div class="fprice"><small>RM</small>'+money(fp.sell_myr)+'</div><span class="fcta">查看 →</span></div>';
       list=list.filter(p=>p.id!==fp.id);
     } else featEl.classList.add('hidden');
     document.getElementById('gridHead').textContent=filtered?('筛选结果 · '+list.length+' 件'):'严选好物 · CURATED';
