@@ -599,8 +599,8 @@
     </div>
     <div class="card">
       <label>贴得物链接，或商品页『分享 → 复制』的整段文字</label>
-      <textarea id="input" placeholder="把得物 App 商品页『分享』复制的整段文字贴进来，最稳。"></textarea>
-      <div class="hint">带上得物链接能自动抓商品大图。入库后定价、上架，顾客店面才显示。</div>
+      <textarea id="input" placeholder="把得物商品链接贴进来。想连买家秀一起？把商品链接 + 一条条得物「动态/晒图」链接一起贴（各占一行也行），一次解析就都进同一件货。"></textarea>
+      <div class="hint">💡 商品链接 + 贴文链接一起贴 → 自动建货并把买家秀放进它的评价区。只贴商品链接也行，入库后定价、上架顾客才看得到。</div>
       <div style="display:flex;gap:9px">
         <button class="btn" style="width:auto;flex:1;background:var(--card2);border:1px solid var(--line);color:var(--txt)" onclick="pasteClip()">📋 粘贴</button>
         <button class="btn" style="width:auto;flex:2.2" id="go" onclick="parseNow()"><span id="goTxt">解析入库</span></button>
@@ -1907,6 +1907,9 @@
   async function parseNow(){
     const input=document.getElementById('input').value.trim();
     if(!input){ showMsg('warn','先贴点内容再解析。'); return; }
+    // 贴了多条链接 = 商品链接 + 贴文链接 → 建一件货并把买家秀一起放进它的评价区
+    const allUrls=input.match(/https?:\/\/[^\s，。、！？【】…一-鿿]+/g)||[];
+    if(allUrls.length>=2){ return parseCombo(input, allUrls); }
     // 防重复入库：同一条链接之前入过就先问一声
     const dupUrl=extractUrl(input);
     if(dupUrl && AROWS.some(p=>p.source_url===dupUrl)){
@@ -1932,6 +1935,44 @@
       showMsg('bad','这个网络反复连不上服务器（试了'+MAX+'次都没送达）。请换个网络、或到信号好的地方再试一次。');
     }
     finally{ btn.disabled=false; goTxt.textContent='解析入库'; loadAdmin(); }
+  }
+  // 组合解析：一堆链接里，能抓到买家秀图的当「贴文」，抓不到的当「商品链接」；建货 + 把买家秀塞进它评价区
+  async function parseCombo(input, urls){
+    const btn=document.getElementById('go'), goTxt=document.getElementById('goTxt');
+    hideMsg(); btn.disabled=true; goTxt.innerHTML='<span class="spin"></span> 识别链接…';
+    try{
+      const list=urls.slice(0,6);
+      const res=await Promise.all(list.map(u=>adminCall('trend',{url:u}).catch(()=>null)));
+      let productUrl=null; const postImgs=[];
+      list.forEach((u,i)=>{
+        const r=res[i];
+        if(r&&r.ok&&r.trend&&r.trend.images&&r.trend.images.length){ postImgs.push(...r.trend.images); }
+        else if(!productUrl){ productUrl=u; } // 抓不到买家秀 = 当成商品链接
+      });
+      if(!productUrl) productUrl=urls[0];
+      const shots=[...new Set(postImgs)].slice(0,24);
+      if(AROWS.some(p=>p.source_url===productUrl)){ if(!confirm('这条商品链接之前入过库了，还要再入一次吗？')) return; }
+      // 把贴文链接从文本里剔掉，只留商品链接给入库（服务端按第一条链接取 source_url）
+      let ptext=input; urls.forEach(u=>{ if(u!==productUrl) ptext=ptext.split(u).join(' '); });
+      ptext=ptext.replace(/\s+/g,' ').trim();
+      goTxt.innerHTML='<span class="spin"></span> 入库中…';
+      const reqId='r'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+      let row=null;
+      for(let i=0;i<6;i++){
+        try{
+          const r=await adminCall('insert',{input:ptext,reqId:reqId,tgId:tgId()});
+          if(r&&r.ok&&r.row){ row=r.row; break; }
+          if(r&&r.error&&!/网络|服务错误/.test(r.error)){ showMsg('bad',r.error); return; }
+        }catch(e){ if(String(e).includes('PIN')) return; }
+        if(i<5){ showMsg('warn','网络不稳，正在自动重试…（'+(i+2)+'/6）'); await new Promise(r2=>setTimeout(r2,2500)); }
+      }
+      if(!row){ showMsg('bad','这个网络反复连不上服务器。换个网络或到信号好的地方再试。'); return; }
+      if(shots.length){ try{ await adminCall('patch',{id:row.id,fields:{review_shots:shots}}); }catch(e){} }
+      hideMsg();
+      showMsg('ok','✅ 已入库'+(shots.length?('，并把 '+shots.length+' 张买家秀放进这件货的评价区'):'（这次贴文没抓到图，可能被限流；稍后可用下面「导入买家秀」补）')+'。商品名/图/价正在后台补全…');
+      haptic('medium'); document.getElementById('input').value='';
+      _pollN=0; loadAdmin();
+    } finally { btn.disabled=false; goTxt.textContent='解析入库'; }
   }
   async function patch(id,fields){ try{ const r=await adminCall('patch',{id:id,fields:fields}); return !!(r&&r.ok); }catch(e){ return false; } }
   async function saveItem(id){
