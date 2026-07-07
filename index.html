@@ -1907,9 +1907,12 @@
   async function parseNow(){
     const input=document.getElementById('input').value.trim();
     if(!input){ showMsg('warn','先贴点内容再解析。'); return; }
-    // 贴了多条链接 = 商品链接 + 贴文链接 → 建一件货并把买家秀一起放进它的评价区
+    // 贴了多条链接：若识别到「贴文链接」，走组合解析（建货 + 买家秀）；否则按普通单条入库
     const allUrls=input.match(/https?:\/\/[^\s，。、！？【】…一-鿿]+/g)||[];
-    if(allUrls.length>=2){ return parseCombo(input, allUrls); }
+    if(allUrls.length>=2){
+      const cls=classifyUrls(input, allUrls);
+      if(cls.postUrls.length) return parseCombo(input, allUrls, cls);
+    }
     // 防重复入库：同一条链接之前入过就先问一声
     const dupUrl=extractUrl(input);
     if(dupUrl && AROWS.some(p=>p.source_url===dupUrl)){
@@ -1936,23 +1939,29 @@
     }
     finally{ btn.disabled=false; goTxt.textContent='解析入库'; loadAdmin(); }
   }
-  // 组合解析：一堆链接里，能抓到买家秀图的当「贴文」，抓不到的当「商品链接」；建货 + 把买家秀塞进它评价区
-  async function parseCombo(input, urls){
+  // 按分享文字判断每条链接是「商品」还是「贴文」——不靠抓取，省请求、避免把商品页也抓一遍撞到限流
+  function classifyUrls(text, urls){
+    const pos=urls.map(u=>({u,i:text.indexOf(u)})).filter(x=>x.i>=0).sort((a,b)=>a.i-b.i);
+    let productUrl=null; const postUrls=[]; let prevEnd=0;
+    for(const {u,i} of pos){
+      const seg=text.slice(prevEnd, i); prevEnd=i+u.length;
+      const isPost=/发布了一篇|得物动态|晒图|买家秀|动态/.test(seg);
+      const isProduct=/发现一件好物|发现好物/.test(seg);
+      if(isPost && !isProduct) postUrls.push(u);
+      else if(!productUrl) productUrl=u;   // 第一条非贴文 = 商品
+      else postUrls.push(u);
+    }
+    if(!productUrl) productUrl=urls[0];
+    return {productUrl, postUrls};
+  }
+  // 组合解析：商品链接建货 + 贴文买家秀进评价区。先入库让商品页解析先跑，稍后再抓贴文，避开得物限流
+  async function parseCombo(input, urls, cls){
     const btn=document.getElementById('go'), goTxt=document.getElementById('goTxt');
-    hideMsg(); btn.disabled=true; goTxt.innerHTML='<span class="spin"></span> 识别链接…';
+    const productUrl=cls.productUrl, postUrls=cls.postUrls.slice(0,5);
+    hideMsg(); btn.disabled=true;
     try{
-      const list=urls.slice(0,6);
-      const res=await Promise.all(list.map(u=>adminCall('trend',{url:u}).catch(()=>null)));
-      let productUrl=null; const postImgs=[];
-      list.forEach((u,i)=>{
-        const r=res[i];
-        if(r&&r.ok&&r.trend&&r.trend.images&&r.trend.images.length){ postImgs.push(...r.trend.images); }
-        else if(!productUrl){ productUrl=u; } // 抓不到买家秀 = 当成商品链接
-      });
-      if(!productUrl) productUrl=urls[0];
-      const shots=[...new Set(postImgs)].slice(0,24);
       if(AROWS.some(p=>p.source_url===productUrl)){ if(!confirm('这条商品链接之前入过库了，还要再入一次吗？')) return; }
-      // 把贴文链接从文本里剔掉，只留商品链接给入库（服务端按第一条链接取 source_url）
+      // 只留商品链接给入库（贴文链接剔掉，服务端按第一条链接取 source_url）
       let ptext=input; urls.forEach(u=>{ if(u!==productUrl) ptext=ptext.split(u).join(' '); });
       ptext=ptext.replace(/\s+/g,' ').trim();
       goTxt.innerHTML='<span class="spin"></span> 入库中…';
@@ -1967,9 +1976,23 @@
         if(i<5){ showMsg('warn','网络不稳，正在自动重试…（'+(i+2)+'/6）'); await new Promise(r2=>setTimeout(r2,2500)); }
       }
       if(!row){ showMsg('bad','这个网络反复连不上服务器。换个网络或到信号好的地方再试。'); return; }
-      if(shots.length){ try{ await adminCall('patch',{id:row.id,fields:{review_shots:shots}}); }catch(e){} }
+      // 抓买家秀：等一会让商品页解析先抢到得物；每条贴文自带重试，逐条来（不并发轰）
+      let shots=[];
+      if(postUrls.length){
+        goTxt.innerHTML='<span class="spin"></span> 抓买家秀…';
+        await new Promise(r=>setTimeout(r,4000)); // 给商品页解析让路，避开限流
+        for(const pu of postUrls){
+          for(let i=0;i<2;i++){
+            const r=await adminCall('trend',{url:pu}).catch(()=>null);
+            if(r&&r.ok&&r.trend&&r.trend.images&&r.trend.images.length){ shots.push(...r.trend.images); break; }
+            await new Promise(r2=>setTimeout(r2,2000));
+          }
+        }
+        shots=[...new Set(shots)].slice(0,24);
+        if(shots.length){ try{ await adminCall('patch',{id:row.id,fields:{review_shots:shots}}); }catch(e){} }
+      }
       hideMsg();
-      showMsg('ok','✅ 已入库'+(shots.length?('，并把 '+shots.length+' 张买家秀放进这件货的评价区'):'（这次贴文没抓到图，可能被限流；稍后可用下面「导入买家秀」补）')+'。商品名/图/价正在后台补全…');
+      showMsg('ok','✅ 已入库'+(shots.length?('，并把 '+shots.length+' 张买家秀放进这件货的评价区'):(postUrls.length?'（贴文这次没抓到图，可能被限流；稍后用下面「导入买家秀」补一次）':''))+'。商品名/图/价正在后台补全…');
       haptic('medium'); document.getElementById('input').value='';
       _pollN=0; loadAdmin();
     } finally { btn.disabled=false; goTxt.textContent='解析入库'; }

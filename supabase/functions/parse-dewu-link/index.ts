@@ -116,7 +116,11 @@ async function fillRow(supabase, apiKey, rowId, material0, sourceUrl, linkOnly) 
       const priceRmb = toNum(parsed.price_rmb);
       upd.name_cn = parsed.name_cn;
       upd.brand = emptyToNull(parsed.brand);
-      upd.sku = emptyToNull(parsed.sku);
+      // 分享文字里「XXX发现一件好物」的 XXX 是分享人用户名，绝不能当成货号
+      let skuVal = emptyToNull(parsed.sku);
+      const um = (material0 || "").match(/([A-Za-z0-9_]{3,})发现一件好物/);
+      if (um && skuVal && skuVal.replace(/\s/g, "") === um[1]) skuVal = null;
+      upd.sku = skuVal;
       upd.price_rmb = priceRmb;
       upd.price_myr = priceRmb != null ? Math.round(priceRmb * RATE_RMB_TO_MYR * 100) / 100 : null;
     } else {
@@ -142,10 +146,10 @@ async function fillRow(supabase, apiKey, rowId, material0, sourceUrl, linkOnly) 
 
 // 得物对数据中心 IP 间歇性限流：失败自动重试一次再认输
 async function fetchDewuPage(url) {
-  for (let a = 0; a < 2; a++) {
+  for (let a = 0; a < 3; a++) {
     const r = await fetchDewuPageOnce(url);
     if (!r.blocked) return r;
-    if (a === 0) await new Promise((r2) => setTimeout(r2, 1500));
+    if (a < 2) await new Promise((r2) => setTimeout(r2, 1800 * (a + 1)));
   }
   return { blocked: true };
 }
@@ -359,6 +363,7 @@ async function parseWithGemini(apiKey, material, fromPage) {
   const instr =
     "你是得物（poizon）商品信息解析器。从给定内容里抠出单个商品的：中文名(name_cn)、品牌(brand)、" +
     "货号SKU(sku)、得物人民币价格(price_rmb，元，纯数字)、商品主图链接(image_url)。" +
+    "货号是得物商品编号（一般 2 个大写字母+数字，如 KU4750）；分享文字里『XXX发现一件好物』的 XXX 是分享人用户名，绝对不要当作货号。若拿不准货号就填 null。" +
     "抠不到的字段填 null。价格只要数字（元），不要货币符号。只解析最主要的那个商品。" +
     "价格取值优先级：页面显示的当前售价 > 发售价格 >【价格线索】给的值。" +
     "注意：JSON 里的 authPrice 字段单位是「分」，要除以 100 换算成元；如果几个价格矛盾，选最像商品当前售价的那个。";
