@@ -1290,13 +1290,23 @@
   const TREND_ALIAS={'阿迪':'adidas','三叶草':'originals','蔻驰':'coach','泡泡玛特':'popmart','乐高':'lego','迪士尼':'disney','耐克':'nike','迪赛':'diesel'};
   function trendNorm(s){ s=(s||'').toLowerCase(); for(const k in TREND_ALIAS) s=s.split(k).join(TREND_ALIAS[k]); return s; }
   const TREND_STOP=new Set(['女款','男款','款式','正品','包邮','女','男']);
+  const TREND_CATSIG=[
+    ['服饰',/穿搭|吊带|背心|t恤|卫衣|外套|裙|裤|文胸|内衣|内搭|上身|显瘦|辣妹|衬衫|夹克/i],
+    ['包包',/包包|钱包|单肩|斜挎|手提|托特|背包|卡包/i],
+    ['玩偶手办',/玩偶|毛绒|公仔|手办|盲盒|挂件|娃娃/i],
+    ['鞋靴',/球鞋|运动鞋|靴|上脚/i],
+    ['饰品手表',/项链|手链|戒指|耳环|手表|眼镜/i],
+    ['美妆个护',/面膜|口红|护肤|香水|精华/i],
+  ];
   function trendRank(hay){
     hay=trendNorm(hay);
+    const cats=TREND_CATSIG.filter(x=>x[1].test(hay)).map(x=>x[0]);
     return AROWS.map(p=>{
       const t=trendNorm((p.name_cn||'')+' '+(p.brand||''));
       let sc=0;
       (t.match(/[a-z]{4,}/g)||[]).forEach(w=>{ if(hay.includes(w)) sc+=4; });
       (t.match(/[一-龥]{2,4}/g)||[]).forEach(w=>{ if(!TREND_STOP.has(w)&&hay.includes(w)) sc+=1; });
+      if(p.category&&cats.includes(p.category)) sc+=2; // 贴文没提品牌时按品类把相关货排前
       return {p,sc};
     }).sort((a,b)=>b.sc-a.sc);
   }
