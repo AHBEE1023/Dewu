@@ -1316,20 +1316,28 @@
     const btn=document.getElementById('trendGo'), tx=document.getElementById('trendGoTxt');
     const box=document.getElementById('trendResult');
     btn.disabled=true;
-    // 得物对服务器IP间歇限流：前端自动重试最多3次（叠加函数内2次），扛过限流窗
+    // 自动重试最多3次；把真实失败原因显示出来（不再一律说"限流"）
+    let lastErr='';
     for(let i=0;i<3;i++){
       tx.innerHTML='<span class="spin"></span>'+(i>0?' 重试'+i:'');
       try{
         const r=await adminCall('trend',{url:url});
         if(r&&r.ok){ _trend=r.trend; _trendPick=new Set(_trend.images.map((_,j)=>j)); renderTrend(); btn.disabled=false; tx.textContent='抓取贴文'; return; }
-        if(!(r&&/限流|抓取失败/.test(r.error||''))){ toast(r&&r.error||'抓取失败'); break; } // 非限流错误不重试
-      }catch(e){ if(String(e).includes('PIN')){ btn.disabled=false; return; } }
+        lastErr=(r&&r.error)||'服务器没返回结果';
+        if(!/限流|抓取失败/.test(lastErr)) break; // 非限流错误（视频贴/链接问题）不重试
+      }catch(e){
+        lastErr=String(e&&e.message||e);
+        if(lastErr.includes('PIN')){ btn.disabled=false; box.classList.remove('hidden'); box.innerHTML='<div style="font-size:12.5px;color:var(--bad)">后台密码失效了，退出后台重进一次（连点logo5次→密码3690）</div>'; return; }
+      }
       if(i<2) await new Promise(r2=>setTimeout(r2,2500));
     }
     btn.disabled=false; tx.textContent='抓取贴文';
     box.classList.remove('hidden');
-    box.innerHTML='<div style="font-size:12.5px;color:var(--sub);line-height:1.6">得物这会儿把服务器挡了（间歇限流，跟你网络无关）。<b style="color:var(--txt)">等 10 来秒再点「重试抓取」</b>，多试一两次基本能过。</div>'+
-      '<button class="btn" onclick="trendFetch()">重试抓取</button>';
+    const isLimit=/限流|抓取失败/.test(lastErr);
+    box.innerHTML='<div style="font-size:12.5px;color:var(--sub);line-height:1.65">'+
+      (isLimit?'得物这会儿把服务器挡了（间歇限流）。<b style="color:var(--txt)">等 10 来秒点「重试抓取」</b>，多试一两次基本能过。':
+        '没成功。错误：<b style="color:var(--bad)">'+esc(lastErr)+'</b><br>把这行字截图发给客服（开发）就能定位。')+
+      '</div><button class="btn" onclick="trendFetch()">重试抓取</button>';
   }
   function trendToggle(i){ _trendPick.has(i)?_trendPick.delete(i):_trendPick.add(i); renderTrend(); }
   function renderTrend(){
