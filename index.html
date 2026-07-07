@@ -77,7 +77,10 @@
   .soldn{font-size:10.5px;color:var(--sub);margin-left:6px;font-weight:500}
   .savetag{font-size:10.5px;font-weight:700;color:#fff;background:var(--price);border-radius:4px;padding:2px 7px;margin-left:8px;vertical-align:4px}
 
-  .sticky{position:sticky;top:0;background:var(--bg);z-index:8;padding:10px 16px 4px}
+  .searchwrap{padding:10px 16px 2px}
+  /* 排序 + 筛选：滚动时吸顶，逛到下面也能随时换排序/筛选 */
+  .filterbar{position:sticky;top:0;z-index:8;background:var(--bg);padding-top:4px;transition:box-shadow .2s}
+  .filterbar.stuck{box-shadow:0 4px 12px rgba(24,26,32,.06)}
   .searchrow{display:flex;gap:8px}
   .searchrow input{flex:1;background:var(--card);border:1px solid var(--line);border-radius:20px;color:var(--txt);padding:10px 16px;font-size:14px;outline:none;font-family:inherit;box-shadow:var(--shadow)}
   .searchrow input:focus{border-color:#c9cad0}
@@ -86,7 +89,7 @@
   .qico{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.45;pointer-events:none}
   .qclear{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;border:none;background:var(--line);color:var(--sub);font-size:11px;line-height:1;display:none;align-items:center;justify-content:center}
   .qclear.show{display:flex}
-  .seg{display:flex;gap:20px;padding:11px 2px 5px}
+  .seg{display:flex;gap:20px;padding:11px 16px 5px}
   .seg button{background:none;border:none;color:var(--sub);font-size:13px;font-weight:600;padding:2px 0;position:relative}
   .seg button.on{color:var(--txt);font-weight:800}
   .seg button.on::after{content:'';position:absolute;left:22%;right:22%;bottom:-4px;height:2.5px;border-radius:2px;background:var(--ink)}
@@ -388,16 +391,18 @@
     </div>
     <div class="tipbar hidden" id="tipbar"><div class="tx">第一次来？看中就点 + 加心愿单，一键发给客服即可下单。<span class="tgo" onclick="dismissTip();setTab('me')">看怎么买</span></div><button class="tclose" onclick="dismissTip()">✕</button></div>
     <div class="notice hidden" id="notice"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex:0 0 auto"><path d="M3 10v4a1 1 0 0 0 1 1h3l6 4V5L7 9H4a1 1 0 0 0-1 1Z"/><path d="M17 9a4 4 0 0 1 0 6"/></svg><div class="mq" id="noticeMq"></div></div>
-    <div class="sticky">
+    <div class="searchwrap">
       <div class="searchrow">
         <div class="qwrap">
           <span class="qico">🔍</span><input id="q" placeholder="搜商品名 / 品牌 / 货号…" oninput="onSearch()">
           <button class="qclear" id="qclear" onclick="clearSearch()">✕</button>
         </div>
       </div>
-      <div class="seg" id="seg"></div>
     </div>
-    <div class="chips" id="chips"></div>
+    <div class="filterbar" id="filterbar">
+      <div class="seg" id="seg"></div>
+      <div class="chips" id="chips"></div>
+    </div>
     <div class="recent hidden" id="recent"></div>
     <div class="feat hidden" id="feat"></div>
     <div class="sechead" id="gridHead">严选好物 · CURATED</div>
@@ -1682,6 +1687,7 @@
   // 滚得深了显示「回到顶部」（只在店面 Tab）
   window.addEventListener('scroll',()=>{
     document.getElementById('top2').classList.toggle('hidden', window.scrollY<600 || tab!=='shop' || mode!=='shop');
+    const fb=document.getElementById('filterbar'); if(fb) fb.classList.toggle('stuck', fb.getBoundingClientRect().top<=0.5);
   },{passive:true});
 
   // 首次进店提示（关掉就不再出现）
