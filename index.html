@@ -115,6 +115,16 @@
   .favbtn svg{width:16px;height:16px}
   .favbtn.on{background:#fff}
   .favbtn.on svg{fill:var(--price);stroke:var(--price)}
+  .ocard{border:1px solid var(--line);border-radius:15px;padding:13px 14px;margin-bottom:12px;background:#fff}
+  .ohead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px}
+  .ohead b{font-size:14.5px;letter-spacing:.5px}
+  .ohead span{font-size:11.5px;color:var(--sub)}
+  .othumbs{display:flex;gap:6px;align-items:center;margin-bottom:11px}
+  .othumbs img{width:52px;height:52px;object-fit:cover;border-radius:9px;background:#f2f2f4}
+  .othumbs .omore{font-size:12px;color:var(--sub);font-weight:600}
+  .ofoot{display:flex;justify-content:space-between;align-items:center}
+  .ofoot .ol{font-size:12.5px;color:var(--sub)}.ofoot .ol b{color:var(--price)}
+  .obtn{background:var(--ink);color:#fff;border:none;border-radius:20px;padding:8px 15px;font-size:12.5px;font-weight:600;letter-spacing:.5px}
   .pinfo{padding:9px 10px 11px;cursor:pointer}
   .pname{font-size:13px;font-weight:600;line-height:1.42;max-height:2.84em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;margin-bottom:4px}
   .pbrand{font-size:11px;color:var(--sub);margin-bottom:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -431,7 +441,7 @@
   <div id="checkout" class="checkout hidden">
     <div class="box">
       <div class="tot"><div class="l" id="cartCountLabel">共 0 件</div><div class="v" id="cartTotal">RM 0</div></div>
-      <a id="cartSend" href="#" onclick="askClearCart()">发给客服 →</a>
+      <a id="cartSend" href="#" onclick="onCartSend()">发给客服 →</a>
     </div>
   </div>
 
@@ -452,6 +462,9 @@
       <div class="st"><i>3</i><span>点「发给客服」，订单一键发出</span></div>
       <div class="st"><i>4</i><span>和客服确认后付款，马来直邮 7–15 天到手</span></div>
     </div>
+    <a class="mcard" id="ordersCard" href="#" onclick="openOrders();return false" style="text-decoration:none;color:inherit">
+      <div class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8l2 3v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7z"/><path d="M9 10h6M9 14h6"/></svg></div><div class="mt"><b>我的订单</b><div id="ordersSub">查看发过的订单</div></div><span>查看 →</span>
+    </a>
     <a class="mcard" id="waCard" href="#" style="text-decoration:none;color:inherit">
       <div class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8.3 8.3 0 0 1-8.5 8.1 9 9 0 0 1-3.2-.6L4 21l1.6-4.6A7.9 7.9 0 0 1 4 12a8.3 8.3 0 0 1 8.5-8.1A8.3 8.3 0 0 1 21 12Z"/></svg></div><div class="mt"><b>联系客服</b><div>问价 / 下单 / 物流</div></div><span>联系 →</span>
     </a>
@@ -547,6 +560,10 @@
   <div class="sheet" id="sheet" onclick="if(event.target===this)closeSheet()">
     <div class="sheet-in"><div class="close"><button onclick="closeSheet()">✕</button></div><div id="sheetContent"></div></div>
   </div>
+  <!-- 我的订单弹层（顾客） -->
+  <div class="sheet" id="ordersSheet" onclick="if(event.target===this)closeOrders()">
+    <div class="sheet-in"><div class="close"><button onclick="closeOrders()">✕</button></div><div id="ordersContent" style="padding:6px 18px calc(22px + var(--safe-b))"></div></div>
+  </div>
   <!-- 成交流水弹层 -->
   <div class="sheet" id="salesSheet" onclick="if(event.target===this)closeSales()">
     <div class="sheet-in"><div class="close"><button onclick="closeSales()">✕</button></div><div id="salesContent" style="padding:6px 18px calc(22px + var(--safe-b))"></div></div>
@@ -595,7 +612,7 @@
           else if(tg.openLink) tg.openLink(url);
           else window.open(url,'_blank');
         }catch(e){ window.open(url,'_blank'); }
-        askClearCart();
+        onCartSend();
       });
     }catch(e){}
   }
@@ -641,6 +658,7 @@
   function handleBack(){
     const on=(id)=>document.getElementById(id).classList.contains('show');
     if(on('lightbox')){ closeLightbox(); return; }
+    if(on('ordersSheet')){ closeOrders(); return; }
     if(on('salesSheet')){ closeSales(); return; }
     if(on('edit')){ closeEdit(); return; }
     if(on('sheet')){ closeSheet(); return; }
@@ -650,7 +668,7 @@
   function updateBack(){
     if(!(tg&&tg.BackButton)) return;
     const on=(id)=>document.getElementById(id).classList.contains('show');
-    const need=on('lightbox')||on('salesSheet')||on('edit')||on('sheet')||mode==='admin'||tab!=='shop';
+    const need=on('lightbox')||on('ordersSheet')||on('salesSheet')||on('edit')||on('sheet')||mode==='admin'||tab!=='shop';
     try{ need?tg.BackButton.show():tg.BackButton.hide(); }catch(e){}
   }
   if(tg&&tg.BackButton){ try{ tg.BackButton.onClick(handleBack); }catch(e){} }
@@ -710,6 +728,7 @@
     document.getElementById('top2').classList.add('hidden');
     if(t==='cart') renderCart();
     if(t==='fav') renderFav();
+    if(t==='me') updateOrdersEntry();
     haptic('light'); updateBack(); updateMainButton();
   }
 
@@ -1108,14 +1127,59 @@
     const t='我想要这个：'+(p.name_cn||'')+(pv?'【规格：'+pv.name+'】':'')+(p.sku?'（货号 '+p.sku+'）':'')+(price!=null?'，RM'+money(price):'');
     return contactHref(t);
   }
-  function cartWaHref(){
+  // 发单时把当前心愿单快照成一个订单对象（用于「我的订单」记录 + 生成联系文案）
+  let _lastOrder=null;
+  function buildOrder(){
     const items=cartItems().filter(p=>!p.soldout);
-    const n=items.reduce((a,p)=>a+cart[p.id],0);
-    let t='你好，我想下单（'+SHOP_NAME+'）订单 '+orderNo()+'：\n';
-    items.forEach((p,i)=>{ const cv=cartVar[p.id]; t+=(i+1)+'. '+(p.name_cn||'')+(cv?'【'+cv.name+'】':'')+(p.sku?'（'+p.sku+'）':'')+' ×'+cart[p.id]+(linePrice(p)!=null?' RM'+money(linePrice(p)):' 询价')+'\n'; });
-    const tot=cartTotal(); if(tot>0) t+='合计约 RM'+money(tot)+'（共 '+n+' 件）';
-    return contactHref(t);
+    if(!items.length) return null;
+    return {
+      no:orderNo(), ts:Date.now(), total:cartTotal(),
+      count:items.reduce((a,p)=>a+cart[p.id],0),
+      items:items.map(p=>{ const cv=cartVar[p.id]; return {id:p.id,name:p.name_cn||'',sku:p.sku||'',variant:cv?cv.name:'',qty:cart[p.id],price:linePrice(p),image:p.image_url||''}; }),
+    };
   }
+  function orderText(o){
+    let t='你好，我想下单（'+SHOP_NAME+'）订单 '+o.no+'：\n';
+    o.items.forEach((it,i)=>{ t+=(i+1)+'. '+it.name+(it.variant?'【'+it.variant+'】':'')+(it.sku?'（'+it.sku+'）':'')+' ×'+it.qty+(it.price!=null?' RM'+money(it.price):' 询价')+'\n'; });
+    if(o.total>0) t+='合计约 RM'+money(o.total)+'（共 '+o.count+' 件）';
+    return t;
+  }
+  function cartWaHref(){
+    _lastOrder=buildOrder();
+    return _lastOrder?contactHref(orderText(_lastOrder)):contactHref('你好，想问下 '+SHOP_NAME+' 的货');
+  }
+
+  // ===== 我的订单（本地留底，方便顾客回看 / 再发一次）=====
+  let orders=[]; try{ orders=JSON.parse(localStorage.getItem('orders369')||'[]'); }catch(e){}
+  function saveOrder(o){ if(!o||!o.items||!o.items.length) return; orders.unshift(o); orders=orders.slice(0,30); localStorage.setItem('orders369',JSON.stringify(orders)); updateOrdersEntry(); }
+  // 发单动作统一入口：存一笔留底 + 稍后问是否清空
+  function onCartSend(){ if(_lastOrder) saveOrder(_lastOrder); askClearCart(); }
+  function updateOrdersEntry(){ const s=document.getElementById('ordersSub'); if(s) s.textContent=orders.length?('已发 '+orders.length+' 单 · 点开可再发一次'):'查看发过的订单'; }
+  function fmtDate(ts){ const d=new Date(ts); const p=n=>String(n).padStart(2,'0'); return (d.getMonth()+1)+'月'+d.getDate()+'日 '+p(d.getHours())+':'+p(d.getMinutes()); }
+  function resendOrder(no){
+    const o=orders.find(x=>x.no===no); if(!o) return;
+    const url=contactHref(orderText(o)); haptic('light');
+    try{
+      if(hasMB()&&tg){ if(/^https:\/\/t\.me\//.test(url)&&tg.openTelegramLink) tg.openTelegramLink(url); else if(tg.openLink) tg.openLink(url); else window.open(url,'_blank'); }
+      else window.open(url,'_blank');
+    }catch(e){ window.open(url,'_blank'); }
+  }
+  function orderCardHtml(o){
+    const thumbs=o.items.slice(0,4).map(it=>it.image?'<img src="'+esc(im(it.image,120))+'" referrerpolicy="no-referrer" onerror="imgFB(this)" alt="">':'<img alt="">').join('');
+    const more=o.items.length>4?'<span class="omore">+'+(o.items.length-4)+'</span>':'';
+    return '<div class="ocard"><div class="ohead"><b>'+esc(o.no)+'</b><span>'+fmtDate(o.ts)+'</span></div>'+
+      '<div class="othumbs">'+thumbs+more+'</div>'+
+      '<div class="ofoot"><div class="ol">共 '+o.count+' 件'+(o.total>0?' · <b>RM'+money(o.total)+'</b>':'')+'</div>'+
+      '<button class="obtn" onclick="resendOrder(\''+o.no+'\')">再发给客服 →</button></div></div>';
+  }
+  function openOrders(){
+    const box=document.getElementById('ordersContent');
+    box.innerHTML='<h2 style="margin:2px 0 2px;font-size:20px">我的订单</h2><p style="font-size:10px;color:var(--sub);letter-spacing:2.5px;margin:0 0 14px">MY ORDERS</p>'+
+      (orders.length?orders.map(orderCardHtml).join(''):
+        '<div class="empty" style="padding:44px 0"><div class="big">📋</div>还没有订单<br>去心愿单点「发给客服」，这里就会留底<br><button onclick="closeOrders();setTab(\'shop\')" style="margin-top:14px;background:var(--ink);border:none;color:#fff;border-radius:20px;padding:11px 30px;font-size:13.5px;font-weight:600;letter-spacing:1px">去逛逛</button></div>');
+    document.getElementById('ordersSheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
+  }
+  function closeOrders(){ document.getElementById('ordersSheet').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
 
   // ===== 后台 =====
   function showMsg(k,t){ const m=document.getElementById('msg'); m.className='msg show '+k; m.textContent=t; }
@@ -1730,6 +1794,7 @@
   // 启动
   updateBadge();
   updateFavBadge();
+  updateOrdersEntry();
   refreshSwitch();
   load();
 </script>
