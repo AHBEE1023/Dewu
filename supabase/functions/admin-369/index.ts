@@ -39,6 +39,16 @@ Deno.serve(async (req) => {
         return json({ ok: true, rows: data }, 200, cors);
       }
 
+      case "trend": { // 抓得物「动态/贴文」分享页 -> 标题/正文/作者/买家秀图（匹配商品在前端做）
+        const url = (body.url || "").toString().trim();
+        if (!/^https?:\/\//.test(url)) return json({ ok: false, error: "请贴得物动态链接" }, 400, cors);
+        const html = await fetchTrendHtml(url);
+        if (!html) return json({ ok: false, error: "抓取失败，得物可能临时限流，稍后重试" }, 200, cors);
+        const t = extractTrend(html);
+        if (!t.images.length) return json({ ok: false, error: "没抓到贴文图片（可能是视频贴或已删除）" }, 200, cors);
+        return json({ ok: true, trend: t }, 200, cors);
+      }
+
       case "patch": {
         const id = Number(body.id);
         if (!id) return json({ ok: false, error: "缺 id" }, 400, cors);
@@ -181,6 +191,44 @@ function quickName(input, url) {
     .replace(/\s+/g, " ")
     .trim();
   return t ? "⏳ " + t.slice(0, 40) : null;
+}
+// 抓贴文分享页 HTML（同商品解析：iPhone UA + 失败重试一次）
+async function fetchTrendHtml(url) {
+  for (let a = 0; a < 2; a++) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 12000);
+      const resp = await fetch(url, {
+        signal: ctrl.signal, redirect: "follow",
+        headers: {
+          "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "zh-CN,zh;q=0.9",
+        },
+      }).finally(() => clearTimeout(timer));
+      if (resp.ok) { const h = await resp.text(); if (h && h.length > 800) return h; }
+    } catch (_e) { /* retry */ }
+    await new Promise((r) => setTimeout(r, 1200));
+  }
+  return null;
+}
+function tjstr(html, key) {
+  const m = html.match(new RegExp('"' + key + '":"((?:[^"\\\\]|\\\\.){0,600})"'));
+  if (!m) return "";
+  try { return JSON.parse('"' + m[1] + '"'); } catch (_e) { return m[1].replace(/\\n/g, "\n"); }
+}
+// 从贴文页 SSR JSON 抠 标题/正文/作者/买家秀图
+function extractTrend(html) {
+  const raw = [...html.matchAll(/https?:(?:\\?\/){2}image-cdn\.poizon\.com[^"'\\ ]+?\.(?:jpg|jpeg|png|webp)/gi)]
+    .map((m) => m[0].replace(/\\u002f/gi, "/").replace(/\\\//g, "/"));
+  const seen = new Set(), imgs = [];
+  for (const u0 of raw) { const u = u0.split("?")[0]; if (!seen.has(u)) { seen.add(u); imgs.push(u); } }
+  return {
+    title: tjstr(html, "title").trim(),
+    content: tjstr(html, "content").trim(),
+    author: tjstr(html, "userName").trim(),
+    images: imgs.slice(0, 12),
+  };
 }
 function json(obj, status, cors) {
   return new Response(JSON.stringify(obj), {

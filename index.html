@@ -497,6 +497,15 @@
       </div>
     </div>
     <div class="card">
+      <label>⭐ 从得物动态导入买家秀（贴晒图/好评贴链接，自动认商品、图进评论区）</label>
+      <textarea id="trendIn" placeholder="把得物动态『分享→复制』的整段文字或链接贴这里" style="min-height:64px"></textarea>
+      <div style="display:flex;gap:9px">
+        <button class="btn" style="width:auto;flex:1;background:var(--card2);color:var(--txt)" onclick="pasteTrend()">📋 粘贴</button>
+        <button class="btn" style="width:auto;flex:2.2" id="trendGo" onclick="trendFetch()"><span id="trendGoTxt">抓取贴文</span></button>
+      </div>
+      <div id="trendResult" class="hidden" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
       <input class="asearch" id="aq" placeholder="搜货品…" oninput="renderAdmin()">
       <div class="pricebar">
         <label>加价倍率 ×</label><input id="markup" type="number" step="0.1" min="1" value="1.5" onchange="saveMarkup()">
@@ -1271,6 +1280,68 @@
       toast('设置已保存 ✅'); haptic('medium');
       kv.forEach(([k,v])=>CFG[k]=v); setNotice(CFG.notice||''); applyContact();
     } else toast('部分保存失败，重试一下');
+  }
+  // ===== 从得物动态导入买家秀 =====
+  let _trend=null, _trendPick=new Set();
+  async function pasteTrend(){
+    try{ const t=await navigator.clipboard.readText(); if(t&&t.trim()){ document.getElementById('trendIn').value=t.trim(); toast('已粘贴 ✅ 点抓取'); } else toast('剪贴板空的'); }
+    catch(e){ document.getElementById('trendIn').focus(); toast('读不了剪贴板，长按粘贴'); }
+  }
+  const TREND_ALIAS={'阿迪':'adidas','三叶草':'originals','蔻驰':'coach','泡泡玛特':'popmart','乐高':'lego','迪士尼':'disney','耐克':'nike','迪赛':'diesel'};
+  function trendNorm(s){ s=(s||'').toLowerCase(); for(const k in TREND_ALIAS) s=s.split(k).join(TREND_ALIAS[k]); return s; }
+  const TREND_STOP=new Set(['女款','男款','款式','正品','包邮','女','男']);
+  function trendRank(hay){
+    hay=trendNorm(hay);
+    return AROWS.map(p=>{
+      const t=trendNorm((p.name_cn||'')+' '+(p.brand||''));
+      let sc=0;
+      (t.match(/[a-z]{4,}/g)||[]).forEach(w=>{ if(hay.includes(w)) sc+=4; });
+      (t.match(/[一-龥]{2,4}/g)||[]).forEach(w=>{ if(!TREND_STOP.has(w)&&hay.includes(w)) sc+=1; });
+      return {p,sc};
+    }).sort((a,b)=>b.sc-a.sc);
+  }
+  async function trendFetch(){
+    const url=(document.getElementById('trendIn').value.match(/https?:\/\/[^\s，。、]+/)||[])[0];
+    if(!url){ toast('没找到链接'); return; }
+    const btn=document.getElementById('trendGo'), tx=document.getElementById('trendGoTxt');
+    btn.disabled=true; tx.innerHTML='<span class="spin"></span>';
+    try{
+      const r=await adminCall('trend',{url:url});
+      if(!(r&&r.ok)){ toast(r&&r.error||'抓取失败'); return; }
+      _trend=r.trend; _trendPick=new Set(_trend.images.map((_,i)=>i)); // 默认全选
+      renderTrend();
+    }catch(e){ if(!String(e).includes('PIN')) toast('网络不稳，重试'); }
+    finally{ btn.disabled=false; tx.textContent='抓取贴文'; }
+  }
+  function trendToggle(i){ _trendPick.has(i)?_trendPick.delete(i):_trendPick.add(i); renderTrend(); }
+  function renderTrend(){
+    const box=document.getElementById('trendResult'); if(!_trend){ box.classList.add('hidden'); return; }
+    box.classList.remove('hidden');
+    const ranked=trendRank((_trend.title||'')+' '+(_trend.content||''));
+    const best=ranked[0]&&ranked[0].sc>0?ranked[0].p.id:'';
+    const opts=ranked.map(x=>'<option value="'+x.p.id+'"'+(x.p.id===best?' selected':'')+'>'+(x.sc>0?'★'+x.sc+' ':'')+esc((x.p.name_cn||'').slice(0,22))+'</option>').join('');
+    box.innerHTML=
+      '<div style="font-size:12.5px;color:var(--sub);margin-bottom:6px">「'+esc((_trend.title||'').slice(0,30))+'」· '+esc(_trend.author||'')+' · '+_trend.images.length+'图（点图选/取消，已选 '+_trendPick.size+'）</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">'+
+        _trend.images.map((u,i)=>'<div style="position:relative" onclick="trendToggle('+i+')"><img src="'+esc(im(u,200))+'" referrerpolicy="no-referrer" style="width:62px;height:62px;object-fit:cover;border-radius:8px;border:2px solid '+(_trendPick.has(i)?'var(--ink)':'transparent')+';opacity:'+(_trendPick.has(i)?'1':'.4')+'">'+(_trendPick.has(i)?'<span style="position:absolute;top:-6px;right:-6px;background:var(--ink);color:#fff;width:17px;height:17px;border-radius:50%;font-size:10px;display:flex;align-items:center;justify-content:center">✓</span>':'')+'</div>').join('')+
+      '</div>'+
+      '<label style="font-size:12px;color:var(--sub)">导入到哪件货'+(best?'（已智能匹配）':'（没自动匹配上，手选）')+'</label>'+
+      '<select id="trendTarget" class="asearch" style="margin:6px 0 0">'+opts+'</select>'+
+      '<button class="btn" onclick="trendConfirm()">导入选中的图到该商品评论区</button>';
+  }
+  async function trendConfirm(){
+    if(!_trend||!_trendPick.size){ toast('先选至少一张图'); return; }
+    const id=Number(document.getElementById('trendTarget').value); if(!id){ toast('选一件货'); return; }
+    const p=AROWS.find(x=>x.id===id); if(!p) return;
+    const cur=Array.isArray(p.review_shots)?p.review_shots.slice():[];
+    const add=[..._trendPick].map(i=>_trend.images[i]).filter(u=>!cur.includes(u));
+    const merged=cur.concat(add).slice(0,20);
+    const r=await adminCall('patch',{id:id,fields:{review_shots:merged}}).catch(()=>null);
+    if(r&&r.ok){
+      toast('已导入 '+add.length+' 张到「'+(p.name_cn||'').slice(0,10)+'」✅'); haptic('medium');
+      _trend=null; document.getElementById('trendIn').value=''; document.getElementById('trendResult').classList.add('hidden');
+      loadAdmin();
+    } else toast('导入失败');
   }
   async function markSold(id){
     const p=AROWS.find(x=>x.id===id); if(!p) return;
