@@ -124,7 +124,19 @@
   .shrow span{font-size:11px;color:var(--sub);letter-spacing:1px;font-weight:600}
   .shrow button{background:none;border:none;color:var(--sub);font-size:11.5px}
   .shchips{display:flex;flex-wrap:wrap;gap:7px}
-  .shchip{font-size:12.5px;padding:5px 12px;border-radius:15px;background:var(--card2);color:#5a5f6b}
+  .shchip{font-size:12.5px;padding:5px 12px;border-radius:15px;background:var(--card2);color:var(--sub)}
+  /* 搜索联想（输入时直接列出匹配商品，点开即达）*/
+  .sugg{display:flex;align-items:center;gap:10px;padding:7px 2px;cursor:pointer}
+  .sugg+.sugg{border-top:1px solid var(--line)}
+  .sugg img{width:38px;height:38px;border-radius:8px;object-fit:cover;background:var(--card2);flex:0 0 auto}
+  .sugg .sg-i{flex:1;min-width:0}
+  .sugg .sg-n{font-size:13px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sugg .sg-b{font-size:10.5px;color:var(--sub);letter-spacing:.5px}
+  .sugg .sg-p{font-size:13px;font-weight:700;color:var(--price);flex:0 0 auto}
+  /* 下拉刷新 */
+  .ptr{height:0;overflow:hidden;display:flex;align-items:flex-end;justify-content:center;opacity:0;color:var(--sub)}
+  .ptr .ptr-i{display:flex;align-items:center;justify-content:center;font-size:16px;padding-bottom:10px;transition:transform .1s;font-weight:700}
+  .ptr.ready .ptr-i{color:var(--price)}
   /* 分享图卡 */
   .sharelay{position:fixed;inset:0;background:#000000cc;z-index:120;display:none;align-items:center;justify-content:center;padding:20px}
   .sharelay.show{display:flex}
@@ -485,6 +497,7 @@
 
   <!-- ============ 顾客店面 ============ -->
   <div id="shopView">
+    <div class="ptr" id="ptr"><div class="ptr-i">↓</div></div>
     <div class="hero">
       <div class="brand">
         <div class="logo" onclick="logoTap()">369</div>
@@ -951,12 +964,28 @@
   function applySearch(s){ const q=document.getElementById('q'); q.value=s; document.getElementById('qclear').classList.add('show'); pushSearch(s); renderSearchHist(); render(); }
   function renderSearchHist(){
     const box=document.getElementById('shist'), q=document.getElementById('q');
-    const show=document.activeElement===q && !q.value.trim() && SQ.length>0;
-    box.classList.toggle('hidden',!show);
-    if(!show) return;
+    if(document.activeElement!==q){ box.classList.add('hidden'); return; }
+    const val=(q.value||'').trim().toLowerCase();
+    if(val){
+      // 输入时：直接列出匹配的商品，带图带价，点一下直达详情
+      const hits=ALL.filter(p=>((p.name_cn||'')+(p.brand||'')+(p.sku||'')).toLowerCase().includes(val)).slice(0,6);
+      if(!hits.length){ box.classList.add('hidden'); return; }
+      box.classList.remove('hidden');
+      box.innerHTML='<div class="shrow"><span>相关商品 · '+hits.length+'</span></div>'+hits.map(p=>
+        '<div class="sugg" onmousedown="event.preventDefault()" onclick="pickSugg('+p.id+')">'+
+        (p.image_url?'<img src="'+esc(im(p.image_url,120))+'" referrerpolicy="no-referrer" onerror="imgFB(this)" alt="">':'<img alt="">')+
+        '<div class="sg-i"><div class="sg-n">'+esc(p.name_cn||'')+'</div><div class="sg-b">'+esc(brandOf(p)||'')+'</div></div>'+
+        (p.sell_myr!=null?'<div class="sg-p">RM'+money(p.sell_myr)+'</div>':'')+
+        '</div>').join('');
+      return;
+    }
+    // 空输入时：最近搜索
+    if(!SQ.length){ box.classList.add('hidden'); return; }
+    box.classList.remove('hidden');
     box.innerHTML='<div class="shrow"><span>最近搜索</span><button onmousedown="event.preventDefault()" onclick="clearSearchHist()">清空</button></div>'+
       '<div class="shchips">'+SQ.map(s=>'<span class="shchip" onmousedown="event.preventDefault()" onclick="applySearch(\''+esc(s).replace(/'/g,"\\'")+'\')">'+esc(s)+'</span>').join('')+'</div>';
   }
+  function pickSugg(id){ pushSearch((document.getElementById('q').value||'').trim()); document.getElementById('shist').classList.add('hidden'); document.getElementById('q').blur(); openSheet(id); }
 
   function priceHtml(p){
     if(p.sell_myr==null) return '<div class="ask">点击问价</div>';
@@ -2203,6 +2232,37 @@
   window.addEventListener('scroll',()=>{
     document.getElementById('top2').classList.toggle('hidden', window.scrollY<600 || tab!=='shop' || mode!=='shop');
     const fb=document.getElementById('filterbar'); if(fb) fb.classList.toggle('stuck', fb.getBoundingClientRect().top<=0.5);
+  },{passive:true});
+
+  // ===== 下拉刷新（店面顶部下拉，松手刷新货品）=====
+  let _ptrY=null,_ptrOn=false,_ptrGo=false,_ptrBusy=false; const PTR_TRIG=64,PTR_MAX=96;
+  function ptrReset(){ const el=document.getElementById('ptr'); if(!el) return; el.style.transition='height .25s,opacity .25s'; el.style.height='0'; el.style.opacity='0'; el.classList.remove('ready'); const i=el.querySelector('.ptr-i'); if(i){ i.textContent='↓'; i.style.transform=''; } }
+  document.addEventListener('touchstart',(e)=>{
+    if(_ptrBusy||mode!=='shop'||tab!=='shop'||window.scrollY>0||e.touches.length!==1){ _ptrY=null; return; }
+    _ptrY=e.touches[0].clientY; _ptrOn=false; _ptrGo=false;
+  },{passive:true});
+  document.addEventListener('touchmove',(e)=>{
+    if(_ptrY==null||_ptrBusy) return;
+    const dy=e.touches[0].clientY-_ptrY;
+    if(dy<=0||window.scrollY>0){ if(_ptrOn) ptrReset(); _ptrY=null; _ptrOn=false; return; }
+    _ptrOn=true;
+    const pull=Math.min(PTR_MAX,dy*0.5), el=document.getElementById('ptr');
+    el.style.transition='none'; el.style.height=pull+'px'; el.style.opacity=Math.min(1,pull/PTR_TRIG);
+    const i=el.querySelector('.ptr-i'); if(i) i.style.transform='rotate('+Math.min(180,pull*3)+'deg)';
+    _ptrGo=pull>=PTR_TRIG; el.classList.toggle('ready',_ptrGo);
+    if(e.cancelable) e.preventDefault(); // 顶部下拉时接管手势，避免浏览器自带回弹
+  },{passive:false});
+  document.addEventListener('touchend',()=>{
+    if(_ptrY==null||_ptrBusy){ _ptrY=null; return; }
+    _ptrY=null;
+    if(!_ptrOn) return;
+    const el=document.getElementById('ptr'), i=el.querySelector('.ptr-i');
+    if(_ptrGo){
+      _ptrBusy=true; el.style.transition='height .2s'; el.style.height='46px'; el.classList.remove('ready');
+      if(i) i.innerHTML='<span class="spin"></span>'; haptic('light');
+      Promise.resolve(load()).catch(()=>{}).finally(()=>{ setTimeout(()=>{ ptrReset(); _ptrBusy=false; },400); });
+    } else ptrReset();
+    _ptrOn=false;
   },{passive:true});
 
   // 首次进店提示（关掉就不再出现）
