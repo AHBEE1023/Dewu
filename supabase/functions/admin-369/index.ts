@@ -112,7 +112,8 @@ Deno.serve(async (req) => {
         if (e1) return json({ ok: false, error: e1.message }, 500, cors);
         if (s0.product_id) {
           const { data: p } = await supabase.from("products_369").select("sold_count").eq("id", s0.product_id).maybeSingle();
-          if (p) await supabase.from("products_369").update({ sold_count: Math.max(0, (p.sold_count || 0) - s0.qty) }).eq("id", s0.product_id);
+          // 撤销成交时一并取消售罄标记（sale 可能顺手标了售罄，不撤会一直挂「已售罄」）
+          if (p) await supabase.from("products_369").update({ sold_count: Math.max(0, (p.sold_count || 0) - s0.qty), soldout: false }).eq("id", s0.product_id);
         }
         return json({ ok: true }, 200, cors);
       }

@@ -248,7 +248,8 @@ function extractStructured(html) {
   if (m1) priceRmb = Number(m1[1].replace(/,/g, ""));
   if (!Number.isFinite(priceRmb) || priceRmb == null) {
     const m2 = html.match(/"authPrice"\s*:\s*(\d+(?:\.\d+)?)\s*,\s*"originalTitle"/);
-    if (m2) priceRmb = Number(m2[1]);
+    // authPrice 在得物 JSON 里是「分」（和下面众数分支、extractVariants 一致）；大整数按分换算成元，避免 100 倍价
+    if (m2) { const v = Number(m2[1]); priceRmb = (Number.isInteger(v) && v >= 1000) ? v / 100 : v; }
   }
   if (!Number.isFinite(priceRmb) || priceRmb == null) {
     const ap = [...html.matchAll(/"authPrice"\s*:\s*(\d{3,})/g)].map((m) => +m[1]);

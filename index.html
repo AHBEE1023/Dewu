@@ -3,7 +3,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>369 甄选 · 正品好物</title>
 <meta name="theme-color" content="#f5f6f8" media="(prefers-color-scheme: light)" />
 <meta name="theme-color" content="#0e0f11" media="(prefers-color-scheme: dark)" />
@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="369甄选" />
+<link rel="preconnect" href="https://telegram.org" crossorigin />
 <link rel="preconnect" href="https://cdn.poizon.com" crossorigin />
 <link rel="preconnect" href="https://wgulnumflnumdpqfbjqy.supabase.co" crossorigin />
 <meta property="og:image" content="https://dewu-247team.vercel.app/og.png" />
@@ -25,7 +26,7 @@
 <style>
   :root{
     --bg:#f7f7f8; --card:#ffffff; --card2:#f2f2f4; --line:#ececee;
-    --txt:#141519; --sub:#96979f; --ink:#141519; --onInk:#ffffff;
+    --txt:#141519; --sub:#6d6f78; --ink:#141519; --onInk:#ffffff;
     --face:#ffffff; --faceTrans:#fffffff2; --imgbg:#ffffff;
     --accent:#ff5a3c; --accent2:#ffb020;
     --price:#e8232e; --ok:#00b578; --bad:#ff3141;
@@ -41,10 +42,12 @@
       --shadow:0 1px 12px rgba(0,0,0,.45);
     }
   }
-  :root[data-theme="light"]{ --bg:#f7f7f8; --card:#ffffff; --card2:#f2f2f4; --line:#ececee; --txt:#141519; --sub:#96979f; --ink:#141519; --onInk:#ffffff; --face:#ffffff; --faceTrans:#fffffff2; --imgbg:#ffffff; --shadow:0 1px 10px rgba(24,26,32,.05); }
+  :root[data-theme="light"]{ --bg:#f7f7f8; --card:#ffffff; --card2:#f2f2f4; --line:#ececee; --txt:#141519; --sub:#6d6f78; --ink:#141519; --onInk:#ffffff; --face:#ffffff; --faceTrans:#fffffff2; --imgbg:#ffffff; --shadow:0 1px 10px rgba(24,26,32,.05); }
   :root[data-theme="dark"]{ --bg:#0e0f11; --card:#1a1b1e; --card2:#26272b; --line:#2d2e33; --txt:#ececed; --sub:#8b8d95; --ink:#f0f0f2; --onInk:#16171b; --face:#1a1b1e; --faceTrans:#1a1b1ef2; --imgbg:#232428; --shadow:0 1px 12px rgba(0,0,0,.45); }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   button,a,.chip,.prod,.feat{touch-action:manipulation}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+  @media (prefers-reduced-motion:reduce){ *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important} }
   html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);
     font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
   body{max-width:720px;margin:0 auto;min-height:100vh}
@@ -101,7 +104,7 @@
   .filterbar{position:sticky;top:0;z-index:8;background:var(--bg);padding-top:4px;transition:box-shadow .2s}
   .filterbar.stuck{box-shadow:0 4px 12px rgba(24,26,32,.06)}
   .searchrow{display:flex;gap:8px}
-  .searchrow input{flex:1;background:var(--card);border:1px solid var(--line);border-radius:20px;color:var(--txt);padding:10px 16px;font-size:14px;outline:none;font-family:inherit;box-shadow:var(--shadow)}
+  .searchrow input{flex:1;background:var(--card);border:1px solid var(--line);border-radius:20px;color:var(--txt);padding:10px 16px;font-size:16px;outline:none;font-family:inherit;box-shadow:var(--shadow)}
   .searchrow input:focus{border-color:#c9cad0}
   .qwrap{flex:1;position:relative;display:flex}
   .qwrap input{width:100%;padding-right:34px;padding-left:38px}
@@ -162,7 +165,7 @@
 
   /* 瀑布流：CSS columns，图片保持原比例 */
   .grid{columns:2;column-gap:9px;padding:6px 12px}
-  .prod{background:var(--card);border-radius:12px;overflow:hidden;position:relative;transition:transform .1s;
+  .prod{background:var(--card);border-radius:12px;overflow:hidden;position:relative;transition:transform .1s;content-visibility:auto;contain-intrinsic-size:auto 300px;
     break-inside:avoid;margin-bottom:9px;box-shadow:var(--shadow);display:inline-block;width:100%}
   /* 收藏页用真 2 列网格：件数少也左右铺满，不会挤在左半边 */
   #favGrid{columns:auto!important;display:grid;grid-template-columns:1fr 1fr;gap:11px;align-items:start}
@@ -251,6 +254,7 @@
     background:linear-gradient(180deg,transparent,var(--bg) 30%);z-index:16}
   .checkout .box{background:var(--card);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 24px rgba(24,26,32,.12)}
   .checkout .tot{flex:1}.checkout .tot .l{font-size:11px;color:var(--sub)}.checkout .tot .v{font-size:20px;font-weight:900;color:var(--price)}
+  .checkout .reass{font-size:10px;color:var(--sub);margin-top:1px;letter-spacing:.2px}
   .checkout a{border:none;border-radius:22px;padding:14px 22px;font-size:14.5px;font-weight:700;color:var(--onInk);text-decoration:none;background:var(--ink)}
 
   /* ============ 客服 ============ */
@@ -519,8 +523,8 @@
     <div class="searchwrap">
       <div class="searchrow">
         <div class="qwrap">
-          <span class="qico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.2-4.2"/></svg></span><input id="q" placeholder="搜商品名 / 品牌 / 货号…" autocomplete="off" oninput="onSearch()" onfocus="renderSearchHist()" onblur="setTimeout(renderSearchHist,180)" onkeydown="if(event.key==='Enter'){pushSearch(this.value);renderSearchHist();this.blur();}">
-          <button class="qclear" id="qclear" onclick="clearSearch()">✕</button>
+          <span class="qico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.2-4.2"/></svg></span><input id="q" type="search" enterkeyhint="search" aria-label="搜商品" placeholder="搜商品名 / 品牌 / 货号…" autocomplete="off" oninput="onSearch()" onfocus="renderSearchHist()" onblur="setTimeout(renderSearchHist,180)" onkeydown="if(event.key==='Enter'){pushSearch(this.value);renderSearchHist();this.blur();}">
+          <button class="qclear" id="qclear" onclick="clearSearch()" aria-label="清除搜索">✕</button>
         </div>
       </div>
       <div class="shist hidden" id="shist"></div>
@@ -556,8 +560,8 @@
   </div>
   <div id="checkout" class="checkout hidden">
     <div class="box">
-      <div class="tot"><div class="l" id="cartCountLabel">共 0 件</div><div class="v" id="cartTotal">RM 0</div></div>
-      <a id="cartSend" href="#" onclick="onCartSend()">发给客服 →</a>
+      <div class="tot"><div class="l" id="cartCountLabel">共 0 件</div><div class="v" id="cartTotal">RM 0</div><div class="reass">发送不扣款 · 客服核价后再付</div></div>
+      <a id="cartSend" href="#" onclick="return onCartSend(event)">发给客服 →</a>
     </div>
   </div>
 
@@ -680,7 +684,7 @@
 
   <!-- 顾客详情弹层 -->
   <div class="sheet" id="sheet" onclick="if(event.target===this)closeSheet()">
-    <div class="sheet-in"><div class="close"><button onclick="closeSheet()">✕</button></div><div id="sheetContent"></div></div>
+    <div class="sheet-in"><div class="close"><button onclick="closeSheet()" aria-label="关闭">✕</button></div><div id="sheetContent"></div></div>
   </div>
   <!-- 分享图卡弹层（顾客） -->
   <div class="sharelay" id="sharelay" onclick="if(event.target===this)closeShare()">
@@ -692,27 +696,27 @@
   </div>
   <!-- 我的订单弹层（顾客） -->
   <div class="sheet" id="ordersSheet" onclick="if(event.target===this)closeOrders()">
-    <div class="sheet-in"><div class="close"><button onclick="closeOrders()">✕</button></div><div id="ordersContent" style="padding:6px 18px calc(22px + var(--safe-b))"></div></div>
+    <div class="sheet-in"><div class="close"><button onclick="closeOrders()" aria-label="关闭">✕</button></div><div id="ordersContent" style="padding:6px 18px calc(22px + var(--safe-b))"></div></div>
   </div>
   <!-- 成交流水弹层 -->
   <div class="sheet" id="salesSheet" onclick="if(event.target===this)closeSales()">
-    <div class="sheet-in"><div class="close"><button onclick="closeSales()">✕</button></div><div id="salesContent" style="padding:6px 18px calc(22px + var(--safe-b))"></div></div>
+    <div class="sheet-in"><div class="close"><button onclick="closeSales()" aria-label="关闭">✕</button></div><div id="salesContent" style="padding:6px 18px calc(22px + var(--safe-b))"></div></div>
   </div>
   <!-- 后台编辑弹层 -->
   <div class="sheet" id="edit" onclick="if(event.target===this)closeEdit()">
-    <div class="sheet-in"><div class="close"><button onclick="closeEdit()">✕</button></div><div id="editContent" style="padding:0 18px calc(22px + var(--safe-b))"></div></div>
+    <div class="sheet-in"><div class="close"><button onclick="closeEdit()" aria-label="关闭">✕</button></div><div id="editContent" style="padding:0 18px calc(22px + var(--safe-b))"></div></div>
   </div>
 
   <!-- 全屏看图（可左右滑动切换） -->
   <div id="lightbox" onclick="closeLightbox()">
-    <button class="lbx" onclick="closeLightbox()">✕</button>
+    <button class="lbx" onclick="closeLightbox()" aria-label="关闭">✕</button>
     <div class="lbscroll" id="lbscroll" onscroll="lbCount()"></div>
     <div class="lbcount" id="lbcount"></div>
     <div class="lbhint">双击放大 · 左右滑动切换</div>
   </div>
-  <button id="top2" class="hidden" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+  <button id="top2" class="hidden" aria-label="回到顶部" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
   // ===== 配置 =====
@@ -725,6 +729,7 @@
   // 后台密码不在网页里！存在服务器（admin-369 函数，改密码用 Supabase Secrets 的 ADMIN_PIN_369）
 
   const tg = window.Telegram && window.Telegram.WebApp;
+  const _reduceMotion = !!(window.matchMedia && matchMedia('(prefers-reduced-motion:reduce)').matches); // 尊重系统「减少动态效果」
   if (tg) { try { tg.ready(); tg.expand(); tg.setHeaderColor && tg.setHeaderColor('#f5f6f8'); tg.setBackgroundColor && tg.setBackgroundColor('#f5f6f8'); } catch(e){} }
   document.getElementById('shopName').textContent = SHOP_NAME;
   document.getElementById('meShop').textContent = SHOP_NAME;
@@ -737,6 +742,7 @@
       tg.MainButton.setParams({color:'#141519', text_color:'#ffffff'});
       tg.MainButton.onClick(()=>{
         const url=cartWaHref();
+        if(!hasContact()){ onCartSend(); return; } // 没配客服：走复制兜底，不打开通用分享
         try{
           if(/^https:\/\/t\.me\//.test(url) && tg.openTelegramLink) tg.openTelegramLink(url);
           else if(tg.openLink) tg.openLink(url);
@@ -773,6 +779,7 @@
   const IMG_PH='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect width="400" height="400" fill="#f1f1f4"/><g fill="none" stroke="#d2d5dc" stroke-width="7"><rect x="150" y="158" width="100" height="84" rx="8"/><circle cx="176" cy="184" r="9"/><path d="M150 226l30-26 22 18 26-24 22 20"/></g></svg>');
   function imgFB(el){ el.onerror=null; el.src=IMG_PH; el.style.objectFit='cover'; }
   function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function jesc(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); } // 供 onclick 内联字符串用（转义反斜杠+单引号）
   function haptic(t){ try{ tg&&tg.HapticFeedback&&tg.HapticFeedback.impactOccurred(t||'light'); }catch(e){} }
   let toastTimer;
   function toast(t){ const el=document.getElementById('toast'); el.textContent=t; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),1700); }
@@ -803,6 +810,8 @@
     try{ need?tg.BackButton.show():tg.BackButton.hide(); }catch(e){}
   }
   if(tg&&tg.BackButton){ try{ tg.BackButton.onClick(handleBack); }catch(e){} }
+  // 键盘 Esc 关弹层（无障碍 / 桌面端）
+  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ const on=(id)=>document.getElementById(id).classList.contains('show'); if(on('lightbox')||on('sharelay')||on('ordersSheet')||on('salesSheet')||on('edit')||on('sheet')) handleBack(); } });
 
   // ===== 后台隐藏入口：连点 logo 5 次才显示「后台」按钮，顾客看不到 =====
   let adminEntry = localStorage.getItem('a369_entry')==='1';
@@ -883,6 +892,7 @@
       if(!r.ok) throw new Error('http '+r.status);
       ALL=await r.json(); _loadFail=false;
     }catch(e){ _loadFail=!ALL.length; }
+    indexAll();
     _fresh=true; buildChips(); renderSeg(); render(); updateBadge(); updateFavBadge(); checkDeepLink();
     loadConfig();
   }
@@ -927,17 +937,22 @@
   }
 
   // 品牌字段常为空（解析没抓到），从商品名开头兜底提取，让卡片/筛选都能显示品牌
-  function brandOf(p){
+  // id→商品 映射 + 品牌 memo，避免热路径反复 O(n) 扫描和正则
+  let BYID=new Map();
+  function indexAll(){ BYID=new Map(ALL.map(p=>[String(p.id),p])); ALL.forEach(p=>{ p._brand=_brandCalc(p); }); }
+  function pById(id){ return BYID.get(String(id))||ALL.find(x=>x.id==id); }
+  function _brandCalc(p){
     if(p&&p.brand&&p.brand.trim()) return p.brand.trim();
     let m=((p&&p.name_cn)||'').match(/^([A-Za-z][A-Za-z0-9]*(?:\s+[A-Za-z]+)?)/); // 最多2个词，且第二词须是字母（不吞"3 Strip"里的3）
     return (m&&m[1].replace(/\s/g,'').length>=3)?m[1].trim():null;
   }
+  function brandOf(p){ return (p&&p._brand!==undefined)?p._brand:_brandCalc(p); }
   function buildChips(){
     const cats=[...new Set(ALL.map(p=>p.category).filter(Boolean))];
     const brands=[...new Set(ALL.map(p=>brandOf(p)).filter(Boolean))];
     const box=document.getElementById('chips');
     if(!cats.length&&!brands.length){ box.innerHTML=''; return; }
-    const q=(v)=>esc(v).replace(/'/g,"\\'");
+    const q=(v)=>jesc(v);
     let h='<span class="chip'+(!catFilter&&!brandFilter?' on':'')+'" onclick="setCat(\'\');setBrand(\'\')">全部</span>';
     if(cats.length>1) h+=cats.map(c=>'<span class="chip'+(catFilter===c?' on':'')+'" onclick="setCat(\''+q(c)+'\')">'+esc(c)+'</span>').join('');
     if(brands.length){ h+='<span class="chipdiv"></span>'+brands.map(b=>'<span class="chip'+(brandFilter===b?' on':'')+'" onclick="setBrand(\''+q(b)+'\')">'+esc(b)+'</span>').join(''); }
@@ -964,7 +979,8 @@
       '<button class="'+(sort===s[0]?'on':'')+'" onclick="setSort(\''+s[0]+'\')">'+s[1]+'</button>').join('');
   }
   function setSort(s){ sort=s; renderSeg(); render(); haptic('light'); }
-  function onSearch(){ document.getElementById('qclear').classList.toggle('show',!!document.getElementById('q').value); renderSearchHist(); render(); }
+  let _searchT=null;
+  function onSearch(){ document.getElementById('qclear').classList.toggle('show',!!document.getElementById('q').value); renderSearchHist(); clearTimeout(_searchT); _searchT=setTimeout(render,150); } // 网格重建防抖，联想即时
   function clearSearch(){ const q=document.getElementById('q'); q.value=''; document.getElementById('qclear').classList.remove('show'); render(); q.focus(); }
   // ===== 搜索历史 =====
   let SQ=[]; try{ SQ=JSON.parse(localStorage.getItem('sq369')||'[]'); }catch(e){}
@@ -992,7 +1008,7 @@
     if(!SQ.length){ box.classList.add('hidden'); return; }
     box.classList.remove('hidden');
     box.innerHTML='<div class="shrow"><span>最近搜索</span><button onmousedown="event.preventDefault()" onclick="clearSearchHist()">清空</button></div>'+
-      '<div class="shchips">'+SQ.map(s=>'<span class="shchip" onmousedown="event.preventDefault()" onclick="applySearch(\''+esc(s).replace(/'/g,"\\'")+'\')">'+esc(s)+'</span>').join('')+'</div>';
+      '<div class="shchips">'+SQ.map(s=>'<span class="shchip" onmousedown="event.preventDefault()" onclick="applySearch(\''+jesc(s)+'\')">'+esc(s)+'</span>').join('')+'</div>';
   }
   function pickSugg(id){ pushSearch((document.getElementById('q').value||'').trim()); document.getElementById('shist').classList.add('hidden'); document.getElementById('q').blur(); openSheet(id); }
 
@@ -1000,7 +1016,7 @@
     if(p.sell_myr==null) return '<div class="ask">点击问价</div>';
     let h='<div class="price"><small>RM</small>'+money(p.sell_myr);
     if(p.orig_myr!=null&&Number(p.orig_myr)>Number(p.sell_myr)) h+='<span class="del">RM'+money(p.orig_myr)+'</span>';
-    else h+='<span class="tagship">包邮</span>';
+    h+='<span class="tagship">包邮</span>'; // 包邮是全店承诺，打折品也要保留这个转化点
     if(p.sold_count>0) h+='<span class="soldn">已售'+p.sold_count+'</span>';
     h+='</div>';
     const d=favDrop(p); if(d!=null&&d>0) h+='<div class="droptag">↓ 收藏后降 RM'+money(d)+'</div>'; // 收藏的货降价了，提醒回来看
@@ -1008,7 +1024,7 @@
   }
   function thumb(p){
     return p.image_url
-      ? '<img src="'+esc(im(p.image_url,400))+'" referrerpolicy="no-referrer" loading="lazy" onload="this.classList.add(\'ld\')" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" alt=""><div class="noimg" style="display:none">🖼️</div>'
+      ? '<img src="'+esc(im(p.image_url,400))+'" referrerpolicy="no-referrer" loading="lazy" decoding="async" onload="this.classList.add(\'ld\')" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" alt="'+esc(p.name_cn||'商品')+'"><div class="noimg" style="display:none">🖼️</div>'
       : '<div class="noimg">🖼️</div>';
   }
   function render(){
@@ -1074,7 +1090,7 @@
     document.querySelectorAll('#fdots .fdot').forEach((d,j)=>d.classList.toggle('on',j===i));
     startFeatAuto(); // 用户滑动后重新计时
   }
-  function startFeatAuto(){ stopFeatAuto(); if(_featN>1) _featTimer=setInterval(()=>{
+  function startFeatAuto(){ stopFeatAuto(); if(_reduceMotion) return; if(_featN>1) _featTimer=setInterval(()=>{
     const s=document.getElementById('fcar'); if(!s||mode==='admin'||tab!=='shop'){ return; }
     _featIdx=(_featIdx+1)%_featN; s.scrollTo({left:_featIdx*s.clientWidth,behavior:'smooth'});
   },4500); }
@@ -1112,7 +1128,7 @@
         (p.video_url?'<span class="playic">▶</span>':'')+
         favBtn(p.id)+
         (p.soldout?'<div class="soldcover"><span>已售罄</span></div>':
-          '<button class="addbtn'+(inCart?' in':'')+'" onclick="event.stopPropagation();cardAdd('+p.id+',this)">'+(inCart?'✓':'+')+'</button>')+
+          '<button class="addbtn'+(inCart?' in':'')+'" aria-label="加入心愿单" onclick="event.stopPropagation();cardAdd('+p.id+',this)">'+(inCart?'✓':'+')+'</button>')+
       '</div>'+
       '<div class="pinfo" onclick="openSheet('+p.id+')"><div class="pname">'+esc(p.name_cn||'')+'</div>'+
       '<div class="pbrand">'+esc(brandOf(p)||'—')+'</div>'+priceHtml(p)+'</div>'+
@@ -1234,11 +1250,11 @@
     const rs=Array.isArray(p.review_shots)?p.review_shots.filter(Boolean):[];
     if(!rs.length) return '';
     _rvLb=rs;
-    return '<div class="rvwrap"><div class="rvhead"><b>得物真实评价</b> · REVIEWS</div>'+
+    return '<div class="rvwrap"><div class="rvhead"><b>真实买家实拍</b> · BUYER SHOW</div>'+
       '<div class="rvscroll">'+rs.map((u,i)=>'<img src="'+esc(im(u,400))+'" referrerpolicy="no-referrer" loading="lazy" onclick="openReviewLb('+i+')" alt="">').join('')+'</div></div>';
   }
   let _rvLb=[];
-  function openReviewLb(i){ _gimgs=_rvLb; openLightbox(i); } // 复用全屏看图（可放大/左右滑）
+  function openReviewLb(i){ openLightbox(i,_rvLb); } // 复用全屏看图（不覆盖商品图 _gimgs）
   function closeSheet(){ document.getElementById('sheet').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
   // ===== 分享图卡 =====
   let _shareP=null;
@@ -1320,24 +1336,27 @@
       '<div class="gdots" id="gdots">'+imgs.map((_,i)=>'<span class="gdot'+(i===0?' on':'')+'"></span>').join('')+'</div></div>';
   }
   let _gimgs=[];
-  function openLightbox(i){
-    if(!_gimgs.length) return;
+  let _lbG=[];
+  function openLightbox(i,imgs){
+    const G=(imgs&&imgs.length)?imgs:_gimgs; _lbG=G;
+    if(!G.length) return;
     const sc=document.getElementById('lbscroll');
-    sc.innerHTML=_gimgs.map(u=>'<div class="lbslide"><img src="'+esc(u)+'" referrerpolicy="no-referrer" alt=""></div>').join('');
+    // 只有当前那张立刻加载，其余懒加载——评价晒图单张 ~1.8MB，一次全开会瞬间吃几十 MB
+    sc.innerHTML=G.map((u,j)=>'<div class="lbslide"><img src="'+esc(u)+'" referrerpolicy="no-referrer" '+(j===i?'':'loading="lazy" ')+'decoding="async" alt=""></div>').join('');
     sc.querySelectorAll('img').forEach(el=>lbBindZoom(el));
     const c=document.getElementById('lbcount');
-    c.style.display=_gimgs.length>1?'':'none';
-    c.textContent=(i+1)+'/'+_gimgs.length;
-    document.getElementById('lightbox').classList.add('show');
+    c.style.display=G.length>1?'':'none';
+    c.textContent=(i+1)+'/'+G.length;
+    document.getElementById('lightbox').classList.add('show'); document.body.style.overflow='hidden';
     requestAnimationFrame(()=>{ sc.scrollLeft=i*sc.clientWidth; });
     updateBack();
   }
   function lbCount(){
     const sc=document.getElementById('lbscroll');
     const i=Math.round(sc.scrollLeft/sc.clientWidth);
-    document.getElementById('lbcount').textContent=(Math.min(i,_gimgs.length-1)+1)+'/'+_gimgs.length;
+    document.getElementById('lbcount').textContent=(Math.min(i,_lbG.length-1)+1)+'/'+_lbG.length;
   }
-  function closeLightbox(){ document.getElementById('lightbox').classList.remove('show'); updateBack(); }
+  function closeLightbox(){ document.getElementById('lightbox').classList.remove('show'); if(!document.getElementById('sheet').classList.contains('show'))document.body.style.overflow=''; updateBack(); }
   // 双击放大 2.5x（以点按位置为中心），放大时单指拖动平移，再双击复原；单击关闭
   function lbBindZoom(el){
     let z=1,tx=0,ty=0,drag=null,lastTap=0,moved=false;
@@ -1382,7 +1401,7 @@
   }
 
   // ===== 收藏 =====
-  let fav=JSON.parse(localStorage.getItem('fav369')||'{}');
+  let fav={}; try{ fav=JSON.parse(localStorage.getItem('fav369')||'{}')||{}; }catch(e){ fav={}; }
   function isFav(id){ return !!fav[id]; }
   function saveFav(){ localStorage.setItem('fav369',JSON.stringify(fav)); updateFavBadge(); }
   function toggleFav(id){
@@ -1396,7 +1415,9 @@
   function favDrop(p){ if(!p||!isFav(p.id)||p.sell_myr==null) return null; const b=favBase(p.id); return (b!=null&&Number(p.sell_myr)<b)?(b-Number(p.sell_myr)):null; }
   function favDropCount(){ return ALL.reduce((n,p)=>n+(favDrop(p)!=null?1:0),0); }
   function updateFavBadge(){
-    const n=Object.keys(fav).length; const b=document.getElementById('favBadge'); b.textContent=n; b.classList.toggle('hidden',n===0);
+    // 已上架列表已加载时，只数还在架上的收藏，避免下架/删除后残留幻影数字
+    const ids=Object.keys(fav); const n=ALL.length?ids.filter(id=>ALL.some(p=>p.id==id)).length:ids.length;
+    const b=document.getElementById('favBadge'); b.textContent=n; b.classList.toggle('hidden',n===0);
     const d=document.getElementById('favDot'); if(d) d.classList.toggle('hidden',favDropCount()===0);
   }
   function favBtn(id){ return '<button class="favbtn'+(isFav(id)?' on':'')+'" onclick="event.stopPropagation();favClick(this,'+id+')" aria-label="收藏"><svg viewBox="0 0 24 24" fill="none" stroke="'+(isFav(id)?'var(--price)':'#9499a6')+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.3 4.9 13a4.7 4.7 0 0 1 0-6.6 4.5 4.5 0 0 1 6.5 0l.6.6.6-.6a4.5 4.5 0 0 1 6.5 0 4.7 4.7 0 0 1 0 6.6Z"/></svg></button>'; }
@@ -1413,7 +1434,7 @@
   }
 
   // ===== 心愿单 =====
-  let cart=JSON.parse(localStorage.getItem('cart369')||'{}');
+  let cart={}; try{ cart=JSON.parse(localStorage.getItem('cart369')||'{}')||{}; }catch(e){ cart={}; }
   function saveCart(){ localStorage.setItem('cart369',JSON.stringify(cart)); updateBadge(); updateMainButton(); }
   function cartItems(){ return Object.keys(cart).map(id=>ALL.find(p=>p.id==id)).filter(Boolean); }
   let cartVar={}; try{ cartVar=JSON.parse(localStorage.getItem('cartvar369')||'{}'); }catch(e){}
@@ -1439,7 +1460,13 @@
       setTimeout(()=>{ if(fly.parentNode) fly.remove(); },950);
     }catch(e){}
   }
-  function cardAdd(id,btn){ const p=ALL.find(x=>x.id==id); if(p&&!p.soldout) flyEffect(btn,'cart',p.image_url?im(p.image_url,120):null); addCart(id); }
+  function cardAdd(id,btn){
+    const p=ALL.find(x=>x.id==id); if(!p) return;
+    // 有规格的货：从卡片 + 直接加会漏选尺码 → 打开详情让顾客先选规格，避免发错单
+    if(!p.soldout && (p.variants||[]).some(v=>v&&v.name)){ openSheet(id); toast('这件有规格，选一下再加入'); return; }
+    if(!p.soldout) flyEffect(btn,'cart',p.image_url?im(p.image_url,120):null);
+    addCart(id);
+  }
   function favClick(btn,id){ if(!isFav(id)) flyEffect(btn,'fav',null); toggleFav(id); }
   function addCart(id){
     const p=ALL.find(x=>x.id==id);
@@ -1448,12 +1475,12 @@
     cart[id]=(cart[id]||0)+1; saveCart(); haptic('light'); render(); if(tab==='cart')renderCart();
     const b=document.getElementById('navBadge'); b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump');
   }
-  function setQty(id,d){ cart[id]=(cart[id]||0)+d; if(cart[id]<=0) delete cart[id]; saveCart(); render(); renderCart(); }
+  function setQty(id,d){ cart[id]=(cart[id]||0)+d; if(cart[id]<=0){ delete cart[id]; delete cartVar[id]; localStorage.setItem('cartvar369',JSON.stringify(cartVar)); } saveCart(); render(); renderCart(); }
   function rmCart(id){ delete cart[id]; delete cartVar[id]; localStorage.setItem('cartvar369',JSON.stringify(cartVar)); saveCart(); render(); renderCart(); }
-  function updateBadge(){ const n=Object.values(cart).reduce((a,b)=>a+b,0); const b=document.getElementById('navBadge'); b.textContent=n; b.classList.toggle('hidden',n===0); }
+  function updateBadge(){ const n=cartItems().reduce((a,p)=>a+(cart[p.id]||0),0); const b=document.getElementById('navBadge'); b.textContent=n; b.classList.toggle('hidden',n===0); }
   function linePrice(p){ const cv=cartVar[p.id]; return (cv&&cv.sell!=null)?Number(cv.sell):(p.sell_myr!=null?Number(p.sell_myr):null); }
   function cartTotal(){ return cartItems().reduce((s,p)=>s+((!p.soldout&&linePrice(p)!=null)?linePrice(p)*cart[p.id]:0),0); }
-  function orderNo(){ const d=new Date(); return '#'+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+(100+Math.floor(Math.random()*900)); }
+  function orderNo(){ const d=new Date(); return '#'+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+(100+Math.floor(Math.random()*900)); } // 展示用；查找用 ts
   // 发单后问一声要不要清空（等用户从分享/WhatsApp 跳回来）
   function askClearCart(){
     setTimeout(()=>{
@@ -1521,8 +1548,26 @@
   // ===== 我的订单（本地留底，方便顾客回看 / 再发一次）=====
   let orders=[]; try{ orders=JSON.parse(localStorage.getItem('orders369')||'[]'); }catch(e){}
   function saveOrder(o){ if(!o||!o.items||!o.items.length) return; orders.unshift(o); orders=orders.slice(0,30); localStorage.setItem('orders369',JSON.stringify(orders)); updateOrdersEntry(); }
-  // 发单动作统一入口：存一笔留底 + 稍后问是否清空
-  function onCartSend(){ if(_lastOrder) saveOrder(_lastOrder); askClearCart(); }
+  // 是否配了真实客服联系方式（没配就别把订单丢进 Telegram 通用分享）
+  function hasContact(){ return !!(((CFG.contact_wa||CONTACT_WA)||'').replace(/[^\d]/g,'') || (CFG.contact_tg||'').trim()); }
+  // 发单动作统一入口：存一笔留底 + 防重复 + 没配客服时兜底复制，绝不让订单凭空消失
+  let _sendLock=0;
+  function onCartSend(ev){
+    const now=(window.performance&&performance.now)?performance.now():+new Date();
+    if(now-_sendLock<1500){ if(ev&&ev.preventDefault)ev.preventDefault(); return false; } // 防连点/双通道重复发单
+    _sendLock=now;
+    if(!_lastOrder) _lastOrder=buildOrder();
+    if(!hasContact()){
+      if(ev&&ev.preventDefault) ev.preventDefault();
+      if(_lastOrder){ saveOrder(_lastOrder); const t=orderText(_lastOrder);
+        if(navigator.clipboard){ navigator.clipboard.writeText(t).then(()=>toast('客服未设置，订单已复制 ✅ 请粘贴发给客服')).catch(()=>toast('订单已存「我的订单」，可稍后再发')); }
+        else toast('订单已存「我的订单」，可稍后再发'); }
+      return false;
+    }
+    if(_lastOrder) saveOrder(_lastOrder);
+    askClearCart();
+    return true;
+  }
   function updateOrdersEntry(){ const s=document.getElementById('ordersSub'); if(s) s.textContent=orders.length?('已发 '+orders.length+' 单 · 点开可再发一次'):'查看发过的订单'; }
   // ===== 常见问题 FAQ =====
   const FAQS=[
@@ -1544,8 +1589,8 @@
     haptic('light');
   }
   function fmtDate(ts){ const d=new Date(ts); const p=n=>String(n).padStart(2,'0'); return (d.getMonth()+1)+'月'+d.getDate()+'日 '+p(d.getHours())+':'+p(d.getMinutes()); }
-  function resendOrder(no){
-    const o=orders.find(x=>x.no===no); if(!o) return;
+  function resendOrder(ts){
+    const o=orders.find(x=>x.ts===ts)||orders.find(x=>x.no===ts); if(!o) return; // 按唯一 ts 查，兼容旧数据
     const url=contactHref(orderText(o)); haptic('light');
     try{
       if(hasMB()&&tg){ if(/^https:\/\/t\.me\//.test(url)&&tg.openTelegramLink) tg.openTelegramLink(url); else if(tg.openLink) tg.openLink(url); else window.open(url,'_blank'); }
@@ -1558,7 +1603,7 @@
     return '<div class="ocard"><div class="ohead"><b>'+esc(o.no)+'</b><span>'+fmtDate(o.ts)+'</span></div>'+
       '<div class="othumbs">'+thumbs+more+'</div>'+
       '<div class="ofoot"><div class="ol">共 '+o.count+' 件'+(o.total>0?' · <b>RM'+money(o.total)+'</b>':'')+'</div>'+
-      '<button class="obtn" onclick="resendOrder(\''+o.no+'\')">再发给客服 →</button></div></div>';
+      '<button class="obtn" onclick="resendOrder('+o.ts+')">再发给客服 →</button></div></div>';
   }
   function openOrders(){
     const box=document.getElementById('ordersContent');
@@ -1987,7 +2032,7 @@
       const isProduct=/发现一件好物|发现好物/.test(seg);
       if(isPost && !isProduct) postUrls.push(u);
       else if(!productUrl) productUrl=u;   // 第一条非贴文 = 商品
-      else postUrls.push(u);
+      // 非贴文的多余链接（如第二个商品链接）不当买家秀，忽略，避免把别的商品图抓进评价
     }
     if(!productUrl) productUrl=urls[0];
     return {productUrl, postUrls};
