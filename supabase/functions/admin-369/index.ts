@@ -1,11 +1,13 @@
-// admin-369 v1: 369 后台专用网关 —— 校验 x-admin-pin 后代办 列表/改/删/入库。
-// 底表 products_369 已对 anon 完全锁死，后台一切读写都必须经过这里。
+// admin-369 v2: 369 后台专用网关 —— 校验 x-admin-pin 后代办 列表/改/删/入库/订单管理。
+// 底表 products_369 / orders_369 已对 anon 完全锁死，后台一切读写都必须经过这里。
 // 密码优先读 Supabase Secrets 的 ADMIN_PIN_369，没设则用兜底值。
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const PIN = Deno.env.get("ADMIN_PIN_369") || "3690";
 // 只允许改这些字段，防止越权写 created_by / client_ref 之类
 const PATCH_FIELDS = ["name_cn", "brand", "sku", "images", "image_url", "price_rmb", "price_myr", "sell_myr", "status", "orig_myr", "hot", "soldout", "category", "params", "variants", "review_shots", "video_url"];
+// 订单状态白名单，防止后台误写乱七八糟的状态
+const ORDER_STATUS = ["已发送", "已确认", "已付款", "已采购", "运输中", "已到手", "已取消"];
 
 Deno.serve(async (req) => {
   const cors = {
@@ -170,6 +172,38 @@ Deno.serve(async (req) => {
           return json({ ok: false, error: "入库失败：" + error.message }, 500, cors);
         }
         return json({ ok: true, row: data }, 200, cors);
+      }
+
+      case "orders": { // 订单列表（最新 100 单）
+        const { data, error } = await supabase
+          .from("orders_369")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(100);
+        if (error) return json({ ok: false, error: error.message }, 500, cors);
+        return json({ ok: true, rows: data }, 200, cors);
+      }
+
+      case "orderStatus": { // 改订单状态/备注（状态必须在白名单里）
+        const id = Number(body.id);
+        if (!id) return json({ ok: false, error: "缺 id" }, 400, cors);
+        const status = String(body.status || "");
+        if (!ORDER_STATUS.includes(status)) return json({ ok: false, error: "状态不合法" }, 400, cors);
+        const note = body.note != null ? String(body.note).slice(0, 200) : null;
+        const { data, error } = await supabase
+          .from("orders_369")
+          .update({ status, note: note || null, updated_at: new Date().toISOString() })
+          .eq("id", id).select().maybeSingle();
+        if (error) return json({ ok: false, error: error.message }, 500, cors);
+        return json({ ok: true, row: data }, 200, cors);
+      }
+
+      case "orderDel": { // 删订单
+        const id = Number(body.id);
+        if (!id) return json({ ok: false, error: "缺 id" }, 400, cors);
+        const { error } = await supabase.from("orders_369").delete().eq("id", id);
+        if (error) return json({ ok: false, error: error.message }, 500, cors);
+        return json({ ok: true }, 200, cors);
       }
 
       default:
