@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: boutique-redesign-v1 -->
+<!-- build: boutique-redesign-v2 -->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -161,11 +161,12 @@
   .sharecard .sc-img{width:100%;aspect-ratio:1;object-fit:cover;background:var(--card2);display:block}
   .sharecard .sc-noimg{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800;color:#fff;letter-spacing:2px}
   .sharecard .sc-body{padding:15px 16px 17px;text-align:left}
+  .sharecard .sc-brand{font-size:9px;font-weight:800;letter-spacing:1.6px;color:#A6812F;text-transform:uppercase;margin-bottom:5px}
   .sharecard .sc-name{font-size:15px;font-weight:700;line-height:1.35;margin-bottom:7px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .sharecard .sc-price{color:var(--price);font-size:22px;font-weight:800}.sharecard .sc-price small{font-size:13px;font-weight:700}
   .sharecard .sc-price .sc-del{color:#a9abb2;font-size:12px;font-weight:500;text-decoration:line-through;margin-left:6px}
   .sharecard .sc-foot{display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
-  .sharecard .sc-logo{width:34px;height:34px;border-radius:9px;background:#16171b;color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center}
+  .sharecard .sc-logo{width:34px;height:34px;border-radius:9px;background:#1C1813;color:#F7F3EC;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center}
   .sharecard .sc-shop b{font-size:13px;color:#141519}.sharecard .sc-shop div{font-size:10.5px;color:#8a8c93}
   .sharebtns{display:flex;gap:10px;margin-top:16px}
   .sharebtns button{flex:1;border:none;border-radius:22px;padding:12px;font-size:13.5px;font-weight:700;letter-spacing:.5px}
@@ -286,8 +287,9 @@
   .crow{display:flex;gap:12px;background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:11px 13px;margin-bottom:10px}
   .crow img{width:70px;height:70px;object-fit:cover;border-radius:12px;background:var(--card2);flex:0 0 auto}
   .crow .ci{flex:1;min-width:0}
+  .crow .cbrand{font-size:8.5px;font-weight:800;letter-spacing:1.3px;color:var(--gold);text-transform:uppercase;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .crow .cn{font-size:13px;font-weight:600;line-height:1.35;margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .crow .cp{font-size:13px;color:var(--price);font-weight:700}
+  .crow .cp{font-size:13.5px;color:var(--price);font-weight:800;font-variant-numeric:tabular-nums}
   .qty{display:flex;align-items:center;gap:10px;margin-top:6px}
   .qty button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--card2);color:var(--txt);font-size:17px;line-height:1}
   .qty span{font-size:14px;min-width:18px;text-align:center}
@@ -1421,7 +1423,7 @@
       ? '<img class="sc-img" src="'+esc(im(p.image_url,700))+'" referrerpolicy="no-referrer" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" alt=""><div class="sc-noimg" style="display:none;background:'+brandColor(p)+'">'+esc(brandOf(p)||SHOP_NAME)+'</div>'
       : '<div class="sc-noimg" style="background:'+brandColor(p)+'">'+esc(brandOf(p)||SHOP_NAME)+'</div>';
     document.getElementById('sharecard').innerHTML=imgPart+
-      '<div class="sc-body"><div class="sc-name">'+esc(p.name_cn||'')+'</div>'+
+      '<div class="sc-body">'+(brandOf(p)?'<div class="sc-brand">'+esc(brandOf(p))+'</div>':'')+'<div class="sc-name">'+esc(p.name_cn||'')+'</div>'+
       (p.sell_myr!=null?'<div class="sc-price"><small>RM</small>'+money(p.sell_myr)+(hasOrig?'<span class="sc-del">RM'+money(p.orig_myr)+'</span>':'')+'</div>':'<div class="sc-price" style="font-size:16px">点链接问价</div>')+
       '<div class="sc-foot"><div class="sc-logo">369</div><div class="sc-shop"><b>'+esc(SHOP_NAME)+'</b><div>正品保证 · 假一赔十 · 马来直邮</div></div></div></div>';
     document.getElementById('sharelay').classList.add('show'); document.body.style.overflow='hidden'; haptic('light');
@@ -1672,7 +1674,7 @@
     if(!items.length){ box.innerHTML='<div class="empty"><div class="big">🛒</div>心愿单还是空的<br>去店面挑几件喜欢的吧～<br><button onclick="setTab(\'shop\')" style="margin-top:14px;background:var(--ink);border:none;color:var(--onInk);border-radius:20px;padding:11px 30px;font-size:13.5px;font-weight:600;letter-spacing:1px">去逛逛</button></div>'; return; }
     box.innerHTML=items.map(p=>
       '<div class="crow"'+(p.soldout?' style="opacity:.65"':'')+'>'+(p.image_url?'<img src="'+esc(im(p.image_url,200))+'" referrerpolicy="no-referrer" onerror="imgFB(this)" alt="">':'<img alt="">')+
-      '<div class="ci"><div class="cn">'+esc(p.name_cn||'')+'</div>'+
+      '<div class="ci">'+(brandOf(p)?'<div class="cbrand">'+esc(brandOf(p))+'</div>':'')+'<div class="cn">'+esc(p.name_cn||'')+'</div>'+
       '<div class="cp"'+(p.soldout?' style="color:var(--sub)"':'')+'>'+(linePrice(p)!=null?'RM'+money(linePrice(p)):'询价')+(p.soldout?' <span class="badge down" style="font-size:10px">已售罄，不计入</span>':'')+'</div>'+
       (cartVar[p.id]?'<div style="font-size:11px;color:var(--sub);margin-top:2px">规格：'+esc(cartVar[p.id].name)+'</div>':'')+
       '<div class="qty"><button onclick="setQty('+p.id+',-1)">−</button><span>'+cart[p.id]+'</span><button onclick="setQty('+p.id+',1)">+</button>'+
