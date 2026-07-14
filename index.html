@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: tg-notify-v1 -->
+<!-- build: boutique-redesign-v1 -->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -24,26 +24,31 @@
 <meta property="og:description" content="正品好物 · 假一赔十 · 马来包邮" />
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
+  /* 精品买手店配色：暖象牙纸感 + 克制的金作点缀 + 红色只留给价格 */
   :root{
-    --bg:#f7f7f8; --card:#ffffff; --card2:#f2f2f4; --line:#ececee;
-    --txt:#141519; --sub:#6d6f78; --ink:#141519; --onInk:#ffffff;
-    --face:#ffffff; --faceTrans:#fffffff2; --imgbg:#ffffff;
-    --accent:#ff5a3c; --accent2:#ffb020;
-    --price:#e8232e; --ok:#00b578; --bad:#ff3141;
-    --shadow:0 1px 10px rgba(24,26,32,.05);
+    --bg:#F5F1EA; --card:#ffffff; --card2:#EFE9DF; --line:#E7DFD1;
+    --txt:#1C1813; --sub:#8B8072; --ink:#1C1813; --onInk:#F7F3EC;
+    --face:#ffffff; --faceTrans:#fffffff2; --imgbg:#F3EEE6;
+    --accent:#A67C2E; --accent2:#C9A24A;
+    --gold:#A67C2E; --goldSoft:#EEE2C8;
+    --price:#C0392B; --ok:#3E7C5A; --bad:#C0392B;
+    --shadow:0 2px 14px rgba(60,45,15,.07);
     --nav-h:62px; --safe-b:env(safe-area-inset-bottom,0px);
   }
-  /* 深色模式：跟随系统。翻转主色面（--ink 变浅、其上文字 --onInk 变深），面板/图底改暗 */
+  /* 深色模式：跟随系统。翻转主色面（--ink 变浅、其上文字 --onInk 变深），面板/图底改暗；暖调不失沉稳 */
   @media (prefers-color-scheme:dark){
     :root{
-      --bg:#0e0f11; --card:#1a1b1e; --card2:#26272b; --line:#2d2e33;
-      --txt:#ececed; --sub:#8b8d95; --ink:#f0f0f2; --onInk:#16171b;
-      --face:#1a1b1e; --faceTrans:#1a1b1ef2; --imgbg:#232428;
-      --shadow:0 1px 12px rgba(0,0,0,.45);
+      --bg:#16120C; --card:#221C13; --card2:#1E190F; --line:#332B1D;
+      --txt:#F2EBDC; --sub:#9A9082; --ink:#F2EBDC; --onInk:#16120C;
+      --face:#221C13; --faceTrans:#221C13f2; --imgbg:#2A2318;
+      --accent:#CDA455; --accent2:#CDA455;
+      --gold:#CDA455; --goldSoft:#39301A;
+      --price:#E87C61; --bad:#E87C61; --ok:#6FB68C;
+      --shadow:0 4px 20px rgba(0,0,0,.5);
     }
   }
-  :root[data-theme="light"]{ --bg:#f7f7f8; --card:#ffffff; --card2:#f2f2f4; --line:#ececee; --txt:#141519; --sub:#6d6f78; --ink:#141519; --onInk:#ffffff; --face:#ffffff; --faceTrans:#fffffff2; --imgbg:#ffffff; --shadow:0 1px 10px rgba(24,26,32,.05); }
-  :root[data-theme="dark"]{ --bg:#0e0f11; --card:#1a1b1e; --card2:#26272b; --line:#2d2e33; --txt:#ececed; --sub:#8b8d95; --ink:#f0f0f2; --onInk:#16171b; --face:#1a1b1e; --faceTrans:#1a1b1ef2; --imgbg:#232428; --shadow:0 1px 12px rgba(0,0,0,.45); }
+  :root[data-theme="light"]{ --bg:#F5F1EA; --card:#ffffff; --card2:#EFE9DF; --line:#E7DFD1; --txt:#1C1813; --sub:#8B8072; --ink:#1C1813; --onInk:#F7F3EC; --face:#ffffff; --faceTrans:#fffffff2; --imgbg:#F3EEE6; --accent:#A67C2E; --accent2:#C9A24A; --gold:#A67C2E; --goldSoft:#EEE2C8; --price:#C0392B; --bad:#C0392B; --ok:#3E7C5A; --shadow:0 2px 14px rgba(60,45,15,.07); }
+  :root[data-theme="dark"]{ --bg:#16120C; --card:#221C13; --card2:#1E190F; --line:#332B1D; --txt:#F2EBDC; --sub:#9A9082; --ink:#F2EBDC; --onInk:#16120C; --face:#221C13; --faceTrans:#221C13f2; --imgbg:#2A2318; --accent:#CDA455; --accent2:#CDA455; --gold:#CDA455; --goldSoft:#39301A; --price:#E87C61; --bad:#E87C61; --ok:#6FB68C; --shadow:0 4px 20px rgba(0,0,0,.5); }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   button,a,.chip,.prod,.feat{touch-action:manipulation}
   :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
@@ -70,8 +75,13 @@
     display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:var(--onInk);letter-spacing:.5px}
   .brand h1{font-size:18px;margin:0;font-weight:700;letter-spacing:1px}
   .brand p{margin:2px 0 0;font-size:10px;color:var(--sub);letter-spacing:2.5px;text-transform:uppercase}
-  .trust{display:flex;margin-top:10px}
-  .trust span{font-size:11px;color:#8a8b93;letter-spacing:.5px;font-weight:500}
+  /* 金色担保条：代购最值钱的信任点前置，从灰字升级成醒目 guarantee bar */
+  .trust{display:flex;align-items:center;gap:6px;margin-top:12px;background:var(--goldSoft);
+    border:1px solid color-mix(in srgb,var(--gold) 30%,transparent);border-radius:11px;
+    padding:8px 12px;font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.2px;
+    white-space:nowrap;overflow:hidden}
+  .trust svg{flex:0 0 auto}
+  .trust .sep{opacity:.4}
 
   /* 🛒 如何购买步骤卡 / 首次进店提示 */
   .howto{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:16px;text-align:left;margin-bottom:12px}
@@ -97,7 +107,7 @@
   .soldcover span{background:#0000008c;color:#fff;font-size:13px;font-weight:700;padding:7px 18px;border-radius:20px;backdrop-filter:blur(2px)}
   .del{font-size:11px;color:var(--sub);text-decoration:line-through;margin-left:6px;font-weight:500}
   .soldn{font-size:10.5px;color:var(--sub);margin-left:6px;font-weight:500}
-  .savetag{font-size:10.5px;font-weight:700;color:#fff;background:var(--price);border-radius:4px;padding:2px 7px;margin-left:8px;vertical-align:4px}
+  .savetag{font-size:10.5px;font-weight:800;color:var(--gold);background:var(--goldSoft);border-radius:5px;padding:2px 7px;margin-left:8px;vertical-align:4px;letter-spacing:.2px}
 
   .searchwrap{padding:10px 16px 2px}
   /* 排序 + 筛选：滚动时吸顶，逛到下面也能随时换排序/筛选 */
@@ -251,11 +261,14 @@
   .dropbar{display:flex;align-items:center;gap:8px;background:rgba(232,35,46,.12);color:var(--price);border-radius:13px;padding:11px 14px;margin:0 4px 12px;font-size:12.5px;font-weight:600}
   .dropbar b{color:var(--price)}
   .dropbar .dbi{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--price);color:#fff;font-weight:800;font-size:12px;flex-shrink:0}
-  .pinfo{padding:9px 10px 11px;cursor:pointer}
-  .pname{font-size:13px;font-weight:600;line-height:1.42;max-height:2.84em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;margin-bottom:4px}
-  .pbrand{font-size:11px;color:var(--sub);margin-bottom:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .price{font-size:17px;font-weight:800;color:var(--price);letter-spacing:-.3px}
+  .pinfo{padding:9px 11px 12px;cursor:pointer}
+  .pbrand{font-size:8.5px;font-weight:800;letter-spacing:1.4px;color:var(--gold);text-transform:uppercase;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pname{font-size:12.5px;font-weight:650;line-height:1.34;max-height:2.68em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;margin-bottom:5px}
+  .price{font-size:17px;font-weight:800;color:var(--price);letter-spacing:-.3px;font-variant-numeric:tabular-nums}
   .price small{font-size:10.5px;font-weight:700;color:var(--price);margin-right:1px}
+  .pmeta{display:flex;align-items:center;gap:5px;margin-top:6px;font-size:9.5px;color:var(--sub);font-weight:600}
+  .pmeta .vok{color:var(--ok);display:flex;align-items:center;gap:2px}
+  .pmeta .sep{opacity:.45}
   .tagship{font-size:9.5px;font-weight:700;color:var(--price);background:rgba(255,56,36,.08);border-radius:4px;padding:1.5px 5px;margin-left:6px;vertical-align:2.5px;letter-spacing:0}
   .ask{font-size:13px;font-weight:700;color:var(--sub)}
   .empty{column-span:all;text-align:center;color:var(--sub);font-size:14px;padding:50px 16px;line-height:1.7;min-height:52vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
@@ -392,8 +405,9 @@
   .grid.anim .prod:nth-child(4){animation-delay:.12s}.grid.anim .prod:nth-child(5){animation-delay:.16s}
   .grid.anim .prod:nth-child(6){animation-delay:.2s}
   .sheet-body{padding:16px 18px calc(22px + var(--safe-b))}
+  .sheet-brand{font-size:10px;font-weight:800;letter-spacing:1.8px;color:var(--gold);text-transform:uppercase;margin:0 0 5px}
   .sheet-body h2{font-size:17px;margin:0 0 6px;line-height:1.4;font-weight:800}
-  .sheet-price{font-size:26px;font-weight:900;color:var(--price);margin-bottom:4px;letter-spacing:-.5px}
+  .sheet-price{font-size:26px;font-weight:900;color:var(--price);margin-bottom:4px;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
   .sheet-price small{font-size:13px;color:var(--price);font-weight:700}
   .meta{font-size:12px;color:var(--sub);margin:10px 0 18px;line-height:1.7}
   .svcbox{display:flex;background:var(--card2);border-radius:12px;padding:11px 4px;margin:14px 0}
@@ -568,7 +582,7 @@
         <div class="logo" onclick="logoTap()">369</div>
         <div><h1 id="shopName">369 甄选</h1><p id="heroSub">PREMIUM SELECT</p></div>
       </div>
-      <div class="trust"><span>正品保证 · 假一赔十 · 马来包邮 · 支持验货</span></div>
+      <div class="trust"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.6-3 8.4-7 10-4-1.6-7-5.4-7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>正品保证<span class="sep">·</span>假一赔十<span class="sep">·</span>支持验货<span class="sep">·</span>马来直邮</div>
     </div>
     <div class="tipbar hidden" id="tipbar"><div class="tx">第一次来？看中就点 + 加心愿单，一键发给客服即可下单。<span class="tgo" onclick="dismissTip();setTab('me')">看怎么买</span></div><button class="tclose" onclick="dismissTip()">✕</button></div>
     <div class="notice hidden" id="notice"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex:0 0 auto"><path d="M3 10v4a1 1 0 0 0 1 1h3l6 4V5L7 9H4a1 1 0 0 0-1 1Z"/><path d="M17 9a4 4 0 0 1 0 6"/></svg><div class="mq" id="noticeMq"></div></div>
@@ -1130,11 +1144,17 @@
     if(p.sell_myr==null) return '<div class="ask">点击问价</div>';
     let h='<div class="price"><small>RM</small>'+money(p.sell_myr);
     if(p.orig_myr!=null&&Number(p.orig_myr)>Number(p.sell_myr)) h+='<span class="del">RM'+money(p.orig_myr)+'</span>';
-    h+='<span class="tagship">包邮</span>'; // 包邮是全店承诺，打折品也要保留这个转化点
-    if(p.sold_count>0) h+='<span class="soldn">已售'+p.sold_count+'</span>';
     h+='</div>';
     const d=favDrop(p); if(d!=null&&d>0) h+='<div class="droptag">↓ 收藏后降 RM'+money(d)+'</div>'; // 收藏的货降价了，提醒回来看
     return h;
+  }
+  // 卡片社交证明行：验货是全店承诺（每件都能显示），已售有数才显示，包邮已归到金色担保条
+  function cardMeta(p){
+    if(p.sell_myr==null) return '';
+    const bits=['<span class="vok">✓验货</span>'];
+    if(p.sold_count>0) bits.push('已售 '+p.sold_count);
+    else bits.push('包邮');
+    return '<div class="pmeta">'+bits.join('<span class="sep">·</span>')+'</div>';
   }
   function thumb(p){
     return p.image_url
@@ -1247,8 +1267,9 @@
         (p.soldout?'<div class="soldcover"><span>已售罄</span></div>':
           '<button class="addbtn'+(inCart?' in':'')+'" aria-label="加入心愿单" onclick="event.stopPropagation();cardAdd('+p.id+',this)">'+(inCart?'✓':'+')+'</button>')+
       '</div>'+
-      '<div class="pinfo" onclick="openSheet('+p.id+')"><div class="pname">'+esc(p.name_cn||'')+'</div>'+
-      '<div class="pbrand">'+esc(brandOf(p)||'—')+'</div>'+priceHtml(p)+'</div>'+
+      '<div class="pinfo" onclick="openSheet('+p.id+')">'+
+      (brandOf(p)?'<div class="pbrand">'+esc(brandOf(p))+'</div>':'')+
+      '<div class="pname">'+esc(p.name_cn||'')+'</div>'+priceHtml(p)+cardMeta(p)+'</div>'+
     '</div>';
   }
 
@@ -1292,7 +1313,7 @@
     document.getElementById('sheetContent').innerHTML=
       videoHtml(p)+
       galleryHtml(p)+
-      '<div class="sheet-body"><h2>'+esc(p.name_cn||'')+'</h2>'+priceBlock+proofHtml+varHtml+
+      '<div class="sheet-body">'+(brandOf(p)?'<div class="sheet-brand">'+esc(brandOf(p))+'</div>':'')+'<h2>'+esc(p.name_cn||'')+'</h2>'+priceBlock+proofHtml+varHtml+
       '<div class="svcbox">'+
         '<div><b>正品保证</b>支持验货</div>'+
         '<div><b>假一赔十</b>放心买</div>'+
