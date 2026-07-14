@@ -1,4 +1,4 @@
-// admin-369 v2: 369 后台专用网关 —— 校验 x-admin-pin 后代办 列表/改/删/入库/订单管理。
+// admin-369 v11: 369 后台专用网关 —— 校验 x-admin-pin 后代办 列表/改/删/入库/订单管理/Telegram 通知。
 // 底表 products_369 / orders_369 已对 anon 完全锁死，后台一切读写都必须经过这里。
 // 密码优先读 Supabase Secrets 的 ADMIN_PIN_369，没设则用兜底值。
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -8,6 +8,8 @@ const PIN = Deno.env.get("ADMIN_PIN_369") || "3690";
 const PATCH_FIELDS = ["name_cn", "brand", "sku", "images", "image_url", "price_rmb", "price_myr", "sell_myr", "status", "orig_myr", "hot", "soldout", "category", "params", "variants", "review_shots", "video_url"];
 // 订单状态白名单，防止后台误写乱七八糟的状态
 const ORDER_STATUS = ["已发送", "已确认", "已付款", "已采购", "运输中", "已到手", "已取消"];
+// 顾客状态推送用的小图标，让通知更直观
+const STATUS_EMOJI = { "已发送": "📨", "已确认": "✅", "已付款": "💰", "已采购": "🛍️", "运输中": "🚚", "已到手": "📦", "已取消": "❌" };
 
 Deno.serve(async (req) => {
   const cors = {
@@ -190,12 +192,69 @@ Deno.serve(async (req) => {
         const status = String(body.status || "");
         if (!ORDER_STATUS.includes(status)) return json({ ok: false, error: "状态不合法" }, 400, cors);
         const note = body.note != null ? String(body.note).slice(0, 200) : null;
+        // 先读旧值：状态/备注真的变了才推送，避免顾客被重复打扰
+        const { data: prev } = await supabase.from("orders_369")
+          .select("status,note,tg_id,order_no").eq("id", id).maybeSingle();
         const { data, error } = await supabase
           .from("orders_369")
           .update({ status, note: note || null, updated_at: new Date().toISOString() })
           .eq("id", id).select().maybeSingle();
         if (error) return json({ ok: false, error: error.message }, 500, cors);
-        return json({ ok: true, row: data }, 200, cors);
+        // 推送给顾客（仅当有 tg_id、配了 bot、且状态或备注确有变化）
+        let pushed = false;
+        try {
+          const changed = !prev || prev.status !== status || (prev.note || "") !== (note || "");
+          if (changed && data && data.tg_id) {
+            const token = (await getSecret(supabase, "tg_bot_token")).trim();
+            if (token) pushed = await tgSend(token, String(data.tg_id), fmtStatus(data));
+          }
+        } catch (_e) { /* 推送失败不影响后台改状态 */ }
+        return json({ ok: true, row: data, pushed }, 200, cors);
+      }
+
+      // ===== Telegram 通知配置（店主专用）=====
+      case "tgGet": { // 返回当前配置状态给后台展示
+        const token = (await getSecret(supabase, "tg_bot_token")).trim();
+        const ownerChat = (await getSecret(supabase, "tg_owner_chat")).trim();
+        const ownerName = (await getSecret(supabase, "tg_owner_name")).trim();
+        let botUser = "";
+        if (token) { try { const me = await tgApi(token, "getMe"); if (me.ok) botUser = me.result.username || ""; } catch (_e) { /* ignore */ } }
+        return json({ ok: true, hasToken: !!token, botUser, ownerChat, ownerName }, 200, cors);
+      }
+
+      case "tgSaveToken": { // 保存 bot token（先用 getMe 验一下真伪）
+        const token = String(body.token || "").trim();
+        if (!token) { await setSecret(supabase, "tg_bot_token", ""); return json({ ok: true, cleared: true }, 200, cors); }
+        if (!/^\d{6,}:[A-Za-z0-9_-]{20,}$/.test(token)) return json({ ok: false, error: "token 格式不对，应形如 123456:AAE...（从 @BotFather 复制）" }, 400, cors);
+        let me;
+        try { me = await tgApi(token, "getMe"); } catch (_e) { return json({ ok: false, error: "连不上 Telegram，稍后再试" }, 200, cors); }
+        if (!me.ok) return json({ ok: false, error: "token 无效，Telegram 拒绝了它" }, 200, cors);
+        await setSecret(supabase, "tg_bot_token", token);
+        return json({ ok: true, botUser: me.result.username || "" }, 200, cors);
+      }
+
+      case "tgBind": { // 店主给 bot 发条消息后点这里：抓最近一条消息的 chat 作为接收人
+        const token = (await getSecret(supabase, "tg_bot_token")).trim();
+        if (!token) return json({ ok: false, error: "请先保存 bot token" }, 400, cors);
+        let upd;
+        try { upd = await tgApi(token, "getUpdates", { offset: -1, allowed_updates: ["message"] }); } catch (_e) { return json({ ok: false, error: "连不上 Telegram，稍后再试" }, 200, cors); }
+        if (!upd.ok) return json({ ok: false, error: "Telegram 返回异常" }, 200, cors);
+        const list = (upd.result || []).filter((u) => u.message && u.message.chat);
+        if (!list.length) return json({ ok: false, error: "没收到消息。请先在 Telegram 打开你的 bot 点「开始 / Start」或随便发一句，再回来点绑定。" }, 200, cors);
+        const chat = list[list.length - 1].message.chat;
+        const name = [chat.first_name, chat.last_name].filter(Boolean).join(" ") || chat.username || String(chat.id);
+        await setSecret(supabase, "tg_owner_chat", String(chat.id));
+        await setSecret(supabase, "tg_owner_name", name);
+        return json({ ok: true, ownerChat: String(chat.id), ownerName: name }, 200, cors);
+      }
+
+      case "tgTest": { // 给已绑定的店主发一条测试消息
+        const token = (await getSecret(supabase, "tg_bot_token")).trim();
+        const chat = (await getSecret(supabase, "tg_owner_chat")).trim();
+        if (!token) return json({ ok: false, error: "请先保存 bot token" }, 400, cors);
+        if (!chat) return json({ ok: false, error: "请先绑定接收人" }, 400, cors);
+        const ok = await tgSend(token, chat, "🔔 <b>369 甄选</b> 通知已接通！\n以后有新订单会推到这里，顾客也会收到你更新的发货进度。");
+        return json({ ok, error: ok ? undefined : "发送失败：请确认你没有拉黑/停用这个 bot" }, 200, cors);
       }
 
       case "orderDel": { // 删订单
@@ -264,6 +323,38 @@ function extractTrend(html) {
     author: tjstr(html, "userName").trim(),
     images: imgs.slice(0, 12),
   };
+}
+// ===== 私密配置读写（app_secrets_369，只有 service role 能碰）=====
+async function getSecret(supabase, key) {
+  const { data } = await supabase.from("app_secrets_369").select("value").eq("key", key).maybeSingle();
+  return (data && data.value) ? String(data.value) : "";
+}
+async function setSecret(supabase, key, value) {
+  await supabase.from("app_secrets_369").upsert({ key, value: value ?? "", updated_at: new Date().toISOString() });
+}
+// ===== Telegram Bot API =====
+async function tgApi(token, method, params) {
+  const r = await fetch("https://api.telegram.org/bot" + token + "/" + method, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params || {}),
+  });
+  return await r.json();
+}
+async function tgSend(token, chat, text) {
+  try {
+    const j = await tgApi(token, "sendMessage", { chat_id: chat, text, parse_mode: "HTML", disable_web_page_preview: true });
+    return !!j.ok;
+  } catch (_e) { return false; }
+}
+function tgEsc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+// 状态变更推给顾客的文案
+function fmtStatus(o) {
+  const em = STATUS_EMOJI[o.status] || "🔔";
+  let t = "📦 你的订单 <b>" + tgEsc(String(o.order_no || "#—")) + "</b> 有更新\n\n状态：<b>" + em + " " + tgEsc(String(o.status || "")) + "</b>";
+  if (o.note) t += "\n物流 / 备注：" + tgEsc(String(o.note));
+  t += "\n\n打开「369 甄选」→「我的订单」可看完整进度。";
+  return t;
 }
 function json(obj, status, cors) {
   return new Response(JSON.stringify(obj), {

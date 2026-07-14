@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: rest-trigger-v2 -->
+<!-- build: tg-notify-v1 -->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -473,6 +473,12 @@
   .opill.ok{color:var(--ok);border-color:rgba(0,181,120,.35)}
   .opill.bad{color:var(--price);border-color:rgba(232,35,46,.35)}
   .ordnew{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--price);color:#fff;font-size:11px;font-weight:700;margin-left:6px;vertical-align:1px}
+  .tgpin{display:none;margin-left:6px;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:8px;vertical-align:1px}
+  .tgpin.on{display:inline-block;background:rgba(0,181,120,.14);color:var(--ok)}
+  .tgpin.off{display:inline-block;background:var(--card2);color:var(--sub);border:1px solid var(--line)}
+  .tgstep{display:flex;gap:9px;align-items:flex-start;margin-top:10px;font-size:12px;color:var(--txt);line-height:1.5}
+  .tgstep i{flex:0 0 auto;width:18px;height:18px;border-radius:50%;background:var(--ink);color:var(--onInk);font-size:11px;font-weight:700;font-style:normal;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .tgstep code{background:var(--card2);border:1px solid var(--line);border-radius:5px;padding:0 5px;font-size:11px}
   .oitem{padding:11px 0;border-bottom:1px solid var(--line)}
   .oitem:last-child{border-bottom:none}
   .ohead{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--sub)}
@@ -708,6 +714,27 @@
         <div class="sec-title" style="margin-top:8px"><span>顾客发来的订单（最近 100 单）</span><button class="mini ghost" onclick="loadOrders(true)">🔄 刷新</button></div>
         <div id="ordList"></div>
         <div class="hint">改状态 + 填物流单号/备注后点「保存」，顾客在「我的订单」里能看到进度。</div>
+      </div>
+    </div>
+    <div class="card" style="padding-bottom:10px">
+      <div onclick="toggleTgCard()" style="display:flex;align-items:center;cursor:pointer;margin-bottom:4px">
+        <label style="margin:0;flex:1;color:var(--txt);font-size:13.5px;font-weight:700">✈️ Telegram 通知<span class="tgpin" id="tgState"></span><span style="color:var(--sub);font-weight:500;font-size:12px">　新单提醒 · 进度推送</span></label>
+        <span id="tgArrow" style="color:var(--sub);font-size:12px">▼</span>
+      </div>
+      <div id="tgBody" class="hidden">
+        <div class="hint" style="margin-top:8px">开通后：顾客一发单，<b>你的 Telegram 立刻收到提醒</b>；你在上面「顾客订单」改状态/填单号，<b>顾客也会收到进度推送</b>（限从 Telegram 打开小程序的顾客）。</div>
+        <div class="tgstep"><i>1</i><span>在 Telegram 找 <b>@BotFather</b> → 发 <code>/newbot</code> 建一个机器人，把它给你的 <b>token</b>（形如 <code>123456:AAE…</code>）复制过来。</span></div>
+        <input class="asearch" id="tgToken" placeholder="粘贴 bot token" autocomplete="off" style="margin:8px 0 0;font-family:monospace;font-size:12px">
+        <div style="display:flex;gap:9px;margin-top:8px">
+          <button class="btn" style="width:auto;flex:1;background:var(--card2);border:1px solid var(--line);color:var(--txt)" onclick="pasteTg()">📋 粘贴</button>
+          <button class="btn" style="width:auto;flex:2.2" id="tgSaveBtn" onclick="tgSaveToken()"><span id="tgSaveTxt">保存 token</span></button>
+        </div>
+        <div class="tgstep" style="margin-top:12px"><i>2</i><span>在 Telegram 打开<b>你自己建的这个 bot</b>，点「开始 / Start」或随便发一句，再回来点下面「绑定接收人」——以后新单就推给这个账号。</span></div>
+        <div style="display:flex;gap:9px;margin-top:8px">
+          <button class="btn" style="width:auto;flex:1;background:var(--card2);border:1px solid var(--line);color:var(--txt)" id="tgBindBtn" onclick="tgBind()">🔗 绑定接收人</button>
+          <button class="btn" style="width:auto;flex:1" id="tgTestBtn" onclick="tgTest()">🔔 发测试通知</button>
+        </div>
+        <div id="tgStatusLine" class="hint" style="margin-top:10px"></div>
       </div>
     </div>
     <div class="card">
@@ -1703,9 +1730,15 @@
         body:JSON.stringify({ck:clientKey(),tg:tgId(),ono:o.no,its:o.items,tot:(o.total>0?o.total:null),cnt:o.count})})
       .then(r=>{ if(!r.ok) throw 0; return r.json(); })
       .then(id=>{ if(id==null) return; o.sid=id;
-        const i=orders.findIndex(x=>x.ts===o.ts); if(i>=0){ orders[i].sid=id; localStorage.setItem('orders369',JSON.stringify(orders)); } })
+        const i=orders.findIndex(x=>x.ts===o.ts); if(i>=0){ orders[i].sid=id; localStorage.setItem('orders369',JSON.stringify(orders)); }
+        notifyOwner(id); })
       .catch(()=>{ if(!retried) setTimeout(()=>syncOrder(o,1),2500); });
     }catch(e){}
+  }
+  // 发单后顺手 ping 店主的 Telegram（后端没配 bot 就静默跳过；失败绝不影响下单）
+  function notifyOwner(sid){
+    if(!sid) return;
+    try{ fetch(FN+'/order-notify-369',{method:'POST',headers:fnHeaders(),body:JSON.stringify({sid})}).catch(()=>{}); }catch(e){}
   }
   // 是否配了真实客服联系方式（没配就别把订单丢进 Telegram 通用分享）
   function hasContact(){ return !!(((CFG.contact_wa||CONTACT_WA)||'').replace(/[^\d]/g,'') || (CFG.contact_tg||'').trim()); }
@@ -2065,6 +2098,68 @@
     const o=AORDERS.find(x=>oid(x.id)===String(id));
     const r=await adminCall('orderDel',{id:o?o.id:id}).catch(()=>null);
     if(r&&r.ok){ toast('已删除'); haptic('light'); loadOrders(); } else toast('删除失败');
+  }
+  // ===== Telegram 通知配置（后台）：懒加载，展开才拉 =====
+  let _tgLoaded=false, _tgCfg=null;
+  function toggleTgCard(){
+    const b=document.getElementById('tgBody');
+    b.classList.toggle('hidden');
+    document.getElementById('tgArrow').textContent=b.classList.contains('hidden')?'▼':'▲';
+    if(!b.classList.contains('hidden')&&!_tgLoaded) tgLoad();
+    haptic('light');
+  }
+  function tgRenderState(){
+    const c=_tgCfg||{}; const pin=document.getElementById('tgState'); if(!pin) return;
+    const on=!!(c.hasToken&&c.ownerChat);
+    pin.className='tgpin '+(on?'on':'off');
+    pin.textContent=on?'已开通':(c.hasToken?'待绑定':'未开通');
+    const line=document.getElementById('tgStatusLine');
+    if(line){
+      if(!c.hasToken) line.innerHTML='还没保存 token。跟着上面步骤 1 建 bot、粘贴 token。';
+      else if(!c.ownerChat) line.innerHTML='bot <b>@'+esc(c.botUser||'')+'</b> 已连上，还没绑定接收人 —— 做步骤 2。';
+      else line.innerHTML='✅ 已开通：新单会推给 <b>'+esc(c.ownerName||c.ownerChat)+'</b>（bot @'+esc(c.botUser||'')+'）。';
+    }
+    const bindBtn=document.getElementById('tgBindBtn'), testBtn=document.getElementById('tgTestBtn');
+    if(bindBtn) bindBtn.disabled=!c.hasToken; if(testBtn) testBtn.disabled=!(c.hasToken&&c.ownerChat);
+  }
+  async function tgLoad(){
+    const line=document.getElementById('tgStatusLine'); if(line) line.textContent='读取中…';
+    try{ const r=await adminCall('tgGet'); if(r&&r.ok){ _tgCfg=r; _tgLoaded=true; } }catch(e){}
+    tgRenderState();
+  }
+  async function pasteTg(){
+    try{ const t=await navigator.clipboard.readText(); if(t&&t.trim()){ document.getElementById('tgToken').value=t.trim(); toast('已粘贴 ✅'); } else toast('剪贴板空的'); }
+    catch(e){ document.getElementById('tgToken').focus(); toast('读不了剪贴板，长按粘贴'); }
+  }
+  async function tgSaveToken(){
+    const tok=document.getElementById('tgToken').value.trim();
+    if(!tok){ toast('先粘贴 bot token'); return; }
+    const btn=document.getElementById('tgSaveBtn'), t=document.getElementById('tgSaveTxt');
+    btn.disabled=true; const old=t.textContent; t.textContent='验证中…';
+    try{
+      const r=await adminCall('tgSaveToken',{token:tok});
+      if(r&&r.ok){ toast('token 已保存 ✅ bot @'+(r.botUser||'')); haptic('medium'); document.getElementById('tgToken').value=''; await tgLoad(); }
+      else toast((r&&r.error)||'保存失败');
+    }catch(e){ toast('网络不稳，重试'); }
+    btn.disabled=false; t.textContent=old;
+  }
+  async function tgBind(){
+    const btn=document.getElementById('tgBindBtn'); if(btn.disabled) return; btn.disabled=true;
+    try{
+      const r=await adminCall('tgBind');
+      if(r&&r.ok){ toast('绑定成功 ✅ '+(r.ownerName||'')); haptic('medium'); await tgLoad(); }
+      else toast((r&&r.error)||'绑定失败');
+    }catch(e){ toast('网络不稳，重试'); }
+    tgRenderState();
+  }
+  async function tgTest(){
+    const btn=document.getElementById('tgTestBtn'); if(btn.disabled) return; btn.disabled=true;
+    try{
+      const r=await adminCall('tgTest');
+      if(r&&r.ok){ toast('测试通知已发出，去 Telegram 看看 📨'); haptic('medium'); }
+      else toast((r&&r.error)||'发送失败');
+    }catch(e){ toast('网络不稳，重试'); }
+    tgRenderState();
   }
   async function loadNoticeInput(){
     try{
