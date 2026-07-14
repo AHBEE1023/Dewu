@@ -1,6 +1,8 @@
-// 369 甄选 · Service Worker —— 加到主屏 / 弱网可开，但绝不给旧版本
-// 策略：同源一律「网络优先」，只有断网时才回退缓存；换版本立刻接管并刷新已开页面
-const V = '369-cache-v2';
+// 369 甄选 · Service Worker v3 —— 保新鲜也要快：
+// 同源请求走「网络 vs 2.5s 竞速」：网络先到用网络（并回填缓存）；网络慢/断，先用缓存秒开，后台继续更新。
+// 换版本立即接管并刷新已开页面；Supabase / 得物图 CDN 一律不接管。
+const V = '369-cache-v3';
+const NET_TIMEOUT = 2500;
 
 self.addEventListener('install', () => self.skipWaiting());
 
@@ -19,15 +21,23 @@ self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  if (url.origin !== location.origin) return; // Supabase / 得物图 CDN 一律走网络，不接管
+  if (url.origin !== location.origin) return; // 数据与商品图始终走网络，保证新鲜
 
-  // 同源一律网络优先：拿到就顺手更新缓存；断网才回退缓存（导航回退到首页壳子）
-  e.respondWith(
-    fetch(req)
+  const cacheKey = req.mode === 'navigate' ? '/index.html' : req;
+  e.respondWith((async () => {
+    const cached = await caches.match(cacheKey);
+    const net = fetch(req)
       .then((res) => {
-        if (res && res.status === 200) { const cp = res.clone(); caches.open(V).then((c) => c.put(req, cp)); }
+        if (res && res.status === 200) { const cp = res.clone(); caches.open(V).then((c) => c.put(cacheKey, cp)); }
         return res;
       })
-      .catch(() => caches.match(req).then((r) => r || (req.mode === 'navigate' ? caches.match('/index.html') : undefined)))
-  );
+      .catch(() => null);
+    if (!cached) { // 没缓存只能等网络
+      const res = await net;
+      return res || new Response('offline', { status: 503 });
+    }
+    // 竞速：网络 2.5s 内到就用最新的；否则先给缓存秒开（net 继续在后台回填缓存）
+    const winner = await Promise.race([net, new Promise((r) => setTimeout(() => r('TIMEOUT'), NET_TIMEOUT))]);
+    return (winner && winner !== 'TIMEOUT') ? winner : cached;
+  })());
 });

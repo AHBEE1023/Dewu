@@ -827,10 +827,25 @@
     if(mode==='admin'){ setMode('shop'); return; }
     if(tab!=='shop'){ setTab('shop'); return; }
   }
+  function anyOverlay(){
+    const on=(id)=>{ const el=document.getElementById(id); return !!el&&el.classList.contains('show'); };
+    return on('lightbox')||on('sentlay')||on('sharelay')||on('ordersSheet')||on('salesSheet')||on('edit')||on('sheet');
+  }
+  // 浏览器/安卓返回键关弹层：开弹层压一条历史，back 弹出时关掉最上层；✕ 关闭时把那条历史消化掉
+  let _ovPushed=false,_ovIgnorePop=false;
+  function ovSyncHistory(){
+    const open=anyOverlay();
+    if(open&&!_ovPushed){ try{ history.pushState({ov369:1},''); _ovPushed=true; }catch(e){} }
+    else if(!open&&_ovPushed){ _ovPushed=false; _ovIgnorePop=true; try{ history.back(); }catch(e){ _ovIgnorePop=false; } }
+  }
+  window.addEventListener('popstate',()=>{
+    if(_ovIgnorePop){ _ovIgnorePop=false; return; }
+    if(anyOverlay()){ _ovPushed=false; handleBack(); } // handleBack 收尾会走 updateBack→ovSyncHistory，若还有叠着的弹层会再压一条
+  });
   function updateBack(){
+    ovSyncHistory();
     if(!(tg&&tg.BackButton)) return;
-    const on=(id)=>document.getElementById(id).classList.contains('show');
-    const need=on('lightbox')||on('sentlay')||on('sharelay')||on('ordersSheet')||on('salesSheet')||on('edit')||on('sheet')||mode==='admin'||tab!=='shop';
+    const need=anyOverlay()||mode==='admin'||tab!=='shop';
     try{ need?tg.BackButton.show():tg.BackButton.hide(); }catch(e){}
   }
   if(tg&&tg.BackButton){ try{ tg.BackButton.onClick(handleBack); }catch(e){} }
@@ -915,7 +930,8 @@
     try{ _lastLoadTs=Date.now(); }catch(e){}
     if(!ALL.length) skeleton();
     try{
-      const r=await fetch(SUPABASE_URL+'/rest/v1/products_369_shop?select=*&order=created_at.desc&limit=300',{headers:headers()});
+      // 列表不拉 review_shots（单件可达 20+ 条长链接，是首屏最重的字段），详情页打开时按件懒取
+      const r=await fetch(SUPABASE_URL+'/rest/v1/products_369_shop?select=id,name_cn,brand,sku,category,sell_myr,orig_myr,image_url,images,created_at,sold_count,hot,soldout,views,params,variants,video_url&order=created_at.desc&limit=300',{headers:headers()});
       if(!r.ok) throw new Error('http '+r.status);
       ALL=await r.json(); _loadFail=false;
     }catch(e){ _loadFail=!ALL.length; }
@@ -1172,7 +1188,8 @@
     try{ fetch(SUPABASE_URL+'/rest/v1/rpc/bump_view_369',{method:'POST',headers:headers(),body:JSON.stringify({pid:id})}); }catch(e){}
   }
   function openSheet(id){
-    const p=ALL.find(x=>x.id===id); if(!p) return;
+    const p=pById(id); if(!p) return;
+    _sheetPid=p.id;
     markRecent(id); bumpView(id);
     let priceBlock;
     if(p.sell_myr!=null){
@@ -1210,7 +1227,7 @@
         '<div><b>假一赔十</b>放心买</div>'+
         '<div><b>直邮包邮</b>7–15 天</div>'+
       '</div>'+
-      reviewHtml(p)+
+      '<div id="rvslot">'+reviewHtml(p)+'</div>'+
       '<div class="specs">'+specs.map(s=>'<div class="spec"><span>'+s[0]+'</span><b>'+s[1]+'</b></div>').join('')+'</div>'+
       detailFaqHtml()+
       detailHtml(p)+
@@ -1229,6 +1246,7 @@
         '</div>');
     const si=document.querySelector('#sheet .sheet-in'); if(si) si.scrollTop=0;
     document.getElementById('sheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
+    if(p.review_shots===undefined) fetchReviews(p.id); // 列表没带评价图，按件懒取（取过就缓存在行上）
   }
   // 详情页底部推荐：优先同品牌，不够拿别的补（提升连逛）
   function relatedHtml(p){
@@ -1288,8 +1306,18 @@
     return '<div class="rvwrap"><div class="rvhead"><b>真实买家实拍</b> · BUYER SHOW</div>'+
       '<div class="rvscroll">'+rs.map((u,i)=>'<img src="'+esc(im(u,400))+'" referrerpolicy="no-referrer" loading="lazy" onclick="openReviewLb('+i+')" alt="">').join('')+'</div></div>';
   }
-  let _rvLb=[];
+  let _rvLb=[],_sheetPid=null;
   function openReviewLb(i){ openLightbox(i,_rvLb); } // 复用全屏看图（不覆盖商品图 _gimgs）
+  // 按件懒取评价图：取回缓存在行上；若详情页还开着这件货，就把评价区补进去
+  async function fetchReviews(id){
+    try{
+      const r=await fetch(SUPABASE_URL+'/rest/v1/products_369_shop?select=id,review_shots&id=eq.'+id,{headers:headers()});
+      if(!r.ok) return;
+      const rows=await r.json(); const p=pById(id); if(!p) return;
+      p.review_shots=(rows[0]&&rows[0].review_shots)||null;
+      if(_sheetPid===p.id){ const slot=document.getElementById('rvslot'); if(slot) slot.innerHTML=reviewHtml(p); }
+    }catch(e){}
+  }
   function closeSheet(){ document.getElementById('sheet').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
   // ===== 分享图卡 =====
   let _shareP=null;
