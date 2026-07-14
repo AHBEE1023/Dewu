@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: boutique-redesign-v4 -->
+<!-- build: obs-v5 -->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -502,6 +502,26 @@
   .tgstep{display:flex;gap:9px;align-items:flex-start;margin-top:10px;font-size:12px;color:var(--txt);line-height:1.5}
   .tgstep i{flex:0 0 auto;width:18px;height:18px;border-radius:50%;background:var(--ink);color:var(--onInk);font-size:11px;font-weight:700;font-style:normal;display:flex;align-items:center;justify-content:center;margin-top:1px}
   .tgstep code{background:var(--card2);border:1px solid var(--line);border-radius:5px;padding:0 5px;font-size:11px}
+  /* 数据看板 */
+  .funnel{display:flex;align-items:center;justify-content:space-between;gap:4px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px 8px;margin:10px 0 4px}
+  .funnel .fn{flex:1;text-align:center}
+  .funnel .fn b{display:block;font-size:19px;font-weight:800;color:var(--txt);font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+  .funnel .fn span{font-size:10px;color:var(--sub);letter-spacing:.3px}
+  .funnel .fnar{flex:0 0 auto;color:var(--sub);font-size:12px;display:flex;flex-direction:column;align-items:center;line-height:1.1}
+  .funnel .fnar i{font-style:normal;font-size:9.5px;font-weight:700;color:var(--gold)}
+  .sthd{font-size:11.5px;font-weight:700;color:var(--txt);letter-spacing:.3px;margin:14px 0 6px}
+  .sthd-hot{color:var(--gold)}
+  .stt{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 10px;border-radius:9px;background:var(--card2);border:1px solid var(--line);margin-bottom:5px}
+  .stt .q{font-size:12.5px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .stt b{font-size:12.5px;font-weight:800;color:var(--txt);font-variant-numeric:tabular-nums;flex:0 0 auto}
+  .stt.hot{background:var(--goldSoft);border-color:color-mix(in srgb,var(--gold) 26%,transparent)}
+  .stt.hot .q,.stt.hot b{color:var(--gold)}
+  .stt.none{justify-content:center;color:var(--sub);font-size:11.5px}
+  .stfoot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px;font-size:11.5px;color:var(--sub)}
+  .errbox{margin-top:8px;max-height:240px;overflow:auto;-webkit-overflow-scrolling:touch}
+  .erritem{padding:8px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--line);margin-bottom:5px}
+  .erritem .errmsg{font-size:11.5px;color:var(--bad);word-break:break-word;line-height:1.4}
+  .erritem .errmeta{font-size:10px;color:var(--sub);margin-top:3px;letter-spacing:.2px}
   .oitem{padding:11px 0;border-bottom:1px solid var(--line)}
   .oitem:last-child{border-bottom:none}
   .ohead{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--sub)}
@@ -759,6 +779,25 @@
         </div>
         <div id="tgStatusLine" class="hint" style="margin-top:10px"></div>
       </div>
+    </div>
+    <div class="card" style="padding-bottom:10px">
+      <div onclick="toggleStatsCard()" style="display:flex;align-items:center;cursor:pointer;margin-bottom:4px">
+        <label style="margin:0;flex:1;color:var(--txt);font-size:13.5px;font-weight:700">📊 数据看板<span style="color:var(--sub);font-weight:500;font-size:12px">　顾客行为 · 进货参考</span></label>
+        <span id="statsArrow" style="color:var(--sub);font-size:12px">▼</span>
+      </div>
+      <div id="statsBody" class="hidden">
+        <div class="sec-title" style="margin-top:8px"><span>近
+          <select id="statsDays" onchange="loadStats(true)" style="border:1px solid var(--line);background:var(--card2);color:var(--txt);border-radius:8px;padding:3px 6px;font-size:12px"><option value="7">7 天</option><option value="30">30 天</option><option value="1">今天</option></select>
+        </span><button class="mini ghost" onclick="loadStats(true)">🔄 刷新</button></div>
+        <div id="statsContent"></div>
+      </div>
+    </div>
+    <div class="card" style="padding-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <label style="margin:0;flex:1;color:var(--txt);font-size:13.5px;font-weight:700">🔒 后台安全<span style="color:var(--sub);font-weight:500;font-size:12px">　改登录密码</span></label>
+        <button class="mini" onclick="setAdminPin()">改密码</button>
+      </div>
+      <div class="hint" style="margin-top:8px">默认密码太弱（易被猜）。设一个 6 位以上、数字+字母混合的强密码，登录失败 5 次会自动锁 10 分钟。</div>
     </div>
     <div class="card">
       <label>⭐ 从得物动态导入买家秀（贴晒图/好评贴链接，自动认商品、图进评论区）</label>
@@ -1117,7 +1156,7 @@
   }
   function setSort(s){ sort=s; renderSeg(); render(); haptic('light'); }
   let _searchT=null;
-  function onSearch(){ document.getElementById('qclear').classList.toggle('show',!!document.getElementById('q').value); renderSearchHist(); clearTimeout(_searchT); _searchT=setTimeout(render,150); } // 网格重建防抖，联想即时
+  function onSearch(){ document.getElementById('qclear').classList.toggle('show',!!document.getElementById('q').value); renderSearchHist(); clearTimeout(_searchT); _searchT=setTimeout(render,150); clearTimeout(_searchTrackT); _searchTrackT=setTimeout(trackSearch,900); } // 网格重建防抖，联想即时；搜索埋点更长防抖
   function clearSearch(){ const q=document.getElementById('q'); q.value=''; document.getElementById('qclear').classList.remove('show'); render(); q.focus(); }
   // ===== 搜索历史 =====
   let SQ=[]; try{ SQ=JSON.parse(localStorage.getItem('sq369')||'[]'); }catch(e){}
@@ -1283,10 +1322,40 @@
     '</div>';
   }
 
+  // ===== 埋点：尽力而为，绝不阻塞体验；店主自己不计（错误除外，那个要收）=====
+  const BUILD='obs-v5';
+  let _errN=0;
+  function track(t,opts){
+    opts=opts||{};
+    if(adminEntry && t!=='error') return; // 店主浏览不污染顾客数据；但店主端报错也要收
+    try{
+      fetch(SUPABASE_URL+'/rest/v1/rpc/track_369',{method:'POST',headers:headers(),body:JSON.stringify({
+        t:t, pid:(opts.pid!=null?opts.pid:null), q:(opts.q!=null?String(opts.q):null),
+        meta:(opts.meta||null), ck:clientKey(), ua:(navigator.userAgent||'').slice(0,300)
+      })}).catch(()=>{});
+    }catch(e){}
+  }
+  // 客户端报错静默上报（每次会话最多 8 条，防刷屏），店主能在后台看到「谁踩了什么坑」
+  window.addEventListener('error',function(e){ if(_errN++>=8)return; track('error',{q:(e&&e.message||'脚本错误').slice(0,160),meta:{src:(e&&e.filename||'').slice(-90),line:e&&e.lineno,col:e&&e.colno,stack:((e&&e.error&&e.error.stack)||'').slice(0,600),build:BUILD,path:location.pathname}}); });
+  window.addEventListener('unhandledrejection',function(e){ if(_errN++>=8)return; const r=e&&e.reason; track('error',{q:('promise: '+((r&&r.message)||r||'')).slice(0,160),meta:{stack:((r&&r.stack)||'').slice(0,600),build:BUILD,path:location.pathname}}); });
+  // 搜索埋点（防抖，只在停手后记一次；无结果词单独记——这是「该进什么货」的金矿）
+  let _searchTrackT=null,_lastTrackedQ='';
+  function trackSearch(){
+    const q=(document.getElementById('q').value||'').trim();
+    if(q.length<2||q===_lastTrackedQ) return; _lastTrackedQ=q;
+    const ql=q.toLowerCase();
+    let l=ALL.slice();
+    if(catFilter) l=l.filter(p=>p.category===catFilter);
+    if(brandFilter) l=l.filter(p=>brandOf(p)===brandFilter);
+    const n=l.filter(p=>((p.name_cn||'')+(p.brand||'')+(p.sku||'')).toLowerCase().includes(ql)).length;
+    track('search',{q:q,meta:{n:n}});
+    if(n===0) track('search_empty',{q:q});
+  }
   const _viewed=new Set();
   function bumpView(id){
     if(adminEntry||_viewed.has(id)) return; // 店主自己看不算，同次会话同件货只记一次
     _viewed.add(id);
+    track('view',{pid:id}); // 分析用的浏览事件（和下面的计数 RPC 各司其职）
     try{ fetch(SUPABASE_URL+'/rest/v1/rpc/bump_view_369',{method:'POST',headers:headers(),body:JSON.stringify({pid:id})}); }catch(e){}
   }
   function openSheet(id){
@@ -1646,6 +1715,7 @@
     if(p&&p.soldout){ toast('这件已售罄，问客服等补货吧'); return; }
     const pv=pickedOf(id); if(pv){ cartVar[id]=pv; localStorage.setItem('cartvar369',JSON.stringify(cartVar)); }
     cart[id]=(cart[id]||0)+1; saveCart(); haptic('light'); refreshCard(id); if(tab==='cart')renderCart();
+    track('wishlist_add',{pid:id});
     const b=document.getElementById('navBadge'); b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump');
   }
   function setQty(id,d){ cart[id]=(cart[id]||0)+d; if(cart[id]<=0){ delete cart[id]; delete cartVar[id]; localStorage.setItem('cartvar369',JSON.stringify(cartVar)); } saveCart(); refreshCard(id); renderCart(); }
@@ -1756,6 +1826,7 @@
   // 发单后静默同步到云端拿 sid（回看进度用）；失败 2.5s 后重试一次，绝不阻塞跳客服
   function syncOrder(o,retried){
     if(!o||!o.items||!o.items.length||o.sid) return;
+    if(!retried) track('order_sent',{meta:{count:o.count,total:o.total,items:(o.items||[]).map(it=>it.id)}}); // 只在首次发单记一次，重试不重复
     try{
       fetch(SUPABASE_URL+'/rest/v1/rpc/create_order_369',{method:'POST',headers:headers(),
         body:JSON.stringify({ck:clientKey(),tg:tgId(),ono:o.no,its:o.items,tot:(o.total>0?o.total:null),cnt:o.count})})
@@ -2191,6 +2262,67 @@
       else toast((r&&r.error)||'发送失败');
     }catch(e){ toast('网络不稳，重试'); }
     tgRenderState();
+  }
+  // ===== 数据看板（后台）：懒加载 =====
+  let _statsLoaded=false;
+  function toggleStatsCard(){
+    const b=document.getElementById('statsBody');
+    b.classList.toggle('hidden');
+    document.getElementById('statsArrow').textContent=b.classList.contains('hidden')?'▼':'▲';
+    if(!b.classList.contains('hidden')&&!_statsLoaded) loadStats();
+    haptic('light');
+  }
+  async function loadStats(manual){
+    const box=document.getElementById('statsContent');
+    if(box&&(manual||!_statsLoaded)) box.innerHTML='<div class="empty" style="min-height:auto;padding:24px 0">加载中…</div>';
+    const days=Number(document.getElementById('statsDays').value)||7;
+    try{
+      const r=await adminCall('analytics',{days});
+      if(r&&r.ok){ _statsLoaded=true; renderStats(r.data||{}); }
+      else box.innerHTML='<div class="empty" style="min-height:auto;padding:24px 0">加载失败，点刷新重试</div>';
+    }catch(e){ box.innerHTML='<div class="empty" style="min-height:auto;padding:24px 0">网络不稳，点刷新重试</div>'; }
+  }
+  function _pct(a,b){ return b>0?Math.round(a/b*100):0; }
+  function renderStats(d){
+    const box=document.getElementById('statsContent'); if(!box) return;
+    const f=d.funnel||{}, v=f.view||0, w=f.wishlist_add||0, o=f.order_sent||0;
+    const li=(arr,cls)=>((arr&&arr.length)?arr.map(x=>'<div class="stt'+(cls||'')+'"><span class="q">'+esc(x.q!=null?x.q:(x.name_cn||'（无名）'))+'</span><b>'+x.n+'</b></div>').join(''):'<div class="stt none">暂无数据</div>');
+    const stuck=d.parse_stuck||0, stuckOld=d.parse_stuck_old||0;
+    box.innerHTML=
+      (stuckOld>0?'<div class="stt hot" style="background:rgba(192,57,43,.10);border-color:rgba(192,57,43,.3)"><span class="q" style="color:var(--bad)">⚠️ 解析可能挂了：'+stuckOld+' 件卡在「解析中」超 30 分钟</span><b style="color:var(--bad)">查</b></div>':'')+
+      '<div class="funnel">'+
+        '<div class="fn"><b>'+v+'</b><span>浏览</span></div><div class="fnar">→<i>'+_pct(w,v)+'%</i></div>'+
+        '<div class="fn"><b>'+w+'</b><span>加心愿单</span></div><div class="fnar">→<i>'+_pct(o,w)+'%</i></div>'+
+        '<div class="fn"><b>'+o+'</b><span>发单</span></div>'+
+      '</div>'+
+      (d.no_result&&d.no_result.length?'<div class="sthd sthd-hot">🔎 搜了却没有的货 · 该进什么货看这里</div>'+li(d.no_result,' hot'):'')+
+      '<div class="sthd">🔥 最多人看</div>'+li(d.top_view)+
+      '<div class="sthd">⌨️ 热门搜索词</div>'+li(d.top_search)+
+      '<div class="stfoot">'+
+        '<span>解析积压：'+stuck+' 件待解析</span>'+
+        '<button class="mini ghost" onclick="loadErrors()">错误日志 '+(d.errors?('· '+d.errors):'')+'</button>'+
+      '</div><div id="errList"></div>';
+  }
+  async function loadErrors(){
+    const box=document.getElementById('errList'); if(!box) return;
+    box.innerHTML='<div class="hint" style="padding:8px 0">加载中…</div>';
+    try{
+      const r=await adminCall('errors');
+      if(!(r&&r.ok)){ box.innerHTML='<div class="hint">加载失败</div>'; return; }
+      const rows=r.rows||[];
+      if(!rows.length){ box.innerHTML='<div class="hint" style="padding:8px 0">近期没有报错 ✅</div>'; return; }
+      box.innerHTML='<div class="errbox">'+rows.map(e=>{ const m=e.meta||{};
+        return '<div class="erritem"><div class="errmsg">'+esc((e.q||'错误').slice(0,120))+'</div>'+
+          '<div class="errmeta">'+esc((m.path||'')+(m.line?(' :'+m.line):''))+' · '+ordTime(e.created_at)+(m.build?(' · '+esc(m.build)):'')+'</div></div>';
+      }).join('')+'</div>';
+    }catch(e){ box.innerHTML='<div class="hint">网络不稳</div>'; }
+  }
+  async function setAdminPin(){
+    const np=prompt('设置新的后台密码（≥6 位，建议数字+字母混合）'); if(np===null) return;
+    const p=np.trim(); if(p.length<6){ toast('至少 6 位'); return; }
+    const r=await adminCall('setPin',{pin:p}).catch(()=>null);
+    if(r&&r.ok){ localStorage.setItem('a369_pin',p); toast('密码已更新 ✅ 下次登录用新密码'); haptic('medium'); }
+    else toast((r&&r.error)||'设置失败');
   }
   async function loadNoticeInput(){
     try{

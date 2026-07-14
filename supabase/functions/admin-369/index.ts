@@ -1,4 +1,4 @@
-// admin-369 v11: 369 后台专用网关 —— 校验 x-admin-pin 后代办 列表/改/删/入库/订单管理/Telegram 通知。
+// admin-369 v12: 369 后台专用网关 —— PIN 校验(失败限速+自设强密码) 后代办 列表/改/删/入库/订单/通知/数据看板。
 // 底表 products_369 / orders_369 已对 anon 完全锁死，后台一切读写都必须经过这里。
 // 密码优先读 Supabase Secrets 的 ADMIN_PIN_369，没设则用兜底值。
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -19,15 +19,17 @@ Deno.serve(async (req) => {
   };
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
-  const pin = req.headers.get("x-admin-pin") || "";
-  if (pin !== PIN) return json({ ok: false, error: "密码不对" }, 401, cors);
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL"),
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
+  );
+  // PIN 校验：失败限速 + 店主自设强密码（哈希存 app_secrets）取代硬编码兜底
+  const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "unknown";
+  const gate = await adminAuth(supabase, ip, req.headers.get("x-admin-pin") || "");
+  if (!gate.ok) return json({ ok: false, error: gate.error }, gate.status, cors);
 
   try {
     const body = await req.json().catch(() => ({}));
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL"),
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
-    );
 
     switch (body.action) {
       case "ping":
@@ -265,6 +267,30 @@ Deno.serve(async (req) => {
         return json({ ok: true }, 200, cors);
       }
 
+      // ===== 可观测性 =====
+      case "analytics": { // 数据看板聚合
+        const days = Number(body.days) || 7;
+        const { data, error } = await supabase.rpc("analytics_369", { days });
+        if (error) return json({ ok: false, error: error.message }, 500, cors);
+        return json({ ok: true, data }, 200, cors);
+      }
+
+      case "errors": { // 最近客户端错误
+        const { data, error } = await supabase.from("events_369")
+          .select("id,q,meta,ua,created_at").eq("type", "error")
+          .order("created_at", { ascending: false }).limit(40);
+        if (error) return json({ ok: false, error: error.message }, 500, cors);
+        return json({ ok: true, rows: data }, 200, cors);
+      }
+
+      case "setPin": { // 店主设置强密码（哈希存库，取代兜底 3690）
+        const np = String(body.pin || "").trim();
+        if (np.length < 6) return json({ ok: false, error: "新密码至少 6 位（建议数字+字母混合）" }, 400, cors);
+        if (np.length > 64) return json({ ok: false, error: "密码太长" }, 400, cors);
+        await setSecret(supabase, "admin_pin_hash", await sha256hex(np));
+        return json({ ok: true }, 200, cors);
+      }
+
       default:
         return json({ ok: false, error: "未知 action" }, 400, cors);
     }
@@ -323,6 +349,31 @@ function extractTrend(html) {
     author: tjstr(html, "userName").trim(),
     images: imgs.slice(0, 12),
   };
+}
+// ===== 后台 PIN 校验：失败限速 + 自设强密码 =====
+async function adminAuth(supabase, ip, pin) {
+  const { data: row } = await supabase.from("admin_attempts_369").select("*").eq("ip", ip).maybeSingle();
+  const now = Date.now();
+  if (row && row.locked_until && new Date(row.locked_until).getTime() > now) {
+    const mins = Math.ceil((new Date(row.locked_until).getTime() - now) / 60000);
+    return { ok: false, status: 429, error: "尝试太多，请 " + mins + " 分钟后再试" };
+  }
+  const storedHash = (await getSecret(supabase, "admin_pin_hash")).trim();
+  const valid = pin ? (storedHash ? (await sha256hex(pin)) === storedHash : pin === PIN) : false;
+  if (valid) {
+    if (row && row.fails > 0) {
+      await supabase.from("admin_attempts_369").upsert({ ip, fails: 0, locked_until: null, updated_at: new Date().toISOString() });
+    }
+    return { ok: true, status: 200 };
+  }
+  const fails = (row ? row.fails : 0) + 1;
+  const upd = { ip, fails, updated_at: new Date().toISOString(), locked_until: fails >= 5 ? new Date(now + 10 * 60000).toISOString() : null };
+  await supabase.from("admin_attempts_369").upsert(upd);
+  return { ok: false, status: fails >= 5 ? 429 : 401, error: fails >= 5 ? "错误太多，已锁定 10 分钟" : "密码不对" };
+}
+async function sha256hex(s) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 // ===== 私密配置读写（app_secrets_369，只有 service role 能碰）=====
 async function getSecret(supabase, key) {
