@@ -207,6 +207,23 @@
   .ofoot{display:flex;justify-content:space-between;align-items:center}
   .ofoot .ol{font-size:12.5px;color:var(--sub)}.ofoot .ol b{color:var(--price)}
   .obtn{background:var(--ink);color:var(--onInk);border:none;border-radius:20px;padding:8px 15px;font-size:12.5px;font-weight:600;letter-spacing:.5px}
+  /* 订单状态：胶囊 + 6 步进度条 + 备注（全部走 token，深色模式自动生效） */
+  .orow{margin:-3px 0 9px}
+  .ostat{display:inline-block;font-size:10px;font-weight:700;letter-spacing:1.5px;padding:3px 10px;border-radius:11px;border:1px solid var(--line);color:var(--sub);background:var(--card2)}
+  .ostat.on{background:var(--ink);color:var(--onInk);border-color:transparent}
+  .ostat.cx{background:transparent;color:var(--bad);border-color:rgba(255,49,65,.35)}
+  .oltag{display:inline-block;font-size:9px;color:var(--sub);letter-spacing:1.5px;border:1px solid var(--line);border-radius:5px;padding:2px 7px;font-weight:600}
+  .osteps{display:flex;margin:0 0 11px}
+  .osteps .os{flex:1;text-align:center;position:relative}
+  .osteps .os::before{content:'';position:absolute;top:3.5px;left:-50%;right:50%;height:1.5px;background:var(--line)}
+  .osteps .os:first-child::before{display:none}
+  .osteps .os i{display:block;width:8px;height:8px;border-radius:50%;background:var(--line);margin:0 auto 4px;position:relative;z-index:1}
+  .osteps .os span{display:block;font-size:9px;color:var(--sub);letter-spacing:.5px;transform:scale(.92)}
+  .osteps .os.done::before{background:var(--ok)}
+  .osteps .os.done i{background:var(--ok)}
+  .osteps .os.cur i{background:var(--ink);box-shadow:0 0 0 2.5px var(--card2)}
+  .osteps .os.cur span{color:var(--txt);font-weight:700}
+  .onote{font-size:11.5px;color:var(--sub);margin:-2px 0 10px;line-height:1.5;word-break:break-all}
   .droptag{display:inline-block;margin-top:4px;background:rgba(232,35,46,.10);color:var(--price);font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;letter-spacing:.3px}
   /* 凑单/满额提示 */
   .giftbar{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:12px;box-shadow:var(--shadow)}
@@ -451,6 +468,22 @@
   .selbar b{font-size:13px;flex:1}
   .selbar .mini{padding:9px 13px;font-size:13px}
   .badge.up{color:var(--ok);border-color:rgba(0,181,120,.35)}.badge.wait{color:var(--sub)}.badge.down{color:var(--bad);border-color:rgba(255,49,65,.35)}
+  /* 顾客订单（后台） */
+  .opill{font-size:11px;padding:2px 8px;border-radius:8px;border:1px solid var(--line);color:var(--sub);flex:0 0 auto;white-space:nowrap}
+  .opill.ok{color:var(--ok);border-color:rgba(0,181,120,.35)}
+  .opill.bad{color:var(--price);border-color:rgba(232,35,46,.35)}
+  .ordnew{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--price);color:#fff;font-size:11px;font-weight:700;margin-left:6px;vertical-align:1px}
+  .oitem{padding:11px 0;border-bottom:1px solid var(--line)}
+  .oitem:last-child{border-bottom:none}
+  .ohead{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--sub)}
+  .ohead b{font-size:12.5px;color:var(--txt);font-weight:700;overflow-wrap:anywhere}
+  .othumbs{display:flex;gap:6px;margin:7px 0 2px}
+  .othumbs img{width:34px;height:34px;object-fit:cover;border-radius:7px;border:1px solid var(--line);background:var(--card2);flex:0 0 auto}
+  .oline{font-size:12.5px;color:var(--txt);margin:5px 0 8px;line-height:1.5;overflow-wrap:anywhere}
+  .octl{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  .octl select{background:var(--card2);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:7px 8px;font-size:12.5px;outline:none;font-family:inherit;flex:0 0 auto}
+  .octl input{background:var(--card2);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:7px 9px;font-size:12.5px;outline:none;font-family:inherit;flex:1;min-width:110px}
+  .octl input:focus,.octl select:focus{border-color:var(--accent)}
   /* 后台编辑弹层字段 */
   .fld{margin-bottom:11px}.fld label{margin-bottom:5px}
   .fld input,.fld select{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:10px;color:var(--txt);padding:10px 11px;font-size:14px;outline:none;font-family:inherit}
@@ -664,6 +697,17 @@
       <label style="margin-top:10px">🎁 满额文案（配合门槛显示）</label>
       <input class="asearch" id="giftTxtInput" placeholder="送精美小礼 🎁" style="margin-bottom:0">
       <button class="btn" onclick="saveSettings()">保存设置</button>
+      </div>
+    </div>
+    <div class="card" style="padding-bottom:10px">
+      <div onclick="toggleOrdersCard()" style="display:flex;align-items:center;cursor:pointer;margin-bottom:4px">
+        <label style="margin:0;flex:1;color:var(--txt);font-size:13.5px;font-weight:700">📦 顾客订单<span class="ordnew hidden" id="ordNewBadge">0</span><span style="color:var(--sub);font-weight:500;font-size:12px">　接单 · 发货跟进</span></label>
+        <span id="ordArrow" style="color:var(--sub);font-size:12px">▼</span>
+      </div>
+      <div id="ordBody" class="hidden">
+        <div class="sec-title" style="margin-top:8px"><span>顾客发来的订单（最近 100 单）</span><button class="mini ghost" onclick="loadOrders(true)">🔄 刷新</button></div>
+        <div id="ordList"></div>
+        <div class="hint">改状态 + 填物流单号/备注后点「保存」，顾客在「我的订单」里能看到进度。</div>
       </div>
     </div>
     <div class="card">
@@ -1638,6 +1682,31 @@
   // ===== 我的订单（本地留底，方便顾客回看 / 再发一次）=====
   let orders=[]; try{ orders=JSON.parse(localStorage.getItem('orders369')||'[]'); }catch(e){}
   function saveOrder(o){ if(!o||!o.items||!o.items.length) return; orders.unshift(o); orders=orders.slice(0,30); localStorage.setItem('orders369',JSON.stringify(orders)); updateOrdersEntry(); }
+  // ===== 云端订单同步：匿名本机 key（只存 localStorage，绝不在界面展示）=====
+  function clientKey(){
+    let k=localStorage.getItem('ck369');
+    if(!k){
+      let hex='';
+      try{ const a=new Uint8Array(12); crypto.getRandomValues(a); hex=Array.from(a,b=>b.toString(16).padStart(2,'0')).join(''); }catch(e){}
+      while(hex.length<24) hex+=Math.floor(Math.random()*16).toString(16);
+      k='ck_'+hex.slice(0,24); localStorage.setItem('ck369',k);
+    }
+    return k;
+  }
+  const STATUS_STEPS=['已发送','已确认','已付款','已采购','运输中','已到手'];
+  let _srvOrders=null, _ordersView=null; // 云端订单缓存 / 弹层当前渲染的合并列表
+  // 发单后静默同步到云端拿 sid（回看进度用）；失败 2.5s 后重试一次，绝不阻塞跳客服
+  function syncOrder(o,retried){
+    if(!o||!o.items||!o.items.length||o.sid) return;
+    try{
+      fetch(SUPABASE_URL+'/rest/v1/rpc/create_order_369',{method:'POST',headers:headers(),
+        body:JSON.stringify({ck:clientKey(),tg:tgId(),ono:o.no,its:o.items,tot:(o.total>0?o.total:null),cnt:o.count})})
+      .then(r=>{ if(!r.ok) throw 0; return r.json(); })
+      .then(id=>{ if(id==null) return; o.sid=id;
+        const i=orders.findIndex(x=>x.ts===o.ts); if(i>=0){ orders[i].sid=id; localStorage.setItem('orders369',JSON.stringify(orders)); } })
+      .catch(()=>{ if(!retried) setTimeout(()=>syncOrder(o,1),2500); });
+    }catch(e){}
+  }
   // 是否配了真实客服联系方式（没配就别把订单丢进 Telegram 通用分享）
   function hasContact(){ return !!(((CFG.contact_wa||CONTACT_WA)||'').replace(/[^\d]/g,'') || (CFG.contact_tg||'').trim()); }
   // 发单动作统一入口：存一笔留底 + 防重复 + 没配客服时兜底复制，绝不让订单凭空消失
@@ -1649,16 +1718,16 @@
     if(!_lastOrder) _lastOrder=buildOrder();
     if(!hasContact()){
       if(ev&&ev.preventDefault) ev.preventDefault();
-      if(_lastOrder){ saveOrder(_lastOrder); const t=orderText(_lastOrder);
+      if(_lastOrder){ saveOrder(_lastOrder); syncOrder(_lastOrder); const t=orderText(_lastOrder);
         if(navigator.clipboard){ navigator.clipboard.writeText(t).then(()=>toast('客服未设置，订单已复制 ✅ 请粘贴发给客服')).catch(()=>toast('订单已存「我的订单」，可稍后再发')); }
         else toast('订单已存「我的订单」，可稍后再发'); }
       return false;
     }
-    if(_lastOrder) saveOrder(_lastOrder);
+    if(_lastOrder){ saveOrder(_lastOrder); syncOrder(_lastOrder); }
     askClearCart();
     return true;
   }
-  function updateOrdersEntry(){ const s=document.getElementById('ordersSub'); if(s) s.textContent=orders.length?('已发 '+orders.length+' 单 · 点开可再发一次'):'查看发过的订单'; }
+  function updateOrdersEntry(){ const s=document.getElementById('ordersSub'); if(s){ const n=Math.max(orders.length,(_srvOrders||[]).length); s.textContent=n?('已发 '+n+' 单 · 点开看进度'):'查看发过的订单'; } }
   // ===== 常见问题 FAQ =====
   const FAQS=[
     ['怎么下单？','逛店面看中就点 ➕ 加入心愿单，到「心愿单」核对后点「发给客服」，客服和你确认款式、报价、付款方式即可。也可以在商品页直接点「立即下单」问客服。'],
@@ -1681,27 +1750,57 @@
   }
   function fmtDate(ts){ const d=new Date(ts); const p=n=>String(n).padStart(2,'0'); return (d.getMonth()+1)+'月'+d.getDate()+'日 '+p(d.getHours())+':'+p(d.getMinutes()); }
   function resendOrder(ts){
-    const o=orders.find(x=>x.ts===ts)||orders.find(x=>x.no===ts); if(!o) return; // 按唯一 ts 查，兼容旧数据
+    const src=(_ordersView&&_ordersView.length?_ordersView:orders);
+    const o=src.find(x=>x.ts===ts)||src.find(x=>x.no===ts)||orders.find(x=>x.ts===ts); if(!o||!o.items||!o.items.length) return; // 优先查合并视图，按唯一 ts，兼容旧数据
     const url=contactHref(orderText(o)); haptic('light');
     try{
       if(hasMB()&&tg){ if(/^https:\/\/t\.me\//.test(url)&&tg.openTelegramLink) tg.openTelegramLink(url); else if(tg.openLink) tg.openLink(url); else window.open(url,'_blank'); }
       else window.open(url,'_blank');
     }catch(e){ window.open(url,'_blank'); }
   }
+  function orderStatusHtml(o){
+    if(o.status==='已取消') return '<div class="orow"><span class="ostat cx">已取消</span></div>';
+    const cur=o.status?STATUS_STEPS.indexOf(o.status):-1;
+    if(cur>=0) return '<div class="orow"><span class="ostat on">'+esc(o.status)+'</span></div>'+
+      '<div class="osteps">'+STATUS_STEPS.map((s,i)=>'<div class="os'+(i<cur?' done':(i===cur?' done cur':''))+'"><i></i><span>'+esc(s)+'</span></div>').join('')+'</div>';
+    if(o.status) return '<div class="orow"><span class="ostat on">'+esc(o.status)+'</span></div>'; // 未知状态：只给胶囊
+    if(_srvOrders&&_srvOrders.length&&!o.srv) return '<div class="orow"><span class="oltag">本机记录</span></div>';
+    return '';
+  }
   function orderCardHtml(o){
     const thumbs=o.items.slice(0,4).map(it=>it.image?'<img src="'+esc(im(it.image,120))+'" referrerpolicy="no-referrer" onerror="imgFB(this)" alt="">':'<img alt="">').join('');
     const more=o.items.length>4?'<span class="omore">+'+(o.items.length-4)+'</span>':'';
     return '<div class="ocard"><div class="ohead"><b>'+esc(o.no)+'</b><span>'+fmtDate(o.ts)+'</span></div>'+
+      orderStatusHtml(o)+
+      (o.note?'<div class="onote">备注/单号：'+esc(o.note)+'</div>':'')+
       '<div class="othumbs">'+thumbs+more+'</div>'+
       '<div class="ofoot"><div class="ol">共 '+o.count+' 件'+(o.total>0?' · <b>RM'+money(o.total)+'</b>':'')+'</div>'+
       '<button class="obtn" onclick="resendOrder('+o.ts+')">再发给客服 →</button></div></div>';
   }
-  function openOrders(){
-    const box=document.getElementById('ordersContent');
+  // 合并本地留底和云端订单：云端为准（按 sid 对上就用云端那份），仅本机的老单排最后
+  function mergedOrders(){
+    if(!_srvOrders||!_srvOrders.length) return orders.slice();
+    const srv=_srvOrders.map(r=>({srv:true,sid:r.id,no:r.order_no||'#—',ts:(Date.parse(r.created_at)||Date.now()),
+      total:(r.total!=null?Number(r.total):null),count:(r.count!=null?r.count:(r.items||[]).reduce((a,it)=>a+(Number(it.qty)||0),0)),
+      items:(r.items||[]),status:r.status||'',note:r.note||''}));
+    const sids=new Set(srv.map(r=>String(r.sid)));
+    return srv.concat(orders.filter(o=>o.sid==null||!sids.has(String(o.sid))));
+  }
+  function renderOrdersSheet(){
+    const box=document.getElementById('ordersContent'); if(!box) return;
+    _ordersView=mergedOrders();
     box.innerHTML='<h2 style="margin:2px 0 2px;font-size:20px">我的订单</h2><p style="font-size:10px;color:var(--sub);letter-spacing:2.5px;margin:0 0 14px">MY ORDERS</p>'+
-      (orders.length?orders.map(orderCardHtml).join(''):
+      (_ordersView.length?_ordersView.map(orderCardHtml).join(''):
         '<div class="empty" style="padding:44px 0"><div class="big">📋</div>还没有订单<br>去心愿单点「发给客服」，这里就会留底<br><button onclick="closeOrders();setTab(\'shop\')" style="margin-top:14px;background:var(--ink);border:none;color:var(--onInk);border-radius:20px;padding:11px 30px;font-size:13.5px;font-weight:600;letter-spacing:1px">去逛逛</button></div>');
+  }
+  function openOrders(){
+    renderOrdersSheet(); // 本地先渲染，秒开
     document.getElementById('ordersSheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
+    fetch(SUPABASE_URL+'/rest/v1/rpc/my_orders_369',{method:'POST',headers:headers(),body:JSON.stringify({ck:clientKey()})})
+      .then(r=>{ if(!r.ok) throw 0; return r.json(); })
+      .then(rows=>{ if(!Array.isArray(rows)) return; _srvOrders=rows; updateOrdersEntry();
+        if(document.getElementById('ordersSheet').classList.contains('show')) renderOrdersSheet(); })
+      .catch(()=>{}); // 拉取失败静默，保留本地渲染
   }
   function closeOrders(){ document.getElementById('ordersSheet').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
 
@@ -1900,6 +1999,72 @@
     const b=document.getElementById('setBody');
     b.classList.toggle('hidden');
     document.getElementById('setArrow').textContent=b.classList.contains('hidden')?'▼':'▲';
+  }
+  // ===== 顾客订单（后台）：懒加载，展开才拉，不进 loadAdmin 轮询 =====
+  const ORD_STATUS=['已发送','已确认','已付款','已采购','运输中','已到手','已取消'];
+  let AORDERS=[], _ordLoaded=false, _ordFail=false;
+  function toggleOrdersCard(){
+    const b=document.getElementById('ordBody');
+    b.classList.toggle('hidden');
+    document.getElementById('ordArrow').textContent=b.classList.contains('hidden')?'▼':'▲';
+    if(!b.classList.contains('hidden')&&!_ordLoaded) loadOrders();
+    haptic('light');
+  }
+  async function loadOrders(manual){
+    const box=document.getElementById('ordList');
+    if(box&&(manual||!AORDERS.length)) box.innerHTML='<div class="empty">加载中…</div>';
+    try{
+      const r=await adminCall('orders');
+      if(!(r&&r.ok)) throw new Error('bad');
+      AORDERS=r.rows||[]; _ordLoaded=true; _ordFail=false;
+    }catch(e){ _ordFail=true; }
+    renderOrders();
+  }
+  function ordTime(s){
+    const d=new Date(s); if(isNaN(d)) return '';
+    return (d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  }
+  function ordPill(s){ const k=s==='已到手'?' ok':s==='已取消'?' bad':''; return '<span class="opill'+k+'">'+esc(s||'已发送')+'</span>'; }
+  function oid(v){ return String(v==null?'':v).replace(/[^\w-]/g,''); }
+  function renderOrders(){
+    const nb=document.getElementById('ordNewBadge');
+    if(nb){ const n=AORDERS.filter(o=>(o.status||'已发送')==='已发送').length; nb.textContent=n; nb.classList.toggle('hidden',!n); }
+    const box=document.getElementById('ordList'); if(!box) return;
+    if(_ordFail&&!AORDERS.length){ box.innerHTML='<div class="empty">网络不稳，点刷新重试<br><button class="mini" style="margin-top:10px;padding:9px 22px" onclick="loadOrders(true)">🔄 刷新</button></div>'; return; }
+    if(!AORDERS.length){ box.innerHTML='<div class="empty">还没有顾客订单<br>顾客在心愿单点「发给客服」后会出现在这里</div>'; return; }
+    box.innerHTML=AORDERS.map(o=>{
+      const id=oid(o.id);
+      const its=Array.isArray(o.items)?o.items:[];
+      const first=its[0]||{};
+      const n=o.count||its.reduce((a,x)=>a+(Number(x.qty)||1),0);
+      const sum=esc((first.name||'').slice(0,18))+((Number(first.qty)||1)>1?' ×'+Number(first.qty):'')+(its.length>1?'　等 '+n+' 件':'');
+      const th=its.slice(0,4).map(x=>x.image?'<img src="'+esc(im(x.image,120))+'" referrerpolicy="no-referrer" loading="lazy" onerror="imgFB(this)" alt="">':'').join('');
+      const st=ORD_STATUS.includes(o.status)?o.status:'已发送';
+      const opts=ORD_STATUS.map(s=>'<option value="'+s+'"'+(s===st?' selected':'')+'>'+s+'</option>').join('');
+      return '<div class="oitem">'+
+        '<div class="ohead"><b>'+esc(o.order_no||('#'+o.id))+'</b><span>'+esc(ordTime(o.created_at))+'</span><span style="flex:1"></span>'+ordPill(st)+'</div>'+
+        (th?'<div class="othumbs">'+th+'</div>':'')+
+        '<div class="oline">'+sum+'　·　<b style="color:var(--price)">RM '+money(o.total||0)+'</b>'+(o.tg_id?'　·　TG '+esc(o.tg_id):'')+'</div>'+
+        '<div class="octl">'+
+          '<select id="ost_'+id+'">'+opts+'</select>'+
+          '<input id="ono_'+id+'" placeholder="物流单号/备注" maxlength="200" value="'+esc(o.note||'')+'">'+
+          '<button class="mini" onclick="ordSave(\''+id+'\')">保存</button>'+
+          '<button class="mini del" onclick="delOrder(\''+id+'\')">删</button>'+
+        '</div></div>';
+    }).join('');
+  }
+  async function ordSave(id){
+    const st=document.getElementById('ost_'+id).value;
+    const note=document.getElementById('ono_'+id).value.trim().slice(0,200);
+    const o=AORDERS.find(x=>oid(x.id)===String(id));
+    const r=await adminCall('orderStatus',{id:o?o.id:id,status:st,note:note}).catch(()=>null);
+    if(r&&r.ok){ toast('已更新 → '+st); haptic('medium'); loadOrders(); } else toast('保存失败，重试一下');
+  }
+  async function delOrder(id){
+    if(!confirm('删除这个订单记录？删了就没了')) return;
+    const o=AORDERS.find(x=>oid(x.id)===String(id));
+    const r=await adminCall('orderDel',{id:o?o.id:id}).catch(()=>null);
+    if(r&&r.ok){ toast('已删除'); haptic('light'); loadOrders(); } else toast('删除失败');
   }
   async function loadNoticeInput(){
     try{
