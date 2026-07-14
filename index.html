@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: boutique-redesign-v2 -->
+<!-- build: boutique-redesign-v3 -->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -368,13 +368,16 @@
   .fslide:active{transform:scale(.985)}
   .fimg{position:relative;height:210px;background:var(--imgbg)}
   .fimg img{width:100%;height:100%;object-fit:cover;display:block}
-  .ftag{position:absolute;top:10px;left:10px;background:var(--ink);color:var(--onInk);font-size:9.5px;letter-spacing:1.5px;padding:4px 10px;border-radius:4px;font-weight:700}
+  .ftag{position:absolute;top:10px;left:10px;background:rgba(28,24,19,.82);color:#E8C77E;font-size:9.5px;letter-spacing:1.5px;padding:4px 11px;border-radius:7px;font-weight:800;backdrop-filter:blur(5px)}
   .ftag.hot{background:var(--price);color:#fff}
-  .finfo{display:flex;align-items:center;gap:10px;padding:11px 13px}
-  .fname{flex:1;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .fprice{color:var(--price);font-weight:800;font-size:15.5px;letter-spacing:-.3px}
+  .finfo{display:flex;align-items:center;gap:12px;padding:12px 14px}
+  .ftext{flex:1;min-width:0}
+  .fbrand{font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fname{font-size:13.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fbuy{flex:0 0 auto;display:flex;align-items:center;gap:11px}
+  .fprice{color:var(--price);font-weight:800;font-size:16px;letter-spacing:-.3px;font-variant-numeric:tabular-nums}
   .fprice small{font-size:10px;font-weight:700;margin-right:1px}
-  .fcta{flex:0 0 auto;font-size:11px;color:var(--onInk);background:var(--ink);border-radius:16px;padding:6px 13px;font-weight:600;letter-spacing:.5px}
+  .fcta{font-size:11px;color:var(--onInk);background:var(--ink);border-radius:16px;padding:7px 14px;font-weight:700;letter-spacing:.5px;white-space:nowrap}
   .fdots{display:flex;justify-content:center;gap:5px;margin-top:9px}
   .fdot{width:6px;height:6px;border-radius:50%;background:var(--line);transition:all .25s}
   .fdot.on{background:var(--ink);width:16px;border-radius:3px}
@@ -1219,7 +1222,8 @@
     const tagOf=p=>p.hot?'HOT · 人气热卖':(isNewSince(p)?'NEW IN · 最新到店':'FEATURED · 编辑精选');
     el.innerHTML='<div class="fcar" id="fcar" onscroll="featScroll()">'+picks.map(p=>
       '<div class="fslide" onclick="openSheet('+p.id+')"><div class="fimg"><img src="'+esc(im(p.image_url,800))+'" referrerpolicy="no-referrer" onerror="imgFB(this)" alt=""><span class="ftag'+(p.hot?' hot':'')+'">'+tagOf(p)+'</span></div>'+
-      '<div class="finfo"><div class="fname">'+esc(p.name_cn||'')+'</div>'+(p.sell_myr!=null?'<div class="fprice"><small>RM</small>'+money(p.sell_myr)+'</div>':'')+'<span class="fcta">查看 →</span></div></div>').join('')+
+      '<div class="finfo"><div class="ftext">'+(brandOf(p)?'<div class="fbrand">'+esc(brandOf(p))+'</div>':'')+'<div class="fname">'+esc(p.name_cn||'')+'</div></div>'+
+      '<div class="fbuy">'+(p.sell_myr!=null?'<div class="fprice"><small>RM</small>'+money(p.sell_myr)+'</div>':'')+'<span class="fcta">查看 →</span></div></div></div>').join('')+
       '</div>'+(picks.length>1?'<div class="fdots" id="fdots">'+picks.map((_,i)=>'<span class="fdot'+(i===0?' on':'')+'"></span>').join('')+'</div>':'');
     _featN=picks.length; _featIdx=0; startFeatAuto();
   }
