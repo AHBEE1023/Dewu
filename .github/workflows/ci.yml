@@ -1,0 +1,47 @@
+name: CI
+
+# 冒烟测试：每次 push / PR 都跑，改动不回归。
+# 部署：只在 main 更新时自动发生产（跑通测试后）——从此告别手动 vercel + token。
+#   工作流：功能分支开发 → 合并到 main → 自动测试 + 部署 + 别名。
+# 需要在 GitHub 仓库 Secrets 里配 VERCEL_TOKEN（Settings → Secrets and variables → Actions）。
+on:
+  push:
+    branches: [main, claude/migrate-247-agent-to-dewu-0ashep]
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install deps
+        run: npm install
+      - name: Install chromium
+        run: npx playwright install --with-deps chromium
+      - name: Smoke test（双主题 · 零 pageerror · 关键元素断言）
+        run: npm test
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: smoke
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: team_QMuILE40yr5YztonRC62lR9J
+      VERCEL_PROJECT_ID: prj_Aoh7o9B87CyOBiRG4DwXM7KK5y3T
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Vercel (production) + 挂自定义别名
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "⚠️ 未配置 VERCEL_TOKEN secret，跳过部署（测试已通过）。"
+            exit 0
+          fi
+          DEP=$(npx vercel@latest deploy --prod --yes --token="$VERCEL_TOKEN" | tail -1)
+          echo "Deployed: $DEP"
+          for a in dewu-247team.vercel.app dewu-ahbee1023-247team.vercel.app; do
+            npx vercel@latest alias set "$DEP" "$a" --token="$VERCEL_TOKEN"
+          done
