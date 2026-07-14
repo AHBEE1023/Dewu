@@ -162,6 +162,18 @@
   .sharebtns .sb-save{background:var(--price);color:#fff}
   .sharebtns .sb-link{background:#ffffff22;color:#fff;border:1px solid #ffffff44}
   .sharex{margin-top:12px;background:none;border:none;color:#ffffffaa;font-size:13px}
+  /* 发单成功页 */
+  .sentbox{width:100%;max-width:320px;background:var(--card);border-radius:22px;padding:30px 24px 22px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+  .sent-ic{width:58px;height:58px;border-radius:50%;background:var(--ok);color:#fff;font-size:28px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 6px 18px rgba(0,181,120,.35)}
+  .sentbox h3{margin:0 0 8px;font-size:18px;color:var(--txt)}
+  .sentbox p{margin:0 0 18px;font-size:12.5px;line-height:1.75;color:var(--sub)}
+  .sentbox p b{color:var(--txt)}
+  .sent-main{width:100%;border:none;border-radius:22px;padding:13px;font-size:14px;font-weight:700;background:var(--ink);color:var(--onInk);letter-spacing:.5px}
+  .sent-row{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:12px;color:var(--line)}
+  .sent-row button{background:none;border:none;color:var(--sub);font-size:12.5px;padding:6px 4px}
+  /* 详情底栏说明行 & 尺码求助 */
+  .sbnote{flex:0 0 100%;text-align:center;font-size:10.5px;color:var(--sub);margin-top:2px;letter-spacing:.3px}
+  .sizehelp{display:block;font-size:11.5px;color:var(--sub);text-decoration:underline;text-underline-offset:3px;margin:2px 0 0;padding:4px 0}
 
   /* 瀑布流：CSS columns，图片保持原比例 */
   .grid{columns:2;column-gap:9px;padding:6px 12px}
@@ -376,7 +388,8 @@
   .spec:last-child{border-bottom:none}
   .spec span{color:var(--sub);width:76px;flex:0 0 auto}
   .spec b{font-weight:600;min-width:0;overflow-wrap:anywhere}
-  .sheet-bar{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--line);box-shadow:0 -6px 18px rgba(24,26,32,.05);padding:10px 18px calc(12px + var(--safe-b));display:flex;gap:10px}
+  .sheet-bar{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--line);box-shadow:0 -6px 18px rgba(24,26,32,.05);padding:10px 18px calc(12px + var(--safe-b));display:flex;flex-wrap:wrap;gap:10px}
+  .sheet-bar .sbnote{margin-top:-2px}
   .sheet-btns{display:flex;gap:10px}
   .sbtn{flex:1;text-align:center;border:none;border-radius:22px;padding:14px;font-size:15px;font-weight:800;text-decoration:none}
   .sbtn.buy{flex:1.35;color:var(--onInk);background:var(--ink);box-shadow:0 4px 14px rgba(20,21,25,.22)}
@@ -686,6 +699,16 @@
   <div class="sheet" id="sheet" onclick="if(event.target===this)closeSheet()">
     <div class="sheet-in"><div class="close"><button onclick="closeSheet()" aria-label="关闭">✕</button></div><div id="sheetContent"></div></div>
   </div>
+  <!-- 发单成功弹层（顾客） -->
+  <div class="sharelay" id="sentlay" role="dialog" aria-modal="true" aria-label="订单已发送" onclick="if(event.target===this)closeSent()">
+    <div class="sentbox">
+      <div class="sent-ic">✓</div>
+      <h3>订单已发给客服</h3>
+      <p>客服会尽快回复<b>报价和付款方式</b>，请留意消息。<br>这一单已存进「我的订单」，随时可以再发一次。</p>
+      <button class="sent-main" onclick="sentOrders()">查看我的订单</button>
+      <div class="sent-row"><button onclick="sentClear()">清空心愿单</button><span>·</span><button onclick="closeSent();setTab('shop')">继续逛逛</button></div>
+    </div>
+  </div>
   <!-- 分享图卡弹层（顾客） -->
   <div class="sharelay" id="sharelay" onclick="if(event.target===this)closeShare()">
     <div class="sharebox">
@@ -795,6 +818,7 @@
   function handleBack(){
     const on=(id)=>document.getElementById(id).classList.contains('show');
     if(on('lightbox')){ closeLightbox(); return; }
+    if(on('sentlay')){ closeSent(); return; }
     if(on('sharelay')){ closeShare(); return; }
     if(on('ordersSheet')){ closeOrders(); return; }
     if(on('salesSheet')){ closeSales(); return; }
@@ -806,12 +830,14 @@
   function updateBack(){
     if(!(tg&&tg.BackButton)) return;
     const on=(id)=>document.getElementById(id).classList.contains('show');
-    const need=on('lightbox')||on('sharelay')||on('ordersSheet')||on('salesSheet')||on('edit')||on('sheet')||mode==='admin'||tab!=='shop';
+    const need=on('lightbox')||on('sentlay')||on('sharelay')||on('ordersSheet')||on('salesSheet')||on('edit')||on('sheet')||mode==='admin'||tab!=='shop';
     try{ need?tg.BackButton.show():tg.BackButton.hide(); }catch(e){}
   }
   if(tg&&tg.BackButton){ try{ tg.BackButton.onClick(handleBack); }catch(e){} }
+  // role=button 的元素支持 Enter/空格 触发（chips、FAQ、联想等非原生按钮）
+  document.addEventListener('keydown',(e)=>{ if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.matches&&e.target.matches('[role="button"]')){ e.preventDefault(); e.target.click(); } });
   // 键盘 Esc 关弹层（无障碍 / 桌面端）
-  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ const on=(id)=>document.getElementById(id).classList.contains('show'); if(on('lightbox')||on('sharelay')||on('ordersSheet')||on('salesSheet')||on('edit')||on('sheet')) handleBack(); } });
+  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ const on=(id)=>document.getElementById(id).classList.contains('show'); if(on('lightbox')||on('sentlay')||on('sharelay')||on('ordersSheet')||on('salesSheet')||on('edit')||on('sheet')) handleBack(); } });
 
   // ===== 后台隐藏入口：连点 logo 5 次才显示「后台」按钮，顾客看不到 =====
   let adminEntry = localStorage.getItem('a369_entry')==='1';
@@ -886,6 +912,7 @@
   // 店面读专用视图：数据库层面只发布「已上架 + 安全字段」，成本根本不出库
   let _fresh=false,_loadFail=false;
   async function load(){
+    try{ _lastLoadTs=Date.now(); }catch(e){}
     if(!ALL.length) skeleton();
     try{
       const r=await fetch(SUPABASE_URL+'/rest/v1/products_369_shop?select=*&order=created_at.desc&limit=300',{headers:headers()});
@@ -953,9 +980,9 @@
     const box=document.getElementById('chips');
     if(!cats.length&&!brands.length){ box.innerHTML=''; return; }
     const q=(v)=>jesc(v);
-    let h='<span class="chip'+(!catFilter&&!brandFilter?' on':'')+'" onclick="setCat(\'\');setBrand(\'\')">全部</span>';
-    if(cats.length>1) h+=cats.map(c=>'<span class="chip'+(catFilter===c?' on':'')+'" onclick="setCat(\''+q(c)+'\')">'+esc(c)+'</span>').join('');
-    if(brands.length){ h+='<span class="chipdiv"></span>'+brands.map(b=>'<span class="chip'+(brandFilter===b?' on':'')+'" onclick="setBrand(\''+q(b)+'\')">'+esc(b)+'</span>').join(''); }
+    let h='<span class="chip'+(!catFilter&&!brandFilter?' on':'')+'" role="button" tabindex="0" onclick="setCat(\'\');setBrand(\'\')">全部</span>';
+    if(cats.length>1) h+=cats.map(c=>'<span class="chip'+(catFilter===c?' on':'')+'" role="button" tabindex="0" onclick="setCat(\''+q(c)+'\')">'+esc(c)+'</span>').join('');
+    if(brands.length){ h+='<span class="chipdiv"></span>'+brands.map(b=>'<span class="chip'+(brandFilter===b?' on':'')+'" role="button" tabindex="0" onclick="setBrand(\''+q(b)+'\')">'+esc(b)+'</span>').join(''); }
     box.innerHTML=h;
   }
   function setBrand(b){ brandFilter=(brandFilter===b?'':b); buildChips(); render(); }
@@ -964,10 +991,10 @@
   function buildSubfilter(){
     const box=document.getElementById('subfilter'); if(!box) return;
     const nc=newCount(); let h='';
-    if(nc>0) h+='<span class="chip newchip'+(newFilter?' on':'')+'" onclick="setNew()">🆕 上新 '+nc+'</span>';
+    if(nc>0) h+='<span class="chip newchip'+(newFilter?' on':'')+'" role="button" tabindex="0" onclick="setNew()">🆕 上新 '+nc+'</span>';
     if(ALL.some(p=>p.sell_myr!=null)){
       if(h) h+='<span class="chipdiv"></span>';
-      h+=PRICE_RANGES.map(r=>'<span class="chip'+(priceFilter===r[0]?' on':'')+'" onclick="setPrice(\''+r[0]+'\')">'+r[1]+'</span>').join('');
+      h+=PRICE_RANGES.map(r=>'<span class="chip'+(priceFilter===r[0]?' on':'')+'" role="button" tabindex="0" onclick="setPrice(\''+r[0]+'\')">'+r[1]+'</span>').join('');
     }
     box.innerHTML=h; box.style.display=h?'':'none';
   }
@@ -997,7 +1024,7 @@
       if(!hits.length){ box.classList.add('hidden'); return; }
       box.classList.remove('hidden');
       box.innerHTML='<div class="shrow"><span>相关商品 · '+hits.length+'</span></div>'+hits.map(p=>
-        '<div class="sugg" onmousedown="event.preventDefault()" onclick="pickSugg('+p.id+')">'+
+        '<div class="sugg" role="button" tabindex="0" onmousedown="event.preventDefault()" onclick="pickSugg('+p.id+')">'+
         (p.image_url?'<img src="'+esc(im(p.image_url,120))+'" referrerpolicy="no-referrer" onerror="imgFB(this)" alt="">':'<img alt="">')+
         '<div class="sg-i"><div class="sg-n">'+esc(p.name_cn||'')+'</div><div class="sg-b">'+esc(brandOf(p)||'')+'</div></div>'+
         (p.sell_myr!=null?'<div class="sg-p">RM'+money(p.sell_myr)+'</div>':'')+
@@ -1054,7 +1081,10 @@
       ALL.filter(p=>p.hot).forEach(add); ALL.forEach(add);
       picks=picks.slice(0,5);
     }
-    if(picks.length) renderFeat(picks); else { featEl.classList.add('hidden'); stopFeatAuto(); }
+    // 轮播内容没变就不重建（否则每次 render 都会重拉 5 张 800w 大图）
+    const featKey=picks.map(p=>p.id+':'+p.sell_myr).join(',');
+    if(picks.length){ if(featKey!==window._featKey){ renderFeat(picks); window._featKey=featKey; } }
+    else { featEl.classList.add('hidden'); stopFeatAuto(); window._featKey=''; }
     renderForYou(!filtered);
     document.getElementById('gridHead').textContent=filtered?('筛选结果 · '+list.length+' 件'):'严选好物 · CURATED';
     if(!list.length){
@@ -1122,7 +1152,7 @@
     const nImg=(p.images&&p.images.length)||0;
     const isNew=p.created_at&&(Date.now()-new Date(p.created_at).getTime())<3*86400000;
     const corner=p.hot?'<span class="hotbadge">HOT</span>':(isNewSince(p)?'<span class="newbadge">上新</span>':(isNew?'<span class="newbadge">NEW</span>':''));
-    return '<div class="prod">'+
+    return '<div class="prod" data-id="'+p.id+'">'+
       '<div class="thumb" onclick="openSheet('+p.id+')">'+thumb(p)+
         (nImg>1?'<span class="imgbadge">'+nImg+' 图</span>':'')+corner+
         (p.video_url?'<span class="playic">▶</span>':'')+
@@ -1168,7 +1198,8 @@
     const pk0=pickedOf(p.id);
     const varHtml=vs.length
       ?'<div class="voptbar"><span>选择规格 · OPTIONS</span><span class="vpick'+(pk0?' set':'')+'" id="vpick">'+(pk0?'已选 '+esc(pk0.name):'请选择')+'</span></div>'+
-       '<div class="vwrap">'+vs.map((v,i)=>'<button class="vchip'+(v.soldout?' dis':'')+(pk0&&pk0.name===v.name?' on':'')+'" id="vc_'+i+'" '+(v.soldout?'disabled':'onclick="pickVar('+p.id+','+i+')"')+'>'+esc(v.name)+(v.sell!=null?'<span class="vp">RM '+money(v.sell)+'</span>':'')+(v.soldout?'<span class="vp" style="color:#b9bcc4">暂时缺货</span>':'')+'</button>').join('')+'</div>'
+       '<div class="vwrap">'+vs.map((v,i)=>'<button class="vchip'+(v.soldout?' dis':'')+(pk0&&pk0.name===v.name?' on':'')+'" id="vc_'+i+'" '+(v.soldout?'disabled':'onclick="pickVar('+p.id+','+i+')"')+'>'+esc(v.name)+(v.sell!=null?'<span class="vp">RM '+money(v.sell)+'</span>':'')+(v.soldout?'<span class="vp" style="color:#b9bcc4">暂时缺货</span>':'')+'</button>').join('')+'</div>'+
+       '<a class="sizehelp" href="'+contactHref('这件帮我看下尺码/规格怎么选：'+(p.name_cn||'')+(p.sku?'（货号 '+p.sku+'）':''))+'" target="_blank" rel="noopener">尺码拿不准？发给客服帮你选 →</a>'
       :'';
     document.getElementById('sheetContent').innerHTML=
       videoHtml(p)+
@@ -1181,16 +1212,20 @@
       '</div>'+
       reviewHtml(p)+
       '<div class="specs">'+specs.map(s=>'<div class="spec"><span>'+s[0]+'</span><b>'+s[1]+'</b></div>').join('')+'</div>'+
+      detailFaqHtml()+
       detailHtml(p)+
       relatedHtml(p)+
       sheetFavBtn(p.id)+
       '<button onclick="shareProduct('+p.id+')" style="width:100%;background:none;border:none;color:var(--sub);font-size:12.5px;font-weight:500;padding:10px;letter-spacing:1px">分享这件好物</button>'+
       '</div>'+
       (p.soldout
-        ?'<div class="sheet-bar"><button class="sbtn add" style="opacity:.55" disabled>已售罄</button><a class="sbtn buy" href="'+askHref(p)+'" target="_blank" rel="noopener">询问补货</a></div>'
+        ?'<div class="sheet-bar"><button class="sbtn add" style="opacity:.55" disabled>已售罄</button>'+
+          '<a class="sbtn buy" href="'+restockHref(p)+'" target="_blank" rel="noopener" onclick="wantRestock('+p.id+')">到货喊我 🔔</a>'+
+          '<div class="sbnote">留个信息，补到货第一时间通知你</div></div>'
         :'<div class="sheet-bar">'+
           '<button class="sbtn add" onclick="sheetAdd('+p.id+',this)">'+(cart[p.id]?'已在心愿单':'加入心愿单')+'</button>'+
           '<a class="sbtn buy" href="'+askHref(p)+'" target="_blank" rel="noopener">立即下单</a>'+
+          '<div class="sbnote">下单走客服确认 · 核价后再付款，无需在线支付</div>'+
         '</div>');
     const si=document.querySelector('#sheet .sheet-in'); if(si) si.scrollTop=0;
     document.getElementById('sheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
@@ -1404,11 +1439,19 @@
   let fav={}; try{ fav=JSON.parse(localStorage.getItem('fav369')||'{}')||{}; }catch(e){ fav={}; }
   function isFav(id){ return !!fav[id]; }
   function saveFav(){ localStorage.setItem('fav369',JSON.stringify(fav)); updateFavBadge(); }
+  // 只重画这一张卡（点加购/收藏不再重建整个 300 卡网格 + 重拉全部图）
+  function refreshCard(id){
+    const p=pById(id); if(!p) return;
+    document.querySelectorAll('.prod[data-id="'+id+'"]').forEach(el=>{
+      const box=document.createElement('div'); box.innerHTML=cardHtml(p);
+      el.replaceWith(box.firstChild);
+    });
+  }
   function toggleFav(id){
     if(fav[id])delete fav[id];
-    else{ const p=ALL.find(x=>x.id==id); fav[id]={p:(p&&p.sell_myr!=null)?Number(p.sell_myr):null,t:Date.now()}; } // 存收藏时的价，方便算降价
+    else{ const p=pById(id); fav[id]={p:(p&&p.sell_myr!=null)?Number(p.sell_myr):null,t:Date.now()}; } // 存收藏时的价，方便算降价
     saveFav(); haptic('light');
-    render(); if(tab==='fav')renderFav(); const s=document.getElementById('sheet'); if(s.classList.contains('show'))refreshSheetFav(id); }
+    refreshCard(id); if(tab==='fav')renderFav(); const s=document.getElementById('sheet'); if(s.classList.contains('show'))refreshSheetFav(id); }
   // 收藏时的基准价（兼容旧数据：老版本存的是 1，没有基准）
   function favBase(id){ const v=fav[id]; return (v&&typeof v==='object'&&v.p!=null)?Number(v.p):null; }
   // 降价了多少：只有「收藏后价格更低」才返回金额，否则 null
@@ -1469,27 +1512,29 @@
   }
   function favClick(btn,id){ if(!isFav(id)) flyEffect(btn,'fav',null); toggleFav(id); }
   function addCart(id){
-    const p=ALL.find(x=>x.id==id);
+    const p=pById(id);
     if(p&&p.soldout){ toast('这件已售罄，问客服等补货吧'); return; }
     const pv=pickedOf(id); if(pv){ cartVar[id]=pv; localStorage.setItem('cartvar369',JSON.stringify(cartVar)); }
-    cart[id]=(cart[id]||0)+1; saveCart(); haptic('light'); render(); if(tab==='cart')renderCart();
+    cart[id]=(cart[id]||0)+1; saveCart(); haptic('light'); refreshCard(id); if(tab==='cart')renderCart();
     const b=document.getElementById('navBadge'); b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump');
   }
-  function setQty(id,d){ cart[id]=(cart[id]||0)+d; if(cart[id]<=0){ delete cart[id]; delete cartVar[id]; localStorage.setItem('cartvar369',JSON.stringify(cartVar)); } saveCart(); render(); renderCart(); }
-  function rmCart(id){ delete cart[id]; delete cartVar[id]; localStorage.setItem('cartvar369',JSON.stringify(cartVar)); saveCart(); render(); renderCart(); }
+  function setQty(id,d){ cart[id]=(cart[id]||0)+d; if(cart[id]<=0){ delete cart[id]; delete cartVar[id]; localStorage.setItem('cartvar369',JSON.stringify(cartVar)); } saveCart(); refreshCard(id); renderCart(); }
+  function rmCart(id){ delete cart[id]; delete cartVar[id]; localStorage.setItem('cartvar369',JSON.stringify(cartVar)); saveCart(); refreshCard(id); renderCart(); }
   function updateBadge(){ const n=cartItems().reduce((a,p)=>a+(cart[p.id]||0),0); const b=document.getElementById('navBadge'); b.textContent=n; b.classList.toggle('hidden',n===0); }
   function linePrice(p){ const cv=cartVar[p.id]; return (cv&&cv.sell!=null)?Number(cv.sell):(p.sell_myr!=null?Number(p.sell_myr):null); }
   function cartTotal(){ return cartItems().reduce((s,p)=>s+((!p.soldout&&linePrice(p)!=null)?linePrice(p)*cart[p.id]:0),0); }
   function orderNo(){ const d=new Date(); return '#'+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'-'+(100+Math.floor(Math.random()*900)); } // 展示用；查找用 ts
   // 发单后问一声要不要清空（等用户从分享/WhatsApp 跳回来）
+  // 发单后不再用生硬的 confirm：弹品牌化成功页，讲清「接下来会发生什么」+ 顺手引导看订单/清空
   function askClearCart(){
     setTimeout(()=>{
       if(!cartItems().length) return;
-      if(confirm('订单已发给客服 ✅\n要把心愿单清空吗？（等回复期间也可以留着）')){
-        cart={}; saveCart(); render(); renderCart();
-      }
+      document.getElementById('sentlay').classList.add('show'); document.body.style.overflow='hidden'; haptic('medium'); updateBack();
     },1600);
   }
+  function closeSent(){ document.getElementById('sentlay').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
+  function sentClear(){ cart={}; cartVar={}; localStorage.setItem('cartvar369',JSON.stringify(cartVar)); saveCart(); render(); renderCart(); closeSent(); toast('心愿单已清空'); }
+  function sentOrders(){ closeSent(); openOrders(); }
   // 满额提示：店主在后台设了门槛才显示；快到 / 已达用不同文案+进度条
   function renderGift(){
     const box=document.getElementById('cartGift'); if(!box) return;
@@ -1522,6 +1567,23 @@
     const price=(pv&&pv.sell!=null)?pv.sell:p.sell_myr;
     const t='我想要这个：'+(p.name_cn||'')+(pv?'【规格：'+pv.name+'】':'')+(p.sku?'（货号 '+p.sku+'）':'')+(price!=null?'，RM'+money(price):'');
     return contactHref(t);
+  }
+  // 售罄登记：预填到货通知消息 + 顺手收藏（顾客能在收藏里找回，店主补货改价也有降价提醒兜着）
+  function restockHref(p){ return contactHref('这件到货请通知我：'+(p.name_cn||'')+(p.sku?'（货号 '+p.sku+'）':'')); }
+  function wantRestock(id){ if(!isFav(id)) toggleFav(id); toast('已帮你收藏，到货/降价都会提醒'); }
+  // 详情页内嵌「购买须知」：把最挡下单的三个疑虑（含税/时效/退换）放在决策现场
+  function detailFaqHtml(){
+    const picks=[FAQS[3],FAQS[4],FAQS[5]].filter(Boolean);
+    if(!picks.length) return '';
+    return '<div class="dhd" style="margin:18px 0 9px">购买须知 · GOOD TO KNOW</div><div class="faq" style="margin-top:0">'+
+      picks.map((f,i)=>'<div class="qi" id="dfq_'+i+'"><div class="qq" role="button" tabindex="0" aria-expanded="false" onclick="toggleFaqEl(\'dfq_'+i+'\')"><span>'+esc(f[0])+'</span><span class="qx">+</span></div><div class="qa"><div>'+esc(f[1])+'</div></div></div>').join('')+'</div>';
+  }
+  function toggleFaqEl(elId){
+    const qi=document.getElementById(elId); if(!qi) return;
+    const open=qi.classList.toggle('open');
+    const qq=qi.querySelector('.qq'); if(qq) qq.setAttribute('aria-expanded',open?'true':'false');
+    const qa=qi.querySelector('.qa'); qa.style.maxHeight=open?(qa.scrollHeight+'px'):'0';
+    haptic('light');
   }
   // 发单时把当前心愿单快照成一个订单对象（用于「我的订单」记录 + 生成联系文案）
   let _lastOrder=null;
@@ -1580,11 +1642,12 @@
   ];
   function renderFaq(){
     const box=document.getElementById('faq'); if(!box) return;
-    box.innerHTML=FAQS.map((f,i)=>'<div class="qi" id="fq_'+i+'"><div class="qq" onclick="toggleFaq('+i+')"><span>'+esc(f[0])+'</span><span class="qx">+</span></div><div class="qa"><div>'+esc(f[1])+'</div></div></div>').join('');
+    box.innerHTML=FAQS.map((f,i)=>'<div class="qi" id="fq_'+i+'"><div class="qq" role="button" tabindex="0" aria-expanded="false" onclick="toggleFaq('+i+')"><span>'+esc(f[0])+'</span><span class="qx">+</span></div><div class="qa"><div>'+esc(f[1])+'</div></div></div>').join('');
   }
   function toggleFaq(i){
     const qi=document.getElementById('fq_'+i); if(!qi) return;
     const open=qi.classList.toggle('open');
+    const qq=qi.querySelector('.qq'); if(qq) qq.setAttribute('aria-expanded',open?'true':'false');
     const qa=qi.querySelector('.qa'); qa.style.maxHeight=open?(qa.scrollHeight+'px'):'0';
     haptic('light');
   }
@@ -2281,7 +2344,8 @@
   }
 
   // 切回 App 时自动刷新数据（Telegram 里没有下拉刷新，这个替代它）
-  document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ mode==='admin'?loadAdmin():load(); } });
+  let _lastLoadTs=0; // 切回前台节流：30 秒内不重复整表拉取+全量重绘
+  document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ if(mode==='admin'){ loadAdmin(); } else if(Date.now()-_lastLoadTs>30000){ _lastLoadTs=Date.now(); load(); } } });
   // 滚得深了显示「回到顶部」（只在店面 Tab）
   window.addEventListener('scroll',()=>{
     document.getElementById('top2').classList.toggle('hidden', window.scrollY<600 || tab!=='shop' || mode!=='shop');
@@ -2289,15 +2353,16 @@
   },{passive:true});
 
   // ===== 下拉刷新（店面顶部下拉，松手刷新货品）=====
-  let _ptrY=null,_ptrOn=false,_ptrGo=false,_ptrBusy=false; const PTR_TRIG=64,PTR_MAX=96;
+  let _ptrY=null,_ptrX=0,_ptrOn=false,_ptrGo=false,_ptrBusy=false; const PTR_TRIG=64,PTR_MAX=96;
   function ptrReset(){ const el=document.getElementById('ptr'); if(!el) return; el.style.transition='height .25s,opacity .25s'; el.style.height='0'; el.style.opacity='0'; el.classList.remove('ready'); const i=el.querySelector('.ptr-i'); if(i){ i.textContent='↓'; i.style.transform=''; } }
   document.addEventListener('touchstart',(e)=>{
     if(_ptrBusy||mode!=='shop'||tab!=='shop'||window.scrollY>0||e.touches.length!==1){ _ptrY=null; return; }
-    _ptrY=e.touches[0].clientY; _ptrOn=false; _ptrGo=false;
+    _ptrY=e.touches[0].clientY; _ptrX=e.touches[0].clientX; _ptrOn=false; _ptrGo=false;
   },{passive:true});
   document.addEventListener('touchmove',(e)=>{
     if(_ptrY==null||_ptrBusy) return;
-    const dy=e.touches[0].clientY-_ptrY;
+    const dy=e.touches[0].clientY-_ptrY, dx=e.touches[0].clientX-_ptrX;
+    if(!_ptrOn && Math.abs(dx)>Math.abs(dy)){ _ptrY=null; return; } // 横向手势（轮播/画廊滑动）放行，不抢
     if(dy<=0||window.scrollY>0){ if(_ptrOn) ptrReset(); _ptrY=null; _ptrOn=false; return; }
     _ptrOn=true;
     const pull=Math.min(PTR_MAX,dy*0.5), el=document.getElementById('ptr');
