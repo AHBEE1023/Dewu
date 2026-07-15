@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: obs-v5 -->
+<!-- build: referral-v6 -->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -316,6 +316,16 @@
   .mcard .ic{width:40px;height:40px;border-radius:11px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:19px}
   .mcard .mt{flex:1}.mcard .mt b{font-size:14px}.mcard .mt div{font-size:12px;color:var(--sub);margin-top:2px}
   .mcard a{color:var(--txt);text-decoration:none;font-size:13px;font-weight:600}
+  /* 邀请有礼卡 */
+  .invite{background:var(--goldSoft);border:1px solid color-mix(in srgb,var(--gold) 30%,transparent);border-radius:16px;padding:16px;margin-bottom:12px;text-align:left}
+  .invite h4{margin:0 0 4px;font-size:15px;font-weight:800;color:var(--gold);display:flex;align-items:center;gap:6px}
+  .invite .rw{font-size:12.5px;color:var(--txt);line-height:1.5;margin-bottom:12px}
+  .invite .cr{display:flex;align-items:center;gap:10px;background:var(--card);border:1px dashed color-mix(in srgb,var(--gold) 45%,transparent);border-radius:12px;padding:10px 13px;margin-bottom:10px}
+  .invite .cr .cl{flex:0 0 auto;font-size:10px;color:var(--sub);letter-spacing:1px;font-weight:700}
+  .invite .cr .cc{flex:1;font-size:18px;font-weight:800;letter-spacing:3px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .invite .cr .cn{flex:0 0 auto;font-size:11px;color:var(--gold);font-weight:700}
+  .invite .ib{width:100%;background:var(--ink);color:var(--onInk);border:none;border-radius:12px;padding:12px;font-size:13.5px;font-weight:700;letter-spacing:.5px}
+  .invite .ib:active{transform:scale(.98)}
 
   /* 底部导航 */
   #nav{position:fixed;left:0;right:0;bottom:0;max-width:720px;margin:0 auto;height:calc(var(--nav-h) + var(--safe-b));
@@ -686,6 +696,7 @@
     <a class="mcard" id="shareCard" href="#" onclick="shareShop();return false" style="text-decoration:none;color:inherit">
       <div class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 6.5 15.5 4a3.5 3.5 0 0 1 5 5l-3 3a3.5 3.5 0 0 1-5 0"/><path d="M11 17.5 8.5 20a3.5 3.5 0 0 1-5-5l3-3a3.5 3.5 0 0 1 5 0"/></svg></div><div class="mt"><b>分享店铺</b><div>把好物链接发给朋友</div></div><span>复制 →</span>
     </a>
+    <div id="inviteCard" class="invite"></div>
     <div class="mcard"><div class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.6-3 8.4-7 10-4-1.6-7-5.4-7-10V6z"/><path d="m9 12 2 2 4-4"/></svg></div><div class="mt"><b>正品保证</b><div>件件正品，假一赔十，支持验货</div></div></div>
     <div class="mcard"><div class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.6"/><circle cx="17.5" cy="18" r="1.6"/></svg></div><div class="mt"><b>马来包邮</b><div>下单后 7–15 天到手</div></div></div>
     <div style="margin:22px 0 8px;font-size:11px;color:var(--sub);letter-spacing:2px;font-weight:600;text-align:left">常见问题 · FAQ</div>
@@ -745,6 +756,8 @@
       <input class="asearch" id="giftAmtInput" inputmode="numeric" placeholder="200" style="margin-bottom:0">
       <label style="margin-top:10px">🎁 满额文案（配合门槛显示）</label>
       <input class="asearch" id="giftTxtInput" placeholder="送精美小礼 🎁" style="margin-bottom:0">
+      <label style="margin-top:10px">🤝 邀请有礼文案（顾客「客服」页显示；订单带🎁推荐码时你核价减运费）</label>
+      <input class="asearch" id="refTxtInput" placeholder="拉朋友来下首单，双方各减一笔国际运费 🚚" style="margin-bottom:0">
       <button class="btn" onclick="saveSettings()">保存设置</button>
       </div>
     </div>
@@ -1042,7 +1055,7 @@
     document.getElementById('top2').classList.add('hidden');
     if(t==='cart') renderCart();
     if(t==='fav') renderFav();
-    if(t==='me') updateOrdersEntry();
+    if(t==='me'){ updateOrdersEntry(); renderInvite(); }
     haptic('light'); updateBack(); updateMainButton();
   }
 
@@ -1323,7 +1336,7 @@
   }
 
   // ===== 埋点：尽力而为，绝不阻塞体验；店主自己不计（错误除外，那个要收）=====
-  const BUILD='obs-v5';
+  const BUILD='referral-v6';
   let _errN=0;
   function track(t,opts){
     opts=opts||{};
@@ -1760,6 +1773,7 @@
     const n=items.filter(p=>!p.soldout).reduce((a,p)=>a+cart[p.id],0), tot=cartTotal();
     document.getElementById('cartCountLabel').textContent='共 '+n+' 件'+(items.some(p=>p.sell_myr==null&&!p.soldout)?'（含询价品）':'');
     document.getElementById('cartTotal').textContent='RM '+money(tot);
+    const rs=document.querySelector('#checkout .reass'); if(rs) rs.textContent=refBy()?'🎁 已带推荐优惠 · 客服核价时抵运费':'发送不扣款 · 客服核价后再付';
     document.getElementById('cartSend').href=cartWaHref();
   }
   function askHref(p){
@@ -1821,6 +1835,16 @@
     }
     return k;
   }
+  // ===== 推荐裂变：我的推荐码 = client_key 尾 6 位；谁推荐了我 = 落地时存下 =====
+  function refCode(){ return clientKey().replace('ck_','').slice(-6).toUpperCase(); }
+  function refBy(){ try{ return localStorage.getItem('ref369')||null; }catch(e){ return null; } }
+  (function captureRef(){ // 带 ?ref=XXXX 进来、且我是新客(没下过单)、没记过、非自己码 → 记下推荐人
+    try{
+      const r=((new URLSearchParams(location.search)).get('ref')||'').trim().toUpperCase().slice(0,16);
+      if(r && /^[0-9A-F]{4,16}$/.test(r) && r!==refCode() && !localStorage.getItem('ref369')
+         && !(JSON.parse(localStorage.getItem('orders369')||'[]').length)){ localStorage.setItem('ref369',r); }
+    }catch(e){}
+  })();
   const STATUS_STEPS=['已发送','已确认','已付款','已采购','运输中','已到手'];
   let _srvOrders=null, _ordersView=null; // 云端订单缓存 / 弹层当前渲染的合并列表
   // 发单后静默同步到云端拿 sid（回看进度用）；失败 2.5s 后重试一次，绝不阻塞跳客服
@@ -1829,7 +1853,7 @@
     if(!retried) track('order_sent',{meta:{count:o.count,total:o.total,items:(o.items||[]).map(it=>it.id)}}); // 只在首次发单记一次，重试不重复
     try{
       fetch(SUPABASE_URL+'/rest/v1/rpc/create_order_369',{method:'POST',headers:headers(),
-        body:JSON.stringify({ck:clientKey(),tg:tgId(),ono:o.no,its:o.items,tot:(o.total>0?o.total:null),cnt:o.count})})
+        body:JSON.stringify({ck:clientKey(),tg:tgId(),ono:o.no,its:o.items,tot:(o.total>0?o.total:null),cnt:o.count,rby:refBy()})})
       .then(r=>{ if(!r.ok) throw 0; return r.json(); })
       .then(id=>{ if(id==null) return; o.sid=id;
         const i=orders.findIndex(x=>x.ts===o.ts); if(i>=0){ orders[i].sid=id; localStorage.setItem('orders369',JSON.stringify(orders)); }
@@ -1875,6 +1899,26 @@
   function renderFaq(){
     const box=document.getElementById('faq'); if(!box) return;
     box.innerHTML=FAQS.map((f,i)=>'<div class="qi" id="fq_'+i+'"><div class="qq" role="button" tabindex="0" aria-expanded="false" onclick="toggleFaq('+i+')"><span>'+esc(f[0])+'</span><span class="qx">+</span></div><div class="qa"><div>'+esc(f[1])+'</div></div></div>').join('');
+  }
+  // ===== 邀请有礼（推荐裂变）=====
+  function inviteLink(){ return location.origin+location.pathname+'?ref='+refCode(); }
+  function renderInvite(){
+    const box=document.getElementById('inviteCard'); if(!box) return;
+    const rw=(CFG.ref_text||'拉朋友来下首单，双方各减一笔国际运费 🚚').trim();
+    box.innerHTML='<h4>🎁 邀请有礼</h4><div class="rw">'+esc(rw)+'</div>'+
+      '<div class="cr"><span class="cl">我的邀请码</span><span class="cc">'+esc(refCode())+'</span><span class="cn" id="refN"></span></div>'+
+      '<button class="ib" onclick="copyInvite()">复制邀请链接 · 发给朋友</button>';
+    // 拉一次「已成功邀请几单」
+    try{
+      fetch(SUPABASE_URL+'/rest/v1/rpc/my_referrals',{method:'POST',headers:headers(),body:JSON.stringify({code:refCode()})})
+        .then(r=>r.ok?r.json():0).then(n=>{ const el=document.getElementById('refN'); if(el&&Number(n)>0) el.textContent='已成功邀请 '+n+' 单'; }).catch(()=>{});
+    }catch(e){}
+  }
+  function copyInvite(){
+    const url=inviteLink(); haptic('light');
+    if(navigator.share){ navigator.share({title:SHOP_NAME,text:(CFG.ref_text||'一起逛 '+SHOP_NAME+'，各减运费'),url}).catch(()=>{}); return; }
+    if(navigator.clipboard){ navigator.clipboard.writeText(url).then(()=>toast('邀请链接已复制 ✅ 发给朋友吧')).catch(()=>toast('复制失败，长按链接复制：'+url)); }
+    else toast(url);
   }
   function toggleFaq(i){
     const qi=document.getElementById('fq_'+i); if(!qi) return;
@@ -2179,7 +2223,7 @@
       return '<div class="oitem">'+
         '<div class="ohead"><b>'+esc(o.order_no||('#'+o.id))+'</b><span>'+esc(ordTime(o.created_at))+'</span><span style="flex:1"></span>'+ordPill(st)+'</div>'+
         (th?'<div class="othumbs">'+th+'</div>':'')+
-        '<div class="oline">'+sum+'　·　<b style="color:var(--price)">RM '+money(o.total||0)+'</b>'+(o.tg_id?'　·　TG '+esc(o.tg_id):'')+'</div>'+
+        '<div class="oline">'+sum+'　·　<b style="color:var(--price)">RM '+money(o.total||0)+'</b>'+(o.tg_id?'　·　TG '+esc(o.tg_id):'')+(o.referred_by?'　·　<span style="color:var(--gold);font-weight:700">🎁 推荐码 '+esc(o.referred_by)+'（减运费）</span>':'')+'</div>'+
         '<div class="octl">'+
           '<select id="ost_'+id+'">'+opts+'</select>'+
           '<input id="ono_'+id+'" placeholder="物流单号/备注" maxlength="200" value="'+esc(o.note||'')+'">'+
@@ -2329,7 +2373,7 @@
       const r=await fetch(SUPABASE_URL+'/rest/v1/config_369?select=key,value',{headers:headers()});
       const rows=r.ok?await r.json():[];
       const m={}; rows.forEach(x=>m[x.key]=x.value||'');
-      [['noticeInput','notice'],['waInput','contact_wa'],['tgInput','contact_tg'],['giftAmtInput','gift_amt'],['giftTxtInput','gift_txt']].forEach(([id,k])=>{
+      [['noticeInput','notice'],['waInput','contact_wa'],['tgInput','contact_tg'],['giftAmtInput','gift_amt'],['giftTxtInput','gift_txt'],['refTxtInput','ref_text']].forEach(([id,k])=>{
         const el=document.getElementById(id);
         if(el&&document.activeElement!==el) el.value=m[k]||'';
       });
@@ -2340,7 +2384,8 @@
               ['contact_wa',document.getElementById('waInput').value.replace(/[^\d]/g,'')],
               ['contact_tg',document.getElementById('tgInput').value.trim().replace(/^@/,'')],
               ['gift_amt',document.getElementById('giftAmtInput').value.replace(/[^\d.]/g,'')],
-              ['gift_txt',document.getElementById('giftTxtInput').value.trim().slice(0,60)]];
+              ['gift_txt',document.getElementById('giftTxtInput').value.trim().slice(0,60)],
+              ['ref_text',document.getElementById('refTxtInput').value.trim().slice(0,120)]];
     let ok=0;
     for(const [k,v] of kv){ const r=await adminCall('config',{key:k,value:v}).catch(()=>null); if(r&&r.ok) ok++; }
     if(ok===kv.length){
