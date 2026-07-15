@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: review-v9 -->
+<!-- build: push-v10 -->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -785,6 +785,7 @@
       <div class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 6.5 15.5 4a3.5 3.5 0 0 1 5 5l-3 3a3.5 3.5 0 0 1-5 0"/><path d="M11 17.5 8.5 20a3.5 3.5 0 0 1-5-5l3-3a3.5 3.5 0 0 1 5 0"/></svg></div><div class="mt"><b>分享店铺</b><div>把好物链接发给朋友</div></div><span>复制 →</span>
     </a>
     <div id="inviteCard" class="invite"></div>
+    <div class="mcard hidden" id="pushCard" style="cursor:pointer"></div>
     <div class="mcard"><div class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.6-3 8.4-7 10-4-1.6-7-5.4-7-10V6z"/><path d="m9 12 2 2 4-4"/></svg></div><div class="mt"><b>正品保证</b><div>件件正品，假一赔十，支持验货</div></div></div>
     <div class="mcard"><div class="ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.6"/><circle cx="17.5" cy="18" r="1.6"/></svg></div><div class="mt"><b>马来包邮</b><div>下单后 7–15 天到手</div></div></div>
     <div style="margin:22px 0 8px;font-size:11px;color:var(--sub);letter-spacing:2px;font-weight:600;text-align:left">常见问题 · FAQ</div>
@@ -915,6 +916,17 @@
           <button class="btn" style="width:auto;flex:1" id="tgTestBtn" onclick="tgTest()">🔔 发测试通知</button>
         </div>
         <div id="tgStatusLine" class="hint" style="margin-top:10px"></div>
+      </div>
+    </div>
+    <div class="card" style="padding-bottom:10px">
+      <div onclick="toggleAdminPush()" style="display:flex;align-items:center;cursor:pointer;margin-bottom:4px">
+        <label style="margin:0;flex:1;color:var(--txt);font-size:13.5px;font-weight:700">🔔 到货推送<span class="tgpin" id="apushState"></span><span style="color:var(--sub);font-weight:500;font-size:12px">　顾客手机通知</span></label>
+        <span id="apushArrow" style="color:var(--sub);font-size:12px">▼</span>
+      </div>
+      <div id="apushBody" class="hidden">
+        <div class="hint" style="margin-top:8px">顾客在店面「我」页点「开启到货提醒」后，你在上面「顾客订单」改状态，<b>顾客手机会直接弹通知</b>（不用从 Telegram 打开也能收到）。<br><b>iPhone 需先把网页「添加到主屏幕」</b>再开启才收得到；安卓 / 电脑 Chrome 直接就行。</div>
+        <div id="apushLine" class="hint" style="margin-top:8px">展开即自动初始化…</div>
+        <button class="btn" onclick="adminPushTest()" style="margin-top:10px">📲 发测试推送给我这台设备</button>
       </div>
     </div>
     <div class="card" style="padding-bottom:10px">
@@ -1184,7 +1196,7 @@
     document.getElementById('top2').classList.add('hidden');
     if(t==='cart') renderCart();
     if(t==='fav') renderFav();
-    if(t==='me'){ updateOrdersEntry(); renderInvite(); }
+    if(t==='me'){ updateOrdersEntry(); renderInvite(); renderPushCard(); }
     haptic('light'); updateBack(); updateMainButton();
   }
 
@@ -1513,7 +1525,7 @@
   }
 
   // ===== 埋点：尽力而为，绝不阻塞体验；店主自己不计（错误除外，那个要收）=====
-  const BUILD='review-v9';
+  const BUILD='push-v10';
   let _errN=0;
   function track(t,opts){
     opts=opts||{};
@@ -2105,6 +2117,47 @@
     const box=document.getElementById('faq'); if(!box) return;
     box.innerHTML=FAQS.map((f,i)=>'<div class="qi" id="fq_'+i+'"><div class="qq" role="button" tabindex="0" aria-expanded="false" onclick="toggleFaq('+i+')"><span>'+esc(f[0])+'</span><span class="qx">+</span></div><div class="qa"><div>'+esc(f[1])+'</div></div></div>').join('');
   }
+  // ===== Web Push 到货提醒（顾客端）=====
+  function pushSupported(){ return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window && isSecureContext; }
+  function urlB64ToUint8(base64){ const pad='='.repeat((4-base64.length%4)%4); const b=(base64+pad).replace(/-/g,'+').replace(/_/g,'/'); const raw=atob(b); return Uint8Array.from(raw,c=>c.charCodeAt(0)); }
+  async function pushReg(){ try{ return await navigator.serviceWorker.ready; }catch(e){ return null; } }
+  async function currentPushSub(){ const reg=await pushReg(); if(!reg) return null; try{ return await reg.pushManager.getSubscription(); }catch(e){ return null; } }
+  function renderPushCard(){
+    const box=document.getElementById('pushCard'); if(!box) return;
+    if(!pushSupported()){ box.classList.add('hidden'); return; }
+    box.classList.remove('hidden');
+    box.innerHTML='<div class="ic">🔔</div><div class="mt"><b>到货提醒</b><div>检查中…</div></div>';
+    currentPushSub().then(sub=>{
+      const on=!!sub && Notification.permission==='granted';
+      box.innerHTML=on
+        ? '<div class="ic">🔔</div><div class="mt"><b>到货提醒 · 已开启</b><div>下单 / 发货进度会推到手机</div></div><span onclick="disablePush(event)" style="color:var(--sub);font-size:12px">关闭</span>'
+        : '<div class="ic">🔕</div><div class="mt"><b>开启到货提醒</b><div>下单 / 发货第一时间推送到手机</div></div><span style="color:var(--gold);font-weight:700">开启 →</span>';
+      box.onclick=on?null:enablePush;
+    });
+  }
+  async function enablePush(){
+    if(!pushSupported()){ toast('这个浏览器不支持推送'); return; }
+    try{
+      const perm=await Notification.requestPermission();
+      if(perm!=='granted'){ toast('没授权通知，去浏览器/系统设置里允许一下'); return; }
+      const pk=await fetch(FN+'/push-369',{method:'POST',headers:fnHeaders(),body:JSON.stringify({action:'pubkey'})}).then(r=>r.json()).catch(()=>null);
+      if(!pk||!pk.ok||!pk.key){ toast('推送还没配好，让店主在后台开一下'); return; }
+      const reg=await pushReg(); if(!reg){ toast('稍等 Service Worker 就绪后重试'); return; }
+      let sub=await reg.pushManager.getSubscription();
+      if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToUint8(pk.key)});
+      const r=await fetch(FN+'/push-369',{method:'POST',headers:fnHeaders(),body:JSON.stringify({action:'subscribe',ck:clientKey(),sub:sub.toJSON()})}).then(r=>r.json()).catch(()=>null);
+      if(r&&r.ok){ toast('到货提醒已开启 🔔'); haptic('medium'); renderPushCard(); }
+      else toast((r&&r.error)||'开启失败,重试');
+    }catch(e){ toast('开启失败,稍后重试'); }
+  }
+  async function disablePush(ev){
+    if(ev&&ev.stopPropagation) ev.stopPropagation();
+    try{
+      const sub=await currentPushSub();
+      if(sub){ const ep=sub.endpoint; await sub.unsubscribe().catch(()=>{}); fetch(FN+'/push-369',{method:'POST',headers:fnHeaders(),body:JSON.stringify({action:'unsubscribe',endpoint:ep})}).catch(()=>{}); }
+      toast('已关闭到货提醒'); renderPushCard();
+    }catch(e){}
+  }
   // ===== 邀请有礼（推荐裂变）=====
   function inviteLink(){ return location.origin+location.pathname+'?ref='+refCode(); }
   function renderInvite(){
@@ -2687,6 +2740,23 @@
   }
   async function revSet(id,status){ const r=await revApi('modSet',{id,status}); if(r&&r.ok){ toast(status==='hidden'?'已隐藏':'已恢复'); haptic('light'); loadRevMod(true); } else toast((r&&r.error)||'失败'); }
   async function revDel(id){ if(!confirm('删除这条评价？删了就没了')) return; const r=await revApi('modDel',{id}); if(r&&r.ok){ toast('已删除'); haptic('light'); loadRevMod(true); } else toast((r&&r.error)||'失败'); }
+  // ===== 到货推送（后台）=====
+  let _apushLoaded=false;
+  async function pushAdmin(action,params){ const r=await fetch(FN+'/push-369',{method:'POST',headers:{...fnHeaders(),'x-admin-pin':getPin()},body:JSON.stringify(Object.assign({action},params||{}))}); return await r.json().catch(()=>({})); }
+  function toggleAdminPush(){ const b=document.getElementById('apushBody'); b.classList.toggle('hidden'); document.getElementById('apushArrow').textContent=b.classList.contains('hidden')?'▼':'▲'; if(!b.classList.contains('hidden')&&!_apushLoaded) initAdminPush(); haptic('light'); }
+  async function initAdminPush(){
+    const line=document.getElementById('apushLine'); if(line) line.textContent='初始化中…';
+    await pushAdmin('genKeys'); const s=await pushAdmin('status');
+    _apushLoaded=!!(s&&s.ok);
+    const st=document.getElementById('apushState'); const ok=s&&s.ok&&s.hasKeys;
+    if(st){ st.className='tgpin '+(ok?'on':'off'); st.textContent=ok?'已就绪':'未就绪'; }
+    if(line) line.innerHTML=(s&&s.ok)?('推送已就绪 · 当前 <b>'+(s.subs||0)+'</b> 台设备开了到货提醒'):'初始化失败，检查后台密码后重试';
+  }
+  async function adminPushTest(){
+    const r=await pushAdmin('test',{ck:clientKey()});
+    if(r&&r.ok){ toast(r.sent>0?('已发测试推送（'+r.sent+' 台设备）✅'):'你这台还没开到货提醒——先去店面「我」页点开启'); haptic('medium'); }
+    else toast((r&&r.error)||'失败');
+  }
   async function ordSave(id){
     const st=document.getElementById('ost_'+id).value;
     const note=document.getElementById('ono_'+id).value.trim().slice(0,200);

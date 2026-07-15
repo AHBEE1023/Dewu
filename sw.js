@@ -17,6 +17,31 @@ self.addEventListener('activate', (e) => {
   })());
 });
 
+// ===== Web Push：到货提醒 =====
+self.addEventListener('push', (e) => {
+  let data = {};
+  try { data = e.data ? e.data.json() : {}; } catch (_e) { data = { body: e.data ? e.data.text() : '' }; }
+  const title = data.title || '369 甄选';
+  const opts = {
+    body: data.body || '',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    data: { url: data.url || '/' },
+    tag: '369-order',
+    renotify: true,
+  };
+  e.waitUntil(self.registration.showNotification(title, opts));
+});
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const url = (e.notification.data && e.notification.data.url) || '/';
+  e.waitUntil((async () => {
+    const cs = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of cs) { if ('focus' in c) { try { c.navigate(url); } catch (_e) { /* ignore */ } return c.focus(); } }
+    if (self.clients.openWindow) return self.clients.openWindow(url);
+  })());
+});
+
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;

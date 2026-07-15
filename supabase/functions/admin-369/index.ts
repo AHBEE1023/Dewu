@@ -204,11 +204,23 @@ Deno.serve(async (req) => {
         if (error) return json({ ok: false, error: error.message }, 500, cors);
         // 推送给顾客（仅当有 tg_id、配了 bot、且状态或备注确有变化）
         let pushed = false;
+        const changed = !prev || prev.status !== status || (prev.note || "") !== (note || "");
         try {
-          const changed = !prev || prev.status !== status || (prev.note || "") !== (note || "");
           if (changed && data && data.tg_id) {
             const token = (await getSecret(supabase, "tg_bot_token")).trim();
             if (token) pushed = await tgSend(token, String(data.tg_id), fmtStatus(data));
+          }
+        } catch (_e) { /* 推送失败不影响后台改状态 */ }
+        // Web Push（到货提醒）：不管从哪打开的都推；用 service_role key 调 push-369（服务器专用）
+        try {
+          if (changed && data && data.client_key) {
+            const emoji = STATUS_EMOJI[status] || "📦";
+            const bodyTxt = "订单 " + (data.order_no || ("#" + id)) + " 更新为：" + status + (note ? "（" + note + "）" : "");
+            fetch((Deno.env.get("SUPABASE_URL") || "") + "/functions/v1/push-369", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Authorization": "Bearer " + (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "") },
+              body: JSON.stringify({ action: "send", ck: data.client_key, title: emoji + " 369 甄选", body: bodyTxt, url: "/" }),
+            }).catch(() => {});
           }
         } catch (_e) { /* 推送失败不影响后台改状态 */ }
         return json({ ok: true, row: data, pushed }, 200, cors);
