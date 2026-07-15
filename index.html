@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: reviewproof-v14 -->
+<!-- build: firstscreen-v15 -->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -70,17 +70,18 @@
 
   /* ============ 顾客店面 ============ */
   #shopView{padding-bottom:calc(var(--nav-h) + var(--safe-b) + 10px)}
-  .hero{padding:calc(18px + env(safe-area-inset-top,0px)) 16px 4px}
-  .brand{display:flex;align-items:center;gap:11px}
+  .hero{padding:calc(12px + env(safe-area-inset-top,0px)) 16px 4px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .hero .logo{width:38px;height:38px;border-radius:11px;font-size:13.5px}
   .logo{width:44px;height:44px;border-radius:13px;background:var(--ink);
     display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:var(--onInk);letter-spacing:.5px;
     box-shadow:0 4px 14px rgba(28,24,19,.18)}
-  .brand h1{font-size:21px;margin:0;font-weight:800;letter-spacing:.5px;line-height:1.05}
-  .brand p{margin:3px 0 0;font-family:var(--serif);font-style:italic;font-size:12px;color:var(--gold);letter-spacing:1.8px;font-weight:400}
+  .brand h1{font-size:19px;margin:0;font-weight:800;letter-spacing:.5px;line-height:1.05}
+  .brand p{margin:2px 0 0;font-family:var(--serif);font-style:italic;font-size:11px;color:var(--gold);letter-spacing:1.6px;font-weight:400}
   /* 金色担保条：代购最值钱的信任点前置，从灰字升级成醒目 guarantee bar */
-  .trust{display:flex;align-items:center;gap:6px;margin-top:12px;background:var(--goldSoft);
-    border:1px solid color-mix(in srgb,var(--gold) 30%,transparent);border-radius:11px;
-    padding:8px 12px;font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.2px;
+  .trust{display:flex;align-items:center;gap:6px;margin-top:8px;background:var(--goldSoft);
+    border:1px solid color-mix(in srgb,var(--gold) 30%,transparent);border-radius:10px;
+    padding:6px 11px;font-size:10.5px;font-weight:700;color:var(--gold);letter-spacing:.2px;
     white-space:nowrap;overflow:hidden}
   .trust svg{flex:0 0 auto}
   .trust .sep{opacity:.4}
@@ -90,8 +91,8 @@
   .howto b{font-size:14.5px;display:block;margin-bottom:11px}
   .howto .st{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--txt);opacity:.9;line-height:1.5;padding:5px 0}
   .howto .st i{flex:0 0 auto;width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--onInk);font-style:normal;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
-  .tipbar{margin:10px 16px 0;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:10px 13px;font-size:12.5px;color:var(--txt);font-weight:500;display:flex;align-items:center;gap:9px;box-shadow:var(--shadow)}
-  .tipbar .tx{flex:1;line-height:1.5;color:var(--txt)}
+  .tipbar{margin:8px 16px 0;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:11px;padding:7px 11px;font-size:11.5px;color:var(--txt);font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow)}
+  .tipbar .tx{flex:1;line-height:1.45;color:var(--txt)}
   .tipbar .tgo{color:var(--gold);text-decoration:underline;font-weight:700}
   .tipbar .tclose{border:none;background:none;color:var(--sub);font-size:14px;padding:2px 4px}
 
@@ -124,11 +125,11 @@
   .qico svg{width:17px;height:17px}
   .qclear{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:22px;height:22px;border-radius:50%;border:none;background:var(--line);color:var(--sub);font-size:11px;line-height:1;display:none;align-items:center;justify-content:center}
   .qclear.show{display:flex}
-  .seg{display:flex;gap:20px;padding:11px 16px 5px}
+  .seg{display:flex;gap:20px;padding:8px 16px 3px}
   .seg button{background:none;border:none;color:var(--sub);font-size:13px;font-weight:600;padding:2px 0;position:relative}
   .seg button.on{color:var(--txt);font-weight:800}
   .seg button.on::after{content:'';position:absolute;left:22%;right:22%;bottom:-4px;height:2.5px;border-radius:2px;background:var(--ink)}
-  .chips{display:flex;gap:8px;overflow-x:auto;padding:10px 16px 2px;scrollbar-width:none}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding:8px 16px 2px;scrollbar-width:none}
   .chips::-webkit-scrollbar{display:none}
   .chip{flex:0 0 auto;font-size:12.5px;padding:6px 13px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--sub);white-space:nowrap}
   .chip.on{background:var(--ink);color:var(--onInk);border-color:transparent;font-weight:600}
@@ -561,7 +562,7 @@
   .fdot{width:6px;height:6px;border-radius:50%;background:var(--line);transition:all .25s}
   .fdot.on{background:var(--ink);width:16px;border-radius:3px}
   /* 分区标题（细线 + 字距）*/
-  .sechead{display:flex;align-items:center;gap:12px;margin:16px 16px 0;color:var(--sub);font-size:11px;letter-spacing:2.5px;font-weight:600;white-space:nowrap}
+  .sechead{display:flex;align-items:center;gap:12px;margin:10px 16px 0;color:var(--sub);font-size:11px;letter-spacing:2.5px;font-weight:600;white-space:nowrap}
   .sechead::before,.sechead::after{content:'';flex:1;height:1px;background:var(--line)}
   /* 页尾品牌落款 */
   .pfoot{text-align:center;color:var(--sub);font-size:10.5px;letter-spacing:3px;padding:28px 16px 10px;font-weight:600}
@@ -1515,25 +1516,27 @@
     const cats=[...new Set(ALL.map(p=>p.category).filter(Boolean))];
     const brands=[...new Set(ALL.map(p=>brandOf(p)).filter(Boolean))];
     const box=document.getElementById('chips');
-    if(!cats.length&&!brands.length){ box.innerHTML=''; return; }
+    const TAIL='<span id="subchips" style="display:contents"></span>'; // 价格/上新 chips 并进同一行，省一整行首屏空间
+    if(!cats.length&&!brands.length){ box.innerHTML=TAIL; buildSubfilter(); return; }
     const q=(v)=>jesc(v);
     let h='<span class="chip'+(!catFilter&&!brandFilter?' on':'')+'" role="button" tabindex="0" onclick="setCat(\'\');setBrand(\'\')">全部</span>';
     if(cats.length>1) h+=cats.map(c=>'<span class="chip'+(catFilter===c?' on':'')+'" role="button" tabindex="0" onclick="setCat(\''+q(c)+'\')">'+esc(c)+'</span>').join('');
     if(brands.length){ h+='<span class="chipdiv"></span>'+brands.map(b=>'<span class="chip'+(brandFilter===b?' on':'')+'" role="button" tabindex="0" onclick="setBrand(\''+q(b)+'\')">'+esc(b)+'</span>').join(''); }
-    box.innerHTML=h;
+    box.innerHTML=h+TAIL; buildSubfilter();
   }
   function setBrand(b){ brandFilter=(brandFilter===b?'':b); buildChips(); render(); }
   function setCat(c){ catFilter=(catFilter===c?'':c); buildChips(); render(); }
   // 副筛选行：上新 + 价格区间
   function buildSubfilter(){
-    const box=document.getElementById('subfilter'); if(!box) return;
+    // 并入品牌行尾部（#subchips），不再占独立一行；老容器 #subfilter 永久隐藏
+    const old=document.getElementById('subfilter'); if(old) old.style.display='none';
+    const box=document.getElementById('subchips'); if(!box) return;
     const nc=newCount(); let h='';
     if(nc>0) h+='<span class="chip newchip'+(newFilter?' on':'')+'" role="button" tabindex="0" onclick="setNew()">🆕 上新 '+nc+'</span>';
     if(ALL.some(p=>p.sell_myr!=null)){
-      if(h) h+='<span class="chipdiv"></span>';
-      h+=PRICE_RANGES.map(r=>'<span class="chip'+(priceFilter===r[0]?' on':'')+'" role="button" tabindex="0" onclick="setPrice(\''+r[0]+'\')">'+r[1]+'</span>').join('');
+      h+='<span class="chipdiv"></span>'+PRICE_RANGES.map(r=>'<span class="chip'+(priceFilter===r[0]?' on':'')+'" role="button" tabindex="0" onclick="setPrice(\''+r[0]+'\')">'+r[1]+'</span>').join('');
     }
-    box.innerHTML=h; box.style.display=h?'':'none';
+    box.innerHTML=h;
   }
   function setPrice(k){ priceFilter=(priceFilter===k?'':k); buildSubfilter(); render(); haptic('light'); }
   function setNew(){ newFilter=!newFilter; buildSubfilter(); render(); haptic('light'); }
@@ -1715,7 +1718,7 @@
   }
 
   // ===== 埋点：尽力而为，绝不阻塞体验；店主自己不计（错误除外，那个要收）=====
-  const BUILD='reviewproof-v14';
+  const BUILD='firstscreen-v15';
   let _errN=0;
   function track(t,opts){
     opts=opts||{};
