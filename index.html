@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: push-v10 -->
+<!-- build: account-v11 -->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -371,6 +371,42 @@
   .memcard .mmeta b{color:var(--ink);font-variant-numeric:tabular-nums;font-weight:800}
   .memcard .mnext{font-size:11px;color:var(--gold);font-weight:700;margin-top:4px}
   .oref{font-size:11px;color:var(--gold);font-weight:700}
+  /* 用户中心 */
+  .acctcard{text-align:left;margin:14px 0 4px}
+  .acctcard.guest{background:var(--goldSoft);border:1px solid color-mix(in srgb,var(--gold) 30%,transparent);border-radius:16px;padding:15px 16px;display:flex;align-items:center;gap:13px;cursor:pointer}
+  .acctcard.guest .ai{width:42px;height:42px;border-radius:12px;background:var(--ink);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 auto}
+  .acctcard.guest .at{flex:1;min-width:0}
+  .acctcard.guest .at b{font-size:14.5px;font-weight:800;color:var(--ink)}
+  .acctcard.guest .at div{font-size:12px;color:var(--sub);margin-top:2px}
+  .acctcard.guest .ag{flex:0 0 auto;color:var(--gold);font-weight:800;font-size:13px}
+  .acctcard.member{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px 16px;box-shadow:var(--card-sh,0 6px 20px -14px rgba(0,0,0,.3))}
+  .acctcard .mrow{display:flex;align-items:center;gap:12px}
+  .acctcard .mav{width:46px;height:46px;border-radius:50%;background:var(--ink);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800;flex:0 0 auto;font-family:var(--serif)}
+  .acctcard .mi{flex:1;min-width:0}
+  .acctcard .mi b{font-size:15px;font-weight:800;color:var(--ink);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .acctcard .mi span{font-size:12px;color:var(--sub)}
+  .acctcard .medit{flex:0 0 auto;font-size:12px;color:var(--gold);font-weight:700;border:1px solid color-mix(in srgb,var(--gold) 35%,transparent);border-radius:20px;padding:5px 12px;background:none;cursor:pointer}
+  .acctcard .maddr{margin-top:11px;padding-top:11px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--txt);line-height:1.55}
+  .acctcard .maddr .k{color:var(--sub);font-size:11px}
+  .acctcard .maddr.empty{color:var(--sub)}
+  /* 账号表单 */
+  .authtab{display:flex;gap:8px;margin:4px 0 16px}
+  .authtab button{flex:1;padding:9px;border:1px solid var(--line);background:var(--card2);color:var(--sub);border-radius:11px;font-size:14px;font-weight:700;cursor:pointer}
+  .authtab button.on{background:var(--ink);color:var(--onInk);border-color:var(--ink)}
+  .authfield{margin-bottom:12px}
+  .authfield label{display:block;font-size:12px;color:var(--sub);margin-bottom:5px;font-weight:600}
+  .authfield input,.authfield textarea{width:100%;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:11px;padding:11px 13px;font-size:15px;font-family:inherit}
+  .authfield textarea{min-height:66px;resize:vertical;line-height:1.5}
+  .authhint{font-size:11.5px;color:var(--sub);margin:-4px 0 14px;line-height:1.5}
+  .authlink{text-align:center;font-size:12.5px;color:var(--sub);margin-top:14px}
+  .authlink a{color:var(--gold);font-weight:700;cursor:pointer;text-decoration:none}
+  .aout{width:100%;margin-top:10px;background:none;border:1px solid var(--line);color:var(--sub);border-radius:11px;padding:11px;font-size:13.5px;cursor:pointer}
+  /* 后台顾客账号 */
+  .macc{border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin:8px 0;background:var(--card2)}
+  .macc .mah{display:flex;align-items:center;gap:8px}
+  .macc .mah b{flex:1;font-size:13.5px;color:var(--txt)}
+  .macc .mah .cnt{flex:0 0 auto;font-size:11px;font-weight:800;color:var(--gold);background:var(--goldSoft);border-radius:20px;padding:2px 9px}
+  .macc .mam{font-size:11.5px;color:var(--sub);margin-top:5px;line-height:1.5}
   /* 真人评价（商品详情页展示）*/
   .crev{margin:2px 0 6px}
   .crev .crh{display:flex;align-items:baseline;gap:9px;margin-bottom:10px}
@@ -763,6 +799,7 @@
     <div class="logo">369</div>
     <h2 id="meShop">369 甄选</h2>
     <p>正品好物 · 精选好货 · 马来直邮</p>
+    <div id="acctCard" class="acctcard"></div>
     <div class="mestats">
       <div><b id="meCount">—</b><span>在售好物</span></div>
       <div><b>100%</b><span>正品保证</span></div>
@@ -930,6 +967,17 @@
       </div>
     </div>
     <div class="card" style="padding-bottom:10px">
+      <div onclick="toggleAccCard()" style="display:flex;align-items:center;cursor:pointer;margin-bottom:4px">
+        <label style="margin:0;flex:1;color:var(--txt);font-size:13.5px;font-weight:700">👤 顾客账号<span style="color:var(--sub);font-weight:500;font-size:12px">　注册会员 · 收货地址</span></label>
+        <span id="accArrow" style="color:var(--sub);font-size:12px">▼</span>
+      </div>
+      <div id="accBody" class="hidden">
+        <div class="hint" style="margin-top:8px">顾客注册后换手机也能找回订单；填了收货地址的，下单会自动带给你（订单卡上直接显示👤+📍）。忘密码的可点「重置密码」给个临时密码。</div>
+        <div class="sec-title" style="margin-top:8px"><span>已注册账号</span><button class="mini ghost" onclick="loadAccounts(true)">🔄 刷新</button></div>
+        <div id="accList"></div>
+      </div>
+    </div>
+    <div class="card" style="padding-bottom:10px">
       <div onclick="toggleStatsCard()" style="display:flex;align-items:center;cursor:pointer;margin-bottom:4px">
         <label style="margin:0;flex:1;color:var(--txt);font-size:13.5px;font-weight:700">📊 数据看板<span style="color:var(--sub);font-weight:500;font-size:12px">　顾客行为 · 进货参考</span></label>
         <span id="statsArrow" style="color:var(--sub);font-size:12px">▼</span>
@@ -1014,6 +1062,10 @@
   <!-- 写评价弹层 -->
   <div class="sheet" id="revSheet" onclick="if(event.target===this)closeRev()">
     <div class="sheet-in"><div class="close"><button onclick="closeRev()" aria-label="关闭">✕</button></div><div id="revContent" style="padding:6px 18px calc(22px + var(--safe-b))"></div></div>
+  </div>
+  <!-- 账号弹层（登录 / 注册 / 我的资料）-->
+  <div class="sheet" id="acctSheet" onclick="if(event.target===this)closeAcct()">
+    <div class="sheet-in"><div class="close"><button onclick="closeAcct()" aria-label="关闭">✕</button></div><div id="acctContent" style="padding:6px 18px calc(22px + var(--safe-b))"></div></div>
   </div>
 
   <!-- 全屏看图（可左右滑动切换） -->
@@ -1106,6 +1158,7 @@
     if(on('lightbox')){ closeLightbox(); return; }
     if(on('sentlay')){ closeSent(); return; }
     if(on('sharelay')){ closeShare(); return; }
+    if(on('acctSheet')){ closeAcct(); return; }
     if(on('revSheet')){ closeRev(); return; }
     if(on('ordersSheet')){ closeOrders(); return; }
     if(on('salesSheet')){ closeSales(); return; }
@@ -1116,7 +1169,7 @@
   }
   function anyOverlay(){
     const on=(id)=>{ const el=document.getElementById(id); return !!el&&el.classList.contains('show'); };
-    return on('lightbox')||on('sentlay')||on('sharelay')||on('revSheet')||on('ordersSheet')||on('salesSheet')||on('edit')||on('sheet');
+    return on('lightbox')||on('sentlay')||on('sharelay')||on('acctSheet')||on('revSheet')||on('ordersSheet')||on('salesSheet')||on('edit')||on('sheet');
   }
   // 浏览器/安卓返回键关弹层：开弹层压一条历史，back 弹出时关掉最上层；✕ 关闭时把那条历史消化掉
   let _ovPushed=false,_ovIgnorePop=false;
@@ -1139,7 +1192,7 @@
   // role=button 的元素支持 Enter/空格 触发（chips、FAQ、联想等非原生按钮）
   document.addEventListener('keydown',(e)=>{ if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.matches&&e.target.matches('[role="button"]')){ e.preventDefault(); e.target.click(); } });
   // 键盘 Esc 关弹层（无障碍 / 桌面端）
-  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ const on=(id)=>document.getElementById(id).classList.contains('show'); if(on('lightbox')||on('sentlay')||on('sharelay')||on('revSheet')||on('ordersSheet')||on('salesSheet')||on('edit')||on('sheet')) handleBack(); } });
+  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ const on=(id)=>document.getElementById(id).classList.contains('show'); if(on('lightbox')||on('sentlay')||on('sharelay')||on('acctSheet')||on('revSheet')||on('ordersSheet')||on('salesSheet')||on('edit')||on('sheet')) handleBack(); } });
 
   // ===== 后台隐藏入口：连点 logo 5 次才显示「后台」按钮，顾客看不到 =====
   let adminEntry = localStorage.getItem('a369_entry')==='1';
@@ -1196,7 +1249,7 @@
     document.getElementById('top2').classList.add('hidden');
     if(t==='cart') renderCart();
     if(t==='fav') renderFav();
-    if(t==='me'){ updateOrdersEntry(); renderInvite(); renderPushCard(); }
+    if(t==='me'){ updateOrdersEntry(); renderInvite(); renderPushCard(); renderAcctCard(); }
     haptic('light'); updateBack(); updateMainButton();
   }
 
@@ -1525,7 +1578,7 @@
   }
 
   // ===== 埋点：尽力而为，绝不阻塞体验；店主自己不计（错误除外，那个要收）=====
-  const BUILD='push-v10';
+  const BUILD='account-v11';
   let _errN=0;
   function track(t,opts){
     opts=opts||{};
@@ -2028,6 +2081,8 @@
     let t='你好，我想下单（'+SHOP_NAME+'）订单 '+o.no+'：\n';
     o.items.forEach((it,i)=>{ t+=(i+1)+'. '+it.name+(it.variant?'【'+it.variant+'】':'')+(it.sku?'（'+it.sku+'）':'')+' ×'+it.qty+(it.price!=null?' RM'+money(it.price):' 询价')+'\n'; });
     if(o.total>0) t+='合计约 RM'+money(o.total)+'（共 '+o.count+' 件）';
+    const a=account();
+    if(a&&(a.address||a.recipient)){ t+='\n\n📦 收货：'+(a.recipient||'')+(a.addr_phone?(' '+a.addr_phone):'')+'\n'+(a.address||''); }
     return t;
   }
   function cartWaHref(){
@@ -2158,6 +2213,92 @@
       toast('已关闭到货提醒'); renderPushCard();
     }catch(e){}
   }
+  // ===== 用户中心：手机号 + 自设密码。账号 = client_key 的可恢复外壳 =====
+  let _acct=null; try{ _acct=JSON.parse(localStorage.getItem('acct369')||'null'); }catch(e){ _acct=null; }
+  let _authMode='login';
+  function account(){ return _acct; }
+  function setAccount(a){ _acct=a||null; try{ if(a) localStorage.setItem('acct369',JSON.stringify(a)); else localStorage.removeItem('acct369'); }catch(e){} }
+  function maskPhone(p){ p=String(p||''); return p.length>4?p.slice(0,3)+'****'+p.slice(-2):p; }
+  async function acctApi(action,params){ const r=await fetch(FN+'/account-369',{method:'POST',headers:fnHeaders(),body:JSON.stringify(Object.assign({action},params||{}))}); return await r.json().catch(()=>({})); }
+  function renderAcctCard(){
+    const box=document.getElementById('acctCard'); if(!box) return;
+    const a=account();
+    if(!a){
+      box.className='acctcard guest'; box.onclick=()=>openAuth('login');
+      box.innerHTML='<div class="ai">👤</div><div class="at"><b>登录 / 注册</b><div>换手机也能找回订单 · 存地址下单更快</div></div><span class="ag">进入 →</span>';
+      return;
+    }
+    box.className='acctcard member'; box.onclick=null;
+    const nm=a.nickname||('会员'+maskPhone(a.phone).slice(-4));
+    const addr=a.address
+      ?'<div class="maddr"><span class="k">收货：</span>'+esc(a.recipient||'')+(a.addr_phone?' · '+esc(a.addr_phone):'')+'<br>'+esc(a.address)+'</div>'
+      :'<div class="maddr empty"><span class="k">收货地址：</span>还没填 · 点「资料」补上，下单更快 →</div>';
+    box.innerHTML='<div class="mrow"><div class="mav">'+esc(nm.slice(0,1))+'</div><div class="mi"><b>'+esc(nm)+'</b><span>'+esc(maskPhone(a.phone))+' · 已登录</span></div><button class="medit" onclick="openProfile()">资料</button></div>'+addr;
+  }
+  function openAuth(mode){ _authMode=mode||'login'; renderAuthSheet(); document.getElementById('acctSheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack(); }
+  function switchAuth(m){ _authMode=m; renderAuthSheet(); }
+  function renderAuthSheet(){
+    const box=document.getElementById('acctContent'); if(!box) return; const reg=_authMode==='register';
+    box.innerHTML='<h2 style="margin:2px 0 2px;font-size:20px">'+(reg?'注册账号':'登录')+'</h2><p style="font-size:10px;color:var(--sub);letter-spacing:2.5px;margin:0 0 14px">MY ACCOUNT</p>'+
+      '<div class="authtab"><button class="'+(!reg?'on':'')+'" onclick="switchAuth(\'login\')">登录</button><button class="'+(reg?'on':'')+'" onclick="switchAuth(\'register\')">注册</button></div>'+
+      (reg?'<div class="authfield"><label>昵称（选填）</label><input id="auNick" maxlength="20" placeholder="怎么称呼你"></div>':'')+
+      '<div class="authfield"><label>手机号</label><input id="auPhone" inputmode="numeric" autocomplete="tel" placeholder="60123456789"></div>'+
+      '<div class="authfield"><label>密码</label><input id="auPw" type="password" autocomplete="'+(reg?'new-password':'current-password')+'" placeholder="'+(reg?'设 6 位以上密码':'输入密码')+'"></div>'+
+      (reg?'<div class="authhint">🔒 密码只用来在换手机时找回你的订单和收货地址；不存明文密码。忘了可联系客服重置。</div>':'')+
+      '<button class="btn" id="auBtn" onclick="submitAuth()">'+(reg?'注册并登录':'登录')+'</button>'+
+      '<div class="authlink">'+(reg?'已有账号？<a onclick="switchAuth(\'login\')">去登录</a>':'第一次来？<a onclick="switchAuth(\'register\')">注册新账号</a>')+'</div>';
+  }
+  async function submitAuth(){
+    const reg=_authMode==='register';
+    const phone=(document.getElementById('auPhone').value||'').trim();
+    const pw=(document.getElementById('auPw').value||'');
+    const nick=reg?(document.getElementById('auNick').value||'').trim():'';
+    if(!phone||!pw){ toast('手机号和密码都要填'); return; }
+    const btn=document.getElementById('auBtn'); if(btn){ btn.disabled=true; btn.textContent='请稍候…'; }
+    const r=await acctApi(reg?'register':'login',{phone,password:pw,nickname:nick,ck:clientKey()});
+    if(!(r&&r.ok)){ if(btn){ btn.disabled=false; btn.textContent=reg?'注册并登录':'登录'; } toast((r&&r.error)||'失败,重试'); return; }
+    const acc=r.account, switched=acc.client_key&&acc.client_key!==clientKey();
+    setAccount({phone:acc.phone,nickname:acc.nickname,recipient:acc.recipient,addr_phone:acc.addr_phone,address:acc.address});
+    try{ if(acc.client_key) localStorage.setItem('ck369',acc.client_key); }catch(e){}
+    toast(reg?'注册成功 🎉':'登录成功 👋'); haptic('medium'); closeAcct();
+    if(switched) setTimeout(()=>location.reload(),450); else { renderAcctCard(); updateOrdersEntry(); }
+  }
+  function openProfile(){ renderProfileSheet(); document.getElementById('acctSheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack(); }
+  function renderProfileSheet(){
+    const a=account()||{}; const box=document.getElementById('acctContent'); if(!box) return;
+    box.innerHTML='<h2 style="margin:2px 0 2px;font-size:20px">我的资料</h2><p style="font-size:10px;color:var(--sub);letter-spacing:2.5px;margin:0 0 14px">'+esc(maskPhone(a.phone))+' · 已登录</p>'+
+      '<div class="authfield"><label>昵称</label><input id="pfNick" maxlength="20" value="'+esc(a.nickname||'')+'" placeholder="怎么称呼你"></div>'+
+      '<div style="font-size:12px;color:var(--gold);font-weight:700;margin:6px 0 10px">📦 收货信息（下单自动带给客服）</div>'+
+      '<div class="authfield"><label>收件人</label><input id="pfRec" maxlength="40" value="'+esc(a.recipient||'')+'" placeholder="收件人姓名"></div>'+
+      '<div class="authfield"><label>收货电话</label><input id="pfPh" inputmode="numeric" value="'+esc(a.addr_phone||'')+'" placeholder="收货联系电话"></div>'+
+      '<div class="authfield"><label>收货地址</label><textarea id="pfAddr" maxlength="300" placeholder="详细地址 + 邮编">'+esc(a.address||'')+'</textarea></div>'+
+      '<button class="btn" id="pfBtn" onclick="saveProfile()">保存</button>'+
+      '<button class="aout" onclick="changePwPrompt()">修改密码</button>'+
+      '<button class="aout" onclick="logout()">退出登录</button>';
+  }
+  async function saveProfile(){
+    const nick=(document.getElementById('pfNick').value||'').trim();
+    const rec=(document.getElementById('pfRec').value||'').trim();
+    const ph=(document.getElementById('pfPh').value||'').trim();
+    const addr=(document.getElementById('pfAddr').value||'').trim();
+    const btn=document.getElementById('pfBtn'); if(btn){ btn.disabled=true; btn.textContent='保存中…'; }
+    const r=await acctApi('updateProfile',{ck:clientKey(),nickname:nick,recipient:rec,addr_phone:ph,address:addr});
+    if(btn){ btn.disabled=false; btn.textContent='保存'; }
+    if(r&&r.ok){ const x=r.account; setAccount({phone:x.phone,nickname:x.nickname,recipient:x.recipient,addr_phone:x.addr_phone,address:x.address}); toast('已保存 ✅'); haptic('medium'); closeAcct(); renderAcctCard(); }
+    else toast((r&&r.error)||'保存失败');
+  }
+  async function changePwPrompt(){
+    const oldPw=prompt('输入当前密码'); if(oldPw===null) return;
+    const newPw=prompt('设置新密码（≥6 位）'); if(newPw===null) return;
+    const r=await acctApi('changePassword',{ck:clientKey(),oldPassword:oldPw,newPassword:newPw});
+    if(r&&r.ok) toast('密码已更新 ✅'); else toast((r&&r.error)||'失败');
+  }
+  function logout(){
+    if(!confirm('退出登录？本机回到未登录状态（订单历史仍在云端，重新登录即可找回）。')) return;
+    setAccount(null); try{ localStorage.removeItem('ck369'); }catch(e){}
+    toast('已退出'); closeAcct(); setTimeout(()=>location.reload(),400);
+  }
+  function closeAcct(){ document.getElementById('acctSheet').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
   // ===== 邀请有礼（推荐裂变）=====
   function inviteLink(){ return location.origin+location.pathname+'?ref='+refCode(); }
   function renderInvite(){
@@ -2583,6 +2724,7 @@
       if(!(r&&r.ok)) throw new Error('bad');
       AORDERS=r.rows||[]; _ordLoaded=true; _ordFail=false;
     }catch(e){ _ordFail=true; }
+    await ensureAcctMap();
     renderOrders();
   }
   function ordTime(s){
@@ -2602,6 +2744,8 @@
     box.innerHTML=AORDERS.map(o=>{
       const rep=o.client_key?(ckCount[o.client_key]||0):0;
       const repTag=rep>=2?'　·　<span class="oref">🎖 回头客 ×'+rep+'</span>':'';
+      const acc=o.client_key?_acctMap[o.client_key]:null;
+      const accRow=acc?('<div class="oline" style="color:var(--gold);font-weight:600">👤 '+esc(acc.nickname||'会员')+' · '+esc(acc.phone)+(acc.address?('<br>📍 '+esc((acc.recipient?acc.recipient+' ':'')+(acc.addr_phone?acc.addr_phone+' · ':'')+acc.address)):'')+'</div>'):'';
       const id=oid(o.id);
       const its=Array.isArray(o.items)?o.items:[];
       const first=its[0]||{};
@@ -2614,6 +2758,7 @@
         '<div class="ohead"><b>'+esc(o.order_no||('#'+o.id))+'</b><span>'+esc(ordTime(o.created_at))+'</span><span style="flex:1"></span>'+ordPill(st)+'</div>'+
         (th?'<div class="othumbs">'+th+'</div>':'')+
         '<div class="oline">'+sum+'　·　<b style="color:var(--price)">RM '+money(o.total||0)+'</b>'+(o.tg_id?'　·　TG '+esc(o.tg_id):'')+(o.referred_by?'　·　<span style="color:var(--gold);font-weight:700">🎁 推荐码 '+esc(o.referred_by)+'（减运费）</span>':'')+(o.campaign_id?'　·　<span style="color:var(--gold);font-weight:700">🚚 拼团单</span>':'')+repTag+'</div>'+
+        accRow+
         payAdminHtml(o,id)+
         '<div class="octl">'+
           '<select id="ost_'+id+'">'+opts+'</select>'+
@@ -2756,6 +2901,35 @@
     const r=await pushAdmin('test',{ck:clientKey()});
     if(r&&r.ok){ toast(r.sent>0?('已发测试推送（'+r.sent+' 台设备）✅'):'你这台还没开到货提醒——先去店面「我」页点开启'); haptic('medium'); }
     else toast((r&&r.error)||'失败');
+  }
+  // ===== 顾客账号（后台）=====
+  let _accLoaded=false, _acctMap={};
+  async function accApi(action,params){ const r=await fetch(FN+'/account-369',{method:'POST',headers:{...fnHeaders(),'x-admin-pin':getPin()},body:JSON.stringify(Object.assign({action},params||{}))}); return await r.json().catch(()=>({})); }
+  async function ensureAcctMap(){ if(_accLoaded) return; try{ const r=await accApi('adminList'); if(r&&r.ok){ _accLoaded=true; _acctMap={}; (r.rows||[]).forEach(a=>{ _acctMap[a.client_key]=a; }); if(document.getElementById('accBody')&&!document.getElementById('accBody').classList.contains('hidden')) renderAccList(r.rows||[]); } }catch(e){} }
+  function toggleAccCard(){ const b=document.getElementById('accBody'); b.classList.toggle('hidden'); document.getElementById('accArrow').textContent=b.classList.contains('hidden')?'▼':'▲'; if(!b.classList.contains('hidden')) loadAccounts(); haptic('light'); }
+  async function loadAccounts(manual){
+    const box=document.getElementById('accList'); if(box&&(manual||!_accLoaded)) box.innerHTML='<div class="hint">加载中…</div>';
+    const r=await accApi('adminList');
+    if(!r||!r.ok){ if(box) box.innerHTML='<div class="hint">'+esc((r&&r.error)||'加载失败，检查后台密码')+'</div>'; return; }
+    _accLoaded=true; _acctMap={}; (r.rows||[]).forEach(a=>{ _acctMap[a.client_key]=a; });
+    renderAccList(r.rows||[]);
+    if(AORDERS.length) renderOrders(); // 订单卡带出账号/地址
+  }
+  function renderAccList(rows){
+    const box=document.getElementById('accList'); if(!box) return;
+    if(!rows.length){ box.innerHTML='<div class="empty">还没有顾客注册账号</div>'; return; }
+    box.innerHTML=rows.map(a=>{
+      const nm=a.nickname||'（未填昵称）';
+      const addr=a.address?('📍 '+esc((a.recipient?a.recipient+' ':'')+(a.addr_phone?a.addr_phone+' · ':'')+a.address)):'（未填收货地址）';
+      return '<div class="macc"><div class="mah"><b>'+esc(nm)+'</b><span class="cnt">下单 '+(a.orders||0)+'</span></div>'+
+        '<div class="mam">📱 '+esc(a.phone)+'<br>'+addr+'</div>'+
+        '<div style="margin-top:8px;text-align:right"><button class="mini ghost" onclick="accReset(\''+esc(a.phone)+'\')">重置密码</button></div></div>';
+    }).join('');
+  }
+  async function accReset(phone){
+    const np=prompt('给 '+phone+' 设个临时新密码（≥6 位），发给顾客让 TA 登录后自己改'); if(np===null) return;
+    const r=await accApi('adminReset',{phone,newPassword:np.trim()});
+    if(r&&r.ok){ toast('已重置 ✅ 把临时密码发给顾客'); haptic('medium'); } else toast((r&&r.error)||'失败');
   }
   async function ordSave(id){
     const st=document.getElementById('ost_'+id).value;
