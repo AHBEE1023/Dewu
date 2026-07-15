@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: groupbuy-v13 -->
+<!-- build: reviewproof-v14 -->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -280,6 +280,7 @@
   .price small{font-size:10.5px;font-weight:700;color:var(--price);margin-right:1px}
   .pmeta{display:flex;align-items:center;gap:5px;margin-top:6px;font-size:9.5px;color:var(--sub);font-weight:600}
   .pmeta .vok{color:var(--ok);display:flex;align-items:center;gap:2px}
+  .pmeta .rrate{color:#C9962F;font-weight:800}
   .pmeta .sep{opacity:.45}
   .tagship{font-size:9.5px;font-weight:700;color:var(--price);background:rgba(255,56,36,.08);border-radius:4px;padding:1.5px 5px;margin-left:6px;vertical-align:2.5px;letter-spacing:0}
   .ask{font-size:13px;font-weight:700;color:var(--sub)}
@@ -1335,7 +1336,7 @@
 
   // ===== 数据 =====
   let ALL=[];
-  let sort='new'; const SORTS=[['new','综合'],['sold','销量'],['plow','价格↑'],['phigh','价格↓']];
+  let sort='new'; const SORTS=[['new','综合'],['rate','好评'],['sold','销量'],['plow','价格↑'],['phigh','价格↓']];
   let brandFilter='', catFilter='', priceFilter='', newFilter=false;
   // 价格快捷区间（马币）
   const PRICE_RANGES=[['lt80','RM80以下',p=>p.sell_myr!=null&&Number(p.sell_myr)<80],['80-200','RM80–200',p=>p.sell_myr!=null&&Number(p.sell_myr)>=80&&Number(p.sell_myr)<=200],['gt200','RM200以上',p=>p.sell_myr!=null&&Number(p.sell_myr)>200]];
@@ -1357,7 +1358,17 @@
     }catch(e){ _loadFail=!ALL.length; }
     indexAll();
     _fresh=true; buildChips(); renderSeg(); render(); updateBadge(); updateFavBadge(); checkDeepLink();
-    loadConfig(); loadCampaign();
+    loadConfig(); loadCampaign(); loadReviewStats();
+  }
+  // 真人评价聚合：把「★均分 · N评价」接进店面卡片 + 排序（有评价才显示）
+  let _rstats={};
+  async function loadReviewStats(){
+    try{
+      const r=await fetch(SUPABASE_URL+'/rest/v1/review_stats_369?select=product_id,avg_rating,cnt',{headers:headers()});
+      if(!r.ok) return; const rows=await r.json(); if(!Array.isArray(rows)) return;
+      _rstats={}; rows.forEach(x=>{ _rstats[x.product_id]={avg:Number(x.avg_rating)||0,cnt:Number(x.cnt)||0}; });
+      if(Object.keys(_rstats).length) render();
+    }catch(e){}
   }
   let CFG={};
   async function loadConfig(){
@@ -1576,9 +1587,12 @@
   // 卡片社交证明行：验货是全店承诺（每件都能显示），已售有数才显示，包邮已归到金色担保条
   function cardMeta(p){
     if(p.sell_myr==null) return '';
-    const bits=['<span class="vok">✓验货</span>'];
+    const bits=[];
+    const rs=_rstats[p.id];
+    if(rs&&rs.cnt>0) bits.push('<span class="rrate">★'+rs.avg.toFixed(1)+'</span> '+rs.cnt+'评价');
+    else bits.push('<span class="vok">✓验货</span>');
     if(p.sold_count>0) bits.push('已售 '+p.sold_count);
-    else bits.push('包邮');
+    else if(!(rs&&rs.cnt>0)) bits.push('包邮');
     return '<div class="pmeta">'+bits.join('<span class="sep">·</span>')+'</div>';
   }
   function thumb(p){
@@ -1596,6 +1610,7 @@
     if(q) list=list.filter(p=>((p.name_cn||'')+(p.brand||'')+(p.sku||'')).toLowerCase().includes(q));
     if(sort==='plow') list.sort((a,b)=>(a.sell_myr??1e9)-(b.sell_myr??1e9));
     else if(sort==='phigh') list.sort((a,b)=>(b.sell_myr??-1)-(a.sell_myr??-1));
+    else if(sort==='rate') list.sort((a,b)=>{const ra=_rstats[a.id],rb=_rstats[b.id];const sa=ra&&ra.cnt>0?ra.avg*100+Math.min(ra.cnt,50):-1,sb=rb&&rb.cnt>0?rb.avg*100+Math.min(rb.cnt,50):-1;return sb-sa;});
     else if(sort==='sold') list.sort((a,b)=>(b.sold_count||0)-(a.sold_count||0));
     else list.sort((a,b)=>(b.hot?1:0)-(a.hot?1:0)); // 综合：热卖优先，其余保持最新在前
     const grid=document.getElementById('grid');
@@ -1700,7 +1715,7 @@
   }
 
   // ===== 埋点：尽力而为，绝不阻塞体验；店主自己不计（错误除外，那个要收）=====
-  const BUILD='groupbuy-v13';
+  const BUILD='reviewproof-v14';
   let _errN=0;
   function track(t,opts){
     opts=opts||{};
