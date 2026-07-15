@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: group-v8 -->
+<!-- build: review-v9 -->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -362,6 +362,54 @@
   .camprow .cpin.on{background:var(--ok);color:#fff}
   .camprow .cpin.off{background:var(--line);color:var(--sub)}
   .camprow .cmeta{font-size:11.5px;color:var(--sub);margin-top:5px;line-height:1.5}
+  /* 会员卡（我的订单顶部）*/
+  .memcard{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,var(--goldSoft),color-mix(in srgb,var(--goldSoft) 55%,var(--card)));border:1px solid color-mix(in srgb,var(--gold) 30%,transparent);border-radius:16px;padding:13px 15px;margin:0 0 14px}
+  .memcard .mic{flex:0 0 auto;width:44px;height:44px;border-radius:13px;background:var(--ink);display:flex;align-items:center;justify-content:center;font-size:21px}
+  .memcard .mm{flex:1;min-width:0}
+  .memcard .mtier{font-size:14.5px;font-weight:800;color:var(--gold);display:flex;align-items:center;gap:6px}
+  .memcard .mmeta{font-size:11.5px;color:var(--sub);margin-top:3px;line-height:1.5}
+  .memcard .mmeta b{color:var(--ink);font-variant-numeric:tabular-nums;font-weight:800}
+  .memcard .mnext{font-size:11px;color:var(--gold);font-weight:700;margin-top:4px}
+  .oref{font-size:11px;color:var(--gold);font-weight:700}
+  /* 真人评价（商品详情页展示）*/
+  .crev{margin:2px 0 6px}
+  .crev .crh{display:flex;align-items:baseline;gap:9px;margin-bottom:10px}
+  .crev .crh b{font-size:13px;font-weight:800;color:var(--ink);letter-spacing:.5px}
+  .crev .cravg{font-size:12px;color:var(--gold);font-weight:800}
+  .crev .cravg .stars{letter-spacing:1px}
+  .crev .crn{font-size:11px;color:var(--sub)}
+  .crev .ci{border-top:1px solid var(--line);padding:11px 0}
+  .crev .ci:first-of-type{border-top:none}
+  .crev .cih{display:flex;align-items:center;gap:8px}
+  .crev .cih .av{width:26px;height:26px;border-radius:50%;background:var(--goldSoft);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex:0 0 auto}
+  .crev .cih .nm{font-size:12.5px;font-weight:700;color:var(--ink);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .crev .cih .st{color:#E8A33D;font-size:12px;letter-spacing:1px;flex:0 0 auto}
+  .crev .cb{font-size:12.5px;color:var(--txt);line-height:1.6;margin:6px 0 0}
+  .crev .cph{margin-top:8px}
+  .crev .cph img{width:74px;height:74px;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:pointer}
+  .crev .cdate{font-size:10.5px;color:var(--sub);margin-top:5px}
+  /* 星级选择器 + 评价编辑 */
+  .starpick{display:flex;gap:6px;justify-content:center;margin:6px 0 14px}
+  .starpick span{font-size:34px;line-height:1;color:var(--line);cursor:pointer;transition:transform .1s}
+  .starpick span.on{color:#E8A33D}
+  .starpick span:active{transform:scale(1.2)}
+  .revitem{display:flex;align-items:center;gap:11px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:9px 11px;margin-bottom:12px}
+  .revitem img{width:46px;height:46px;object-fit:cover;border-radius:9px;flex:0 0 auto}
+  .revitem .rt{flex:1;min-width:0;font-size:12.5px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .revphoto{width:84px;height:84px;border:1px dashed var(--line);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--sub);font-size:11px;background:var(--card2);cursor:pointer}
+  .revphoto img{width:100%;height:100%;object-fit:cover;border-radius:11px}
+  /* 我的订单里每件的评价按钮 */
+  .orevbtn{display:inline-flex;align-items:center;gap:4px;background:var(--goldSoft);color:var(--gold);border:1px solid color-mix(in srgb,var(--gold) 30%,transparent);border-radius:16px;padding:4px 11px;font-size:11.5px;font-weight:700;margin:3px 5px 0 0}
+  .orevbtn.done{background:var(--card2);color:var(--sub);border-color:var(--line)}
+  .orevs{display:flex;flex-wrap:wrap;gap:2px;margin-top:8px}
+  /* 后台评价管理 */
+  .mrev{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0;background:var(--card2)}
+  .mrev.hidden2{opacity:.5}
+  .mrev .mrh{display:flex;align-items:center;gap:8px}
+  .mrev .mrh .st{color:#E8A33D;font-size:12px;flex:0 0 auto}
+  .mrev .mrh .pn{flex:1;min-width:0;font-size:12px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mrev .mrb{font-size:12.5px;color:var(--txt);line-height:1.5;margin:6px 0 0}
+  .mrev .mra{display:flex;gap:7px;margin-top:9px;justify-content:flex-end}
 
   /* 底部导航 */
   #nav{position:fixed;left:0;right:0;bottom:0;max-width:720px;margin:0 auto;height:calc(var(--nav-h) + var(--safe-b));
@@ -838,6 +886,17 @@
       </div>
     </div>
     <div class="card" style="padding-bottom:10px">
+      <div onclick="toggleRevCard()" style="display:flex;align-items:center;cursor:pointer;margin-bottom:4px">
+        <label style="margin:0;flex:1;color:var(--txt);font-size:13.5px;font-weight:700">⭐ 顾客评价<span style="color:var(--sub);font-weight:500;font-size:12px">　真人晒单 · 可隐藏</span></label>
+        <span id="revArrow" style="color:var(--sub);font-size:12px">▼</span>
+      </div>
+      <div id="revModBody" class="hidden">
+        <div class="hint" style="margin-top:8px">顾客在「我的订单」里对已到手的货打分晒图，自动展示在商品页。刷屏/不实的可「隐藏」或「删除」。只有买过这件货的人能评价。</div>
+        <div class="sec-title" style="margin-top:8px"><span>最近评价（最多 60 条）</span><button class="mini ghost" onclick="loadRevMod(true)">🔄 刷新</button></div>
+        <div id="revModList"></div>
+      </div>
+    </div>
+    <div class="card" style="padding-bottom:10px">
       <div onclick="toggleTgCard()" style="display:flex;align-items:center;cursor:pointer;margin-bottom:4px">
         <label style="margin:0;flex:1;color:var(--txt);font-size:13.5px;font-weight:700">✈️ Telegram 通知<span class="tgpin" id="tgState"></span><span style="color:var(--sub);font-weight:500;font-size:12px">　新单提醒 · 进度推送</span></label>
         <span id="tgArrow" style="color:var(--sub);font-size:12px">▼</span>
@@ -940,6 +999,10 @@
   <div class="sheet" id="edit" onclick="if(event.target===this)closeEdit()">
     <div class="sheet-in"><div class="close"><button onclick="closeEdit()" aria-label="关闭">✕</button></div><div id="editContent" style="padding:0 18px calc(22px + var(--safe-b))"></div></div>
   </div>
+  <!-- 写评价弹层 -->
+  <div class="sheet" id="revSheet" onclick="if(event.target===this)closeRev()">
+    <div class="sheet-in"><div class="close"><button onclick="closeRev()" aria-label="关闭">✕</button></div><div id="revContent" style="padding:6px 18px calc(22px + var(--safe-b))"></div></div>
+  </div>
 
   <!-- 全屏看图（可左右滑动切换） -->
   <div id="lightbox" onclick="closeLightbox()">
@@ -1031,6 +1094,7 @@
     if(on('lightbox')){ closeLightbox(); return; }
     if(on('sentlay')){ closeSent(); return; }
     if(on('sharelay')){ closeShare(); return; }
+    if(on('revSheet')){ closeRev(); return; }
     if(on('ordersSheet')){ closeOrders(); return; }
     if(on('salesSheet')){ closeSales(); return; }
     if(on('edit')){ closeEdit(); return; }
@@ -1040,7 +1104,7 @@
   }
   function anyOverlay(){
     const on=(id)=>{ const el=document.getElementById(id); return !!el&&el.classList.contains('show'); };
-    return on('lightbox')||on('sentlay')||on('sharelay')||on('ordersSheet')||on('salesSheet')||on('edit')||on('sheet');
+    return on('lightbox')||on('sentlay')||on('sharelay')||on('revSheet')||on('ordersSheet')||on('salesSheet')||on('edit')||on('sheet');
   }
   // 浏览器/安卓返回键关弹层：开弹层压一条历史，back 弹出时关掉最上层；✕ 关闭时把那条历史消化掉
   let _ovPushed=false,_ovIgnorePop=false;
@@ -1063,7 +1127,7 @@
   // role=button 的元素支持 Enter/空格 触发（chips、FAQ、联想等非原生按钮）
   document.addEventListener('keydown',(e)=>{ if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.matches&&e.target.matches('[role="button"]')){ e.preventDefault(); e.target.click(); } });
   // 键盘 Esc 关弹层（无障碍 / 桌面端）
-  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ const on=(id)=>document.getElementById(id).classList.contains('show'); if(on('lightbox')||on('sentlay')||on('sharelay')||on('ordersSheet')||on('salesSheet')||on('edit')||on('sheet')) handleBack(); } });
+  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ const on=(id)=>document.getElementById(id).classList.contains('show'); if(on('lightbox')||on('sentlay')||on('sharelay')||on('revSheet')||on('ordersSheet')||on('salesSheet')||on('edit')||on('sheet')) handleBack(); } });
 
   // ===== 后台隐藏入口：连点 logo 5 次才显示「后台」按钮，顾客看不到 =====
   let adminEntry = localStorage.getItem('a369_entry')==='1';
@@ -1449,7 +1513,7 @@
   }
 
   // ===== 埋点：尽力而为，绝不阻塞体验；店主自己不计（错误除外，那个要收）=====
-  const BUILD='group-v8';
+  const BUILD='review-v9';
   let _errN=0;
   function track(t,opts){
     opts=opts||{};
@@ -1525,6 +1589,7 @@
         '<div><b>直邮包邮</b>7–15 天</div>'+
       '</div>'+
       '<div id="rvslot">'+reviewHtml(p)+'</div>'+
+      '<div id="crevslot">'+custReviewHtml(p.id)+'</div>'+
       '<div class="specs">'+specs.map(s=>'<div class="spec"><span>'+s[0]+'</span><b>'+s[1]+'</b></div>').join('')+'</div>'+
       detailFaqHtml()+
       detailHtml(p)+
@@ -1544,6 +1609,7 @@
     const si=document.querySelector('#sheet .sheet-in'); if(si) si.scrollTop=0;
     document.getElementById('sheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
     if(p.review_shots===undefined) fetchReviews(p.id); // 列表没带评价图，按件懒取（取过就缓存在行上）
+    fetchCustReviews(p.id); // 真人评价懒取
   }
   // 详情页底部推荐：优先同品牌，不够拿别的补（提升连逛）
   function relatedHtml(p){
@@ -1613,6 +1679,29 @@
       const rows=await r.json(); const p=pById(id); if(!p) return;
       p.review_shots=(rows[0]&&rows[0].review_shots)||null;
       if(_sheetPid===p.id){ const slot=document.getElementById('rvslot'); if(slot) slot.innerHTML=reviewHtml(p); }
+    }catch(e){}
+  }
+  // ===== 真人评价（顾客端展示）=====
+  const _custRev={}; // pid -> 评价数组（缓存）
+  function starStr(n){ n=Math.max(0,Math.min(5,Math.round(n))); return '★★★★★'.slice(0,n)+'☆☆☆☆☆'.slice(0,5-n); }
+  function custReviewHtml(pid){
+    const rs=_custRev[pid]; if(!rs||!rs.length) return '';
+    const avg=rs.reduce((a,r)=>a+(Number(r.rating)||0),0)/rs.length;
+    const items=rs.slice(0,20).map(r=>{
+      const nm=(r.nickname||'匿名顾客').slice(0,20);
+      const ph=r.photo?'<div class="cph"><img src="'+esc(r.photo)+'" loading="lazy" onclick="openLightbox(0,[\''+esc(String(r.photo)).replace(/'/g,"\\'")+'\'])" alt=""></div>':'';
+      return '<div class="ci"><div class="cih"><span class="av">'+esc(nm.slice(0,1))+'</span><span class="nm">'+esc(nm)+'</span><span class="st">'+starStr(r.rating)+'</span></div>'+
+        (r.body?'<div class="cb">'+esc(r.body)+'</div>':'')+ph+
+        '<div class="cdate">'+fmtDate(Date.parse(r.created_at)||Date.now())+'</div></div>';
+    }).join('');
+    return '<div class="crev rvwrap"><div class="crh"><b>真人评价</b><span class="cravg"><span class="stars">'+starStr(avg)+'</span> '+avg.toFixed(1)+'</span><span class="crn">'+rs.length+' 条已购评价</span></div>'+items+'</div>';
+  }
+  async function fetchCustReviews(pid){
+    try{
+      const r=await fetch(SUPABASE_URL+'/rest/v1/reviews_369_pub?product_id=eq.'+pid+'&select=rating,body,nickname,photo,created_at&order=created_at.desc&limit=30',{headers:headers()});
+      if(!r.ok) return; const rows=await r.json();
+      _custRev[pid]=Array.isArray(rows)?rows:[];
+      if(_sheetPid===pid){ const slot=document.getElementById('crevslot'); if(slot) slot.innerHTML=custReviewHtml(pid); }
     }catch(e){}
   }
   function closeSheet(){ document.getElementById('sheet').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
@@ -1999,7 +2088,10 @@
     askClearCart();
     return true;
   }
-  function updateOrdersEntry(){ const s=document.getElementById('ordersSub'); if(s){ const n=Math.max(orders.length,(_srvOrders||[]).length); s.textContent=n?('已发 '+n+' 单 · 点开看进度'):'查看发过的订单'; } }
+  function updateOrdersEntry(){ const s=document.getElementById('ordersSub'); if(!s) return;
+    const m=memberStats(mergedOrders());
+    s.textContent=m.n?(m.icon+' '+m.tier+' · 已发 '+m.n+' 单 · 点开看进度'):'查看发过的订单';
+  }
   // ===== 常见问题 FAQ =====
   const FAQS=[
     ['怎么下单？','逛店面看中就点 ➕ 加入心愿单，到「心愿单」核对后点「发给客服」，客服和你确认款式、报价、付款方式即可。也可以在商品页直接点「立即下单」问客服。'],
@@ -2067,9 +2159,74 @@
       (o.note?'<div class="onote">备注/单号：'+esc(o.note)+'</div>':'')+
       '<div class="othumbs">'+thumbs+more+'</div>'+
       payBlockHtml(o)+
+      reviewRowHtml(o)+
       '<div class="ofoot"><div class="ol">共 '+o.count+' 件'+(o.total>0?' · <b>RM'+money(o.total)+'</b>':'')+'</div>'+
       '<button class="obtn" onclick="resendOrder('+o.ts+')">再发给客服 →</button></div></div>';
   }
+  // ===== 真人评价（顾客端提交）=====
+  function myRevs(){ try{ return JSON.parse(localStorage.getItem('myrevs369')||'[]'); }catch(e){ return []; } }
+  function reviewedKey(sid,pid){ return myRevs().indexOf(sid+':'+pid)>=0; }
+  function markReviewed(sid,pid){ const a=myRevs(),k=sid+':'+pid; if(a.indexOf(k)<0){ a.push(k); try{ localStorage.setItem('myrevs369',JSON.stringify(a)); }catch(e){} } }
+  // 已到手的云端订单，每件货给个「评价」入口
+  function reviewRowHtml(o){
+    if(!o.srv||o.status!=='已到手'||!o.sid) return '';
+    const seen={}; const items=(o.items||[]).filter(it=>{ if(!it||it.id==null) return false; const k=String(it.id); if(seen[k]) return false; seen[k]=1; return true; });
+    if(!items.length) return '';
+    const btns=items.map(it=>{ const done=reviewedKey(o.sid,it.id);
+      return '<button class="orevbtn'+(done?' done':'')+'" onclick="reviewCompose('+o.sid+','+it.id+')">'+(done?'✓ 已评价':'⭐ 评价')+'「'+esc((it.name||'商品').slice(0,8))+'」</button>';
+    }).join('');
+    return '<div class="orevs">'+btns+'</div>';
+  }
+  let _revCtx=null,_revStars=5,_revPhoto=null;
+  function reviewCompose(sid,pid){
+    let name='';
+    const o=(_ordersView||[]).find(x=>x.sid===sid);
+    if(o){ const it=(o.items||[]).find(y=>String(y.id)===String(pid)); if(it) name=it.name||''; }
+    if(!name){ const p=pById(pid); if(p) name=p.name_cn||''; }
+    const thumb=(o&&(o.items||[]).find(y=>String(y.id)===String(pid))||{}).image||'';
+    _revCtx={sid,pid,name,thumb}; _revStars=5; _revPhoto=null;
+    renderRevSheet();
+    document.getElementById('revSheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
+  }
+  function renderRevSheet(){
+    const c=_revCtx; if(!c) return; const box=document.getElementById('revContent'); if(!box) return;
+    const nick=(localStorage.getItem('nick369')||'').slice(0,20);
+    box.innerHTML='<h2 style="margin:2px 0 2px;font-size:20px">写评价</h2><p style="font-size:10px;color:var(--sub);letter-spacing:2.5px;margin:0 0 14px">真实体验，帮到更多姐妹 🤍</p>'+
+      '<div class="revitem">'+(c.thumb?'<img src="'+esc(im(c.thumb,120))+'" referrerpolicy="no-referrer" onerror="imgFB(this)" alt="">':'')+'<div class="rt">'+esc(c.name||'商品')+'</div></div>'+
+      '<div class="starpick" id="starpick">'+[1,2,3,4,5].map(i=>'<span data-v="'+i+'" onclick="setStar('+i+')">★</span>').join('')+'</div>'+
+      '<textarea id="revBody" class="asearch" style="min-height:84px;resize:vertical;line-height:1.5" maxlength="500" placeholder="说说质量、尺码、客服、物流…（选填）"></textarea>'+
+      '<div style="display:flex;gap:12px;align-items:flex-start;margin-top:10px">'+
+        '<div class="revphoto" id="revPhotoBox" onclick="pickRevPhoto()"><span style="font-size:22px">📷</span><span>晒图</span></div>'+
+        '<input class="asearch" id="revNick" maxlength="20" value="'+esc(nick)+'" placeholder="昵称（选填，默认匿名）" style="flex:1;margin:0">'+
+      '</div>'+
+      '<button class="btn" id="revSubmitBtn" onclick="submitReview()" style="margin-top:16px">发布评价</button>';
+    setStar(_revStars);
+  }
+  function setStar(n){ _revStars=n; document.querySelectorAll('#starpick span').forEach(s=>s.classList.toggle('on', Number(s.dataset.v)<=n)); }
+  function pickRevPhoto(){ let inp=document.getElementById('revFile');
+    if(!inp){ inp=document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.id='revFile'; inp.style.display='none'; inp.onchange=onRevPhoto; document.body.appendChild(inp); }
+    inp.value=''; inp.click();
+  }
+  async function onRevPhoto(e){ const f=e.target.files&&e.target.files[0]; if(!f) return;
+    try{ _revPhoto=await compressImg(f,1280,0.82); const box=document.getElementById('revPhotoBox'); if(box) box.innerHTML='<img src="'+_revPhoto+'" alt="">'; }catch(err){ toast('图片读取失败,换一张'); }
+  }
+  async function submitReview(){
+    const c=_revCtx; if(!c) return;
+    const body=(document.getElementById('revBody').value||'').trim().slice(0,500);
+    const nickname=(document.getElementById('revNick').value||'').trim().slice(0,20);
+    if(nickname) try{ localStorage.setItem('nick369',nickname); }catch(e){}
+    const btn=document.getElementById('revSubmitBtn'); if(btn){ btn.disabled=true; btn.textContent='发布中…'; }
+    try{
+      const payload={action:'submit',sid:c.sid,pid:c.pid,ck:clientKey(),rating:_revStars,body,nickname};
+      if(_revPhoto) payload.dataUrl=_revPhoto;
+      const r=await fetch(FN+'/review-369',{method:'POST',headers:fnHeaders(),body:JSON.stringify(payload)});
+      const j=await r.json().catch(()=>({}));
+      if(j&&j.ok){ markReviewed(c.sid,c.pid); toast('评价已发布，谢谢你 🤍'); haptic('medium');
+        closeRev(); renderOrdersSheet(); delete _custRev[c.pid]; // 让下次打开商品页重新拉
+      } else { if(btn){ btn.disabled=false; btn.textContent='发布评价'; } toast((j&&j.error)||'发布失败,重试'); }
+    }catch(err){ if(btn){ btn.disabled=false; btn.textContent='发布评价'; } toast('发布失败,重试'); }
+  }
+  function closeRev(){ document.getElementById('revSheet').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
   // 付款闭环（顾客端）：只对云端订单显示；已确认/待确认/去付款三态
   function payBlockHtml(o){
     if(!o.srv||o.status==='已取消'||!o.sid) return '';
@@ -2116,10 +2273,35 @@
     const sids=new Set(srv.map(r=>String(r.sid)));
     return srv.concat(orders.filter(o=>o.sid==null||!sids.has(String(o.sid))));
   }
+  // ===== 会员识别：从订单派生（本机 + 云端合并），无需账号 =====
+  function memberStats(list){
+    const src=list||_ordersView||mergedOrders();
+    let n=0,spend=0;
+    src.forEach(o=>{ if((o.status||'')==='已取消') return; n++; if(o.total>0) spend+=Number(o.total)||0; });
+    let tier,icon;
+    if(n>=5||spend>=1500){ tier='挚友会员'; icon='💎'; }
+    else if(n>=2){ tier='老顾客'; icon='🎖'; }
+    else { tier='新朋友'; icon='🌱'; }
+    return {n,spend,tier,icon};
+  }
+  function memCardHtml(){
+    const m=memberStats(); if(!m.n) return '';
+    let next='';
+    if(m.tier==='新朋友'){ const g=2-m.n; if(g>0) next='再下 '+g+' 单成为老顾客 🎖'; }
+    else if(m.tier==='老顾客'){ const g=5-m.n; if(g>0) next='再下 '+g+' 单升挚友会员 💎'; }
+    else next='挚友会员 · 感谢一路支持 🤍';
+    const meta='已下单 <b>'+m.n+'</b> 单'+(m.spend>0?' · 累计 <b>RM'+money(m.spend)+'</b>':'');
+    return '<div class="memcard"><div class="mic">'+m.icon+'</div><div class="mm">'+
+      '<div class="mtier">'+m.icon+' '+esc(m.tier)+'</div>'+
+      '<div class="mmeta">'+meta+'</div>'+
+      (next?'<div class="mnext">'+esc(next)+'</div>':'')+
+      '</div></div>';
+  }
   function renderOrdersSheet(){
     const box=document.getElementById('ordersContent'); if(!box) return;
     _ordersView=mergedOrders();
     box.innerHTML='<h2 style="margin:2px 0 2px;font-size:20px">我的订单</h2><p style="font-size:10px;color:var(--sub);letter-spacing:2.5px;margin:0 0 14px">MY ORDERS</p>'+
+      memCardHtml()+
       (_ordersView.length?_ordersView.map(orderCardHtml).join(''):
         '<div class="empty" style="padding:44px 0"><div class="big">📋</div>还没有订单<br>去心愿单点「发给客服」，这里就会留底<br><button onclick="closeOrders();setTab(\'shop\')" style="margin-top:14px;background:var(--ink);border:none;color:var(--onInk);border-radius:20px;padding:11px 30px;font-size:13.5px;font-weight:600;letter-spacing:1px">去逛逛</button></div>');
   }
@@ -2362,7 +2544,11 @@
     const box=document.getElementById('ordList'); if(!box) return;
     if(_ordFail&&!AORDERS.length){ box.innerHTML='<div class="empty">网络不稳，点刷新重试<br><button class="mini" style="margin-top:10px;padding:9px 22px" onclick="loadOrders(true)">🔄 刷新</button></div>'; return; }
     if(!AORDERS.length){ box.innerHTML='<div class="empty">还没有顾客订单<br>顾客在心愿单点「发给客服」后会出现在这里</div>'; return; }
+    // 回头客识别：同一 client_key 在近 100 单里出现几次（服务角色才拿得到 client_key）
+    const ckCount={}; AORDERS.forEach(o=>{ if(o.client_key) ckCount[o.client_key]=(ckCount[o.client_key]||0)+1; });
     box.innerHTML=AORDERS.map(o=>{
+      const rep=o.client_key?(ckCount[o.client_key]||0):0;
+      const repTag=rep>=2?'　·　<span class="oref">🎖 回头客 ×'+rep+'</span>':'';
       const id=oid(o.id);
       const its=Array.isArray(o.items)?o.items:[];
       const first=its[0]||{};
@@ -2374,7 +2560,7 @@
       return '<div class="oitem">'+
         '<div class="ohead"><b>'+esc(o.order_no||('#'+o.id))+'</b><span>'+esc(ordTime(o.created_at))+'</span><span style="flex:1"></span>'+ordPill(st)+'</div>'+
         (th?'<div class="othumbs">'+th+'</div>':'')+
-        '<div class="oline">'+sum+'　·　<b style="color:var(--price)">RM '+money(o.total||0)+'</b>'+(o.tg_id?'　·　TG '+esc(o.tg_id):'')+(o.referred_by?'　·　<span style="color:var(--gold);font-weight:700">🎁 推荐码 '+esc(o.referred_by)+'（减运费）</span>':'')+(o.campaign_id?'　·　<span style="color:var(--gold);font-weight:700">🚚 拼团单</span>':'')+'</div>'+
+        '<div class="oline">'+sum+'　·　<b style="color:var(--price)">RM '+money(o.total||0)+'</b>'+(o.tg_id?'　·　TG '+esc(o.tg_id):'')+(o.referred_by?'　·　<span style="color:var(--gold);font-weight:700">🎁 推荐码 '+esc(o.referred_by)+'（减运费）</span>':'')+(o.campaign_id?'　·　<span style="color:var(--gold);font-weight:700">🚚 拼团单</span>':'')+repTag+'</div>'+
         payAdminHtml(o,id)+
         '<div class="octl">'+
           '<select id="ost_'+id+'">'+opts+'</select>'+
@@ -2466,6 +2652,41 @@
     if(r&&r.ok){ toast('已结束'); haptic('light'); loadCampAdmin(); loadCampaign(); }
     else toast((r&&r.error)||'失败');
   }
+  // ===== 顾客评价管理（后台）=====
+  let _revModLoaded=false;
+  async function revApi(action,params){
+    const r=await fetch(FN+'/review-369',{method:'POST',headers:{...fnHeaders(),'x-admin-pin':getPin()},body:JSON.stringify(Object.assign({action},params||{}))});
+    return await r.json().catch(()=>({}));
+  }
+  function toggleRevCard(){
+    const b=document.getElementById('revModBody');
+    b.classList.toggle('hidden');
+    document.getElementById('revArrow').textContent=b.classList.contains('hidden')?'▼':'▲';
+    if(!b.classList.contains('hidden')&&!_revModLoaded) loadRevMod();
+    haptic('light');
+  }
+  async function loadRevMod(manual){
+    const box=document.getElementById('revModList'); if(box&&(manual||!_revModLoaded)) box.innerHTML='<div class="hint">加载中…</div>';
+    const r=await revApi('modList');
+    if(!r||!r.ok){ if(box) box.innerHTML='<div class="hint">'+esc((r&&r.error)||'加载失败，检查后台密码')+'</div>'; return; }
+    _revModLoaded=true; renderRevMod(r.rows||[]);
+  }
+  function renderRevMod(rows){
+    const box=document.getElementById('revModList'); if(!box) return;
+    if(!rows.length){ box.innerHTML='<div class="empty">还没有顾客评价</div>'; return; }
+    box.innerHTML=rows.map(r=>{
+      const hidden=r.status==='hidden';
+      const ph=r.photo?'<img src="'+esc(r.photo)+'" loading="lazy" onclick="openLightbox(0,[\''+esc(String(r.photo)).replace(/'/g,"\\'")+'\'])" style="width:60px;height:60px;object-fit:cover;border-radius:9px;margin-top:8px;cursor:pointer" alt="">':'';
+      return '<div class="mrev'+(hidden?' hidden2':'')+'"><div class="mrh"><span class="st">'+starStr(r.rating)+'</span><span class="pn">'+esc(r.product_name||'')+(r.nickname?' · '+esc(r.nickname):'')+'</span></div>'+
+        (r.body?'<div class="mrb">'+esc(r.body)+'</div>':'')+ph+
+        '<div class="mra">'+
+          '<button class="mini ghost" onclick="revSet('+r.id+',\''+(hidden?'shown':'hidden')+'\')">'+(hidden?'👁 恢复显示':'🙈 隐藏')+'</button>'+
+          '<button class="mini del" onclick="revDel('+r.id+')">删</button>'+
+        '</div></div>';
+    }).join('');
+  }
+  async function revSet(id,status){ const r=await revApi('modSet',{id,status}); if(r&&r.ok){ toast(status==='hidden'?'已隐藏':'已恢复'); haptic('light'); loadRevMod(true); } else toast((r&&r.error)||'失败'); }
+  async function revDel(id){ if(!confirm('删除这条评价？删了就没了')) return; const r=await revApi('modDel',{id}); if(r&&r.ok){ toast('已删除'); haptic('light'); loadRevMod(true); } else toast((r&&r.error)||'失败'); }
   async function ordSave(id){
     const st=document.getElementById('ost_'+id).value;
     const note=document.getElementById('ono_'+id).value.trim().slice(0,200);
