@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: relayout-v12 -->
+<!-- build: groupbuy-v13 -->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -354,6 +354,31 @@
   .campbn.ended{background:var(--card2);color:var(--sub);box-shadow:none}
   .campbn.ended::after{display:none}
   .campbn.ended .cbadge{background:var(--line);color:var(--sub)}
+  .campbn{cursor:pointer}
+  .campbn .cmore{flex:0 0 auto;font-size:11px;font-weight:700;color:color-mix(in srgb,var(--onInk) 78%,transparent);position:relative}
+  /* 拼团详情弹层 */
+  .gbhero{background:linear-gradient(135deg,var(--ink),color-mix(in srgb,var(--ink) 78%,var(--gold)));color:var(--onInk);border-radius:18px;padding:20px 18px;text-align:center;position:relative;overflow:hidden}
+  .gbhero::after{content:"";position:absolute;right:-40px;top:-40px;width:150px;height:150px;border-radius:50%;background:color-mix(in srgb,var(--gold) 26%,transparent)}
+  .gbhero .cbadge{position:relative;font-size:10.5px;font-weight:800;letter-spacing:1px;background:var(--gold);color:var(--ink);padding:3px 10px;border-radius:20px}
+  .gbhero h2{position:relative;margin:12px 0 0;font-size:21px;font-weight:800;letter-spacing:.3px}
+  .gbhero .gbblurb{position:relative;font-size:12.5px;color:color-mix(in srgb,var(--onInk) 82%,transparent);margin:8px 0 0;line-height:1.5}
+  .gbcd{position:relative;display:flex;gap:5px;align-items:baseline;justify-content:center;margin:16px 0 0;font-variant-numeric:tabular-nums;flex-wrap:wrap}
+  .gbcd .gclab{font-size:11px;opacity:.8;margin-right:3px}
+  .gbcd b{background:color-mix(in srgb,var(--onInk) 15%,transparent);border-radius:8px;padding:6px 8px;font-size:19px;font-weight:800;min-width:34px;text-align:center}
+  .gbcd i{font-style:normal;font-size:12px;opacity:.7;margin:0 1px}
+  .gbbar{position:relative;height:9px;border-radius:20px;background:color-mix(in srgb,var(--onInk) 20%,transparent);overflow:hidden;margin:16px 0 0}
+  .gbbar>i{display:block;height:100%;border-radius:20px;background:var(--gold);transition:width .5s}
+  .gbnum{position:relative;font-size:12px;opacity:.9;margin-top:8px;letter-spacing:.3px}
+  .gbnum b{font-weight:800}
+  .gbsteps{margin:16px 0 0;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .gbsteps .gbhd{font-size:11px;font-weight:800;letter-spacing:2px;color:var(--sub);padding:14px 15px 6px}
+  .gbst{display:flex;gap:12px;align-items:flex-start;padding:11px 15px;border-top:1px solid var(--line)}
+  .gbst i{font-style:normal;font-size:20px;flex:0 0 auto;width:26px;text-align:center}
+  .gbst b{display:block;font-size:13.5px;font-weight:700;color:var(--txt)}
+  .gbst span{display:block;font-size:11.5px;color:var(--sub);margin-top:3px;line-height:1.5}
+  .gbcta{width:100%;margin:16px 0 0;background:var(--ink);color:var(--onInk);border:none;border-radius:14px;padding:15px;font-size:14.5px;font-weight:800;letter-spacing:.5px}
+  .gbcta:active{transform:scale(.99)}
+  .gbtip{font-size:11px;color:var(--sub);line-height:1.6;margin:12px 4px 0;text-align:center}
   /* 后台拼团卡 */
   .camprow{border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin:8px 0;background:var(--card2)}
   .camprow .crh{display:flex;align-items:center;gap:8px}
@@ -769,7 +794,7 @@
     </div>
     <div class="tipbar hidden" id="tipbar"><div class="tx">第一次来？看中就点 + 加心愿单，一键发给客服即可下单。<span class="tgo" onclick="dismissTip();setTab('me')">看怎么买</span></div><button class="tclose" onclick="dismissTip()">✕</button></div>
     <div class="notice hidden" id="notice"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex:0 0 auto"><path d="M3 10v4a1 1 0 0 0 1 1h3l6 4V5L7 9H4a1 1 0 0 0-1 1Z"/><path d="M17 9a4 4 0 0 1 0 6"/></svg><div class="mq" id="noticeMq"></div></div>
-    <div id="campBanner" class="campbn hidden"></div>
+    <div id="campBanner" class="campbn hidden" onclick="openGb()" role="button" tabindex="0"></div>
     <div class="searchwrap">
       <div class="searchrow">
         <div class="qwrap">
@@ -1077,6 +1102,10 @@
   <div class="sheet" id="acctSheet" onclick="if(event.target===this)closeAcct()">
     <div class="sheet-in"><div class="close"><button onclick="closeAcct()" aria-label="关闭">✕</button></div><div id="acctContent" style="padding:6px 18px calc(22px + var(--safe-b))"></div></div>
   </div>
+  <!-- 拼团详情弹层 -->
+  <div class="sheet" id="gbSheet" onclick="if(event.target===this)closeGb()">
+    <div class="sheet-in"><div class="close"><button onclick="closeGb()" aria-label="关闭">✕</button></div><div id="gbContent" style="padding:6px 18px calc(22px + var(--safe-b))"></div></div>
+  </div>
 
   <!-- 全屏看图（可左右滑动切换） -->
   <div id="lightbox" onclick="closeLightbox()">
@@ -1169,6 +1198,7 @@
     if(on('sentlay')){ closeSent(); return; }
     if(on('sharelay')){ closeShare(); return; }
     if(on('acctSheet')){ closeAcct(); return; }
+    if(on('gbSheet')){ closeGb(); return; }
     if(on('revSheet')){ closeRev(); return; }
     if(on('salesSheet')){ closeSales(); return; }
     if(on('edit')){ closeEdit(); return; }
@@ -1178,7 +1208,7 @@
   }
   function anyOverlay(){
     const on=(id)=>{ const el=document.getElementById(id); return !!el&&el.classList.contains('show'); };
-    return on('lightbox')||on('sentlay')||on('sharelay')||on('acctSheet')||on('revSheet')||on('salesSheet')||on('edit')||on('sheet');
+    return on('lightbox')||on('sentlay')||on('sharelay')||on('acctSheet')||on('gbSheet')||on('revSheet')||on('salesSheet')||on('edit')||on('sheet');
   }
   // 浏览器/安卓返回键关弹层：开弹层压一条历史，back 弹出时关掉最上层；✕ 关闭时把那条历史消化掉
   let _ovPushed=false,_ovIgnorePop=false;
@@ -1201,7 +1231,7 @@
   // role=button 的元素支持 Enter/空格 触发（chips、FAQ、联想等非原生按钮）
   document.addEventListener('keydown',(e)=>{ if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.matches&&e.target.matches('[role="button"]')){ e.preventDefault(); e.target.click(); } });
   // 键盘 Esc 关弹层（无障碍 / 桌面端）
-  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ const on=(id)=>document.getElementById(id).classList.contains('show'); if(on('lightbox')||on('sentlay')||on('sharelay')||on('acctSheet')||on('revSheet')||on('salesSheet')||on('edit')||on('sheet')) handleBack(); } });
+  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ const on=(id)=>document.getElementById(id).classList.contains('show'); if(on('lightbox')||on('sentlay')||on('sharelay')||on('acctSheet')||on('gbSheet')||on('revSheet')||on('salesSheet')||on('edit')||on('sheet')) handleBack(); } });
 
   // ===== 后台隐藏入口：连点 logo 5 次才显示「后台」按钮，顾客看不到 =====
   let adminEntry = localStorage.getItem('a369_entry')==='1';
@@ -1366,7 +1396,7 @@
     } else if(c.joined!=null){
       prog='<div class="cprog"><div class="cnum">已有 '+(Number(c.joined)||0)+' 位邻居拼这一批 🚚</div></div>';
     }
-    box.innerHTML='<div class="ct"><span class="cbadge">🚚 拼团直邮</span><h4>'+esc(c.title||'本期拼团')+'</h4></div>'+
+    box.innerHTML='<div class="ct"><span class="cbadge">🚚 拼团直邮</span><h4>'+esc(c.title||'本期拼团')+'</h4><span class="cmore">详情 ›</span></div>'+
       (c.blurb?'<div class="cblurb">'+esc(c.blurb)+'</div>':'')+
       ((cd||prog)?'<div class="cdrow">'+cd+prog+'</div>':'');
     box.classList.remove('hidden');
@@ -1387,6 +1417,48 @@
     parts+='<b>'+p2(h)+'</b><i>:</i><b>'+p2(m)+'</b><i>:</i><b>'+p2(s)+'</b>';
     el.innerHTML=parts;
   }
+  // ===== 拼团详情弹层：点首屏拼团横幅打开 =====
+  let _gbTick=null;
+  function openGb(){
+    if(!_camp){ toast('本期还没有拼团'); return; }
+    renderGb();
+    document.getElementById('gbSheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
+    track('groupbuy_open',{meta:{id:_camp.id}});
+  }
+  function renderGb(){
+    const c=_camp; if(!c) return; const box=document.getElementById('gbContent'); if(!box) return;
+    let prog='';
+    if(c.target && Number(c.target)>0){
+      const j=Math.max(0,Number(c.joined)||0), t=Number(c.target), pct=Math.min(100,Math.round(j/t*100)), done=j>=t;
+      prog='<div class="gbbar"><i style="width:'+pct+'%"></i></div><div class="gbnum">'+(done?'✅ 已满 '+j+' 单，随时截单发货':('已拼 <b>'+j+'</b> / '+t+' 单 · 满单即发'))+'</div>';
+    } else if(c.joined!=null){ prog='<div class="gbnum">已有 <b>'+(Number(c.joined)||0)+'</b> 位邻居拼这一批 🚚</div>'; }
+    const cd=c.deadline?'<div class="gbcd" id="gbCd" data-dl="'+esc(String(c.deadline))+'"></div>':'';
+    box.innerHTML='<div class="gbhero"><span class="cbadge">🚚 拼团直邮</span><h2>'+esc(c.title||'本期拼团')+'</h2>'+
+      (c.blurb?'<p class="gbblurb">'+esc(c.blurb)+'</p>':'')+cd+prog+'</div>'+
+      '<div class="gbsteps"><div class="gbhd">怎么拼 · HOW IT WORKS</div>'+
+        '<div class="gbst"><i>🛒</i><div><b>这期下的单自动归本团</b><span>正常逛货、加心愿单、发给客服即可，无需额外操作</span></div></div>'+
+        '<div class="gbst"><i>📦</i><div><b>凑够就一起发货</b><span>满单即走国际直邮，货齐一趟到，省心</span></div></div>'+
+        '<div class="gbst"><i>💸</i><div><b>空运摊薄，运费更省</b><span>一批一起清关配送，人越多每单越划算</span></div></div>'+
+      '</div>'+
+      '<button class="gbcta" onclick="closeGb();setTab(\'shop\')">去逛货 · 加入本团 →</button>'+
+      '<div class="gbtip">一次只挂一个团。这段时间下的单会带 🚚 标记归到本团，店主凑够就统一发。</div>';
+    if(_gbTick){ clearInterval(_gbTick); _gbTick=null; }
+    if(c.deadline){ tickGbCd(); _gbTick=setInterval(tickGbCd,1000); }
+  }
+  function tickGbCd(){
+    const el=document.getElementById('gbCd'); if(!el){ if(_gbTick){clearInterval(_gbTick);_gbTick=null;} return; }
+    let ms=new Date(el.dataset.dl).getTime()-Date.now();
+    if(ms<=0){ el.innerHTML='<span class="gclab">已截单</span>'; if(_gbTick){clearInterval(_gbTick);_gbTick=null;} return; }
+    const d=Math.floor(ms/86400000); ms-=d*86400000;
+    const h=Math.floor(ms/3600000); ms-=h*3600000;
+    const m=Math.floor(ms/60000); ms-=m*60000;
+    const s=Math.floor(ms/1000); const p2=n=>String(n).padStart(2,'0');
+    let parts='<span class="gclab">距截单</span>';
+    if(d>0) parts+='<b>'+d+'</b><i>天</i>';
+    parts+='<b>'+p2(h)+'</b><i>:</i><b>'+p2(m)+'</b><i>:</i><b>'+p2(s)+'</b>';
+    el.innerHTML=parts;
+  }
+  function closeGb(){ document.getElementById('gbSheet').classList.remove('show'); document.body.style.overflow=''; if(_gbTick){ clearInterval(_gbTick); _gbTick=null; } updateBack(); }
   // 联系方式优先级：后台配的 WhatsApp → 后台配的 TG 用户名（直达聊天）→ 兜底 Telegram 分享
   function contactHref(text){
     const wa=((CFG.contact_wa||CONTACT_WA)||'').replace(/[^\d]/g,'');
@@ -1628,7 +1700,7 @@
   }
 
   // ===== 埋点：尽力而为，绝不阻塞体验；店主自己不计（错误除外，那个要收）=====
-  const BUILD='relayout-v12';
+  const BUILD='groupbuy-v13';
   let _errN=0;
   function track(t,opts){
     opts=opts||{};
