@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: referral-v6 -->
+<!-- build: pay-v7 -->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -237,6 +237,15 @@
   .osteps .os.cur i{background:var(--ink);box-shadow:0 0 0 2.5px var(--card2)}
   .osteps .os.cur span{color:var(--txt);font-weight:700}
   .onote{font-size:11.5px;color:var(--sub);margin:-2px 0 10px;line-height:1.5;word-break:break-all}
+  /* 付款闭环 */
+  .payb{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin:2px 0 11px;font-size:12px;color:var(--txt)}
+  .payb.ok{background:rgba(62,124,90,.10);border-color:rgba(62,124,90,.3);color:var(--ok);font-weight:700}
+  .payb.wait{background:var(--goldSoft);border-color:color-mix(in srgb,var(--gold) 26%,transparent);color:var(--gold);font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .payb .payt{font-weight:600;margin-bottom:9px}
+  .payb .payqr{display:block;width:150px;height:150px;object-fit:contain;background:#fff;border-radius:10px;padding:6px;margin:0 auto 9px;border:1px solid var(--line);cursor:zoom-in}
+  .payb .paynote{font-size:11.5px;color:var(--sub);text-align:center;line-height:1.5;margin-bottom:10px;word-break:break-word}
+  .payb .payup{width:100%;background:var(--ink);color:var(--onInk);border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:700;letter-spacing:.5px}
+  .payb .paylink{background:none;border:none;color:var(--gold);font-size:11.5px;font-weight:700;text-decoration:underline;flex:0 0 auto}
   .droptag{display:inline-block;margin-top:4px;background:rgba(232,35,46,.10);color:var(--price);font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;letter-spacing:.3px}
   /* 凑单/满额提示 */
   .giftbar{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:12px;box-shadow:var(--shadow)}
@@ -540,6 +549,9 @@
   .othumbs img{width:34px;height:34px;object-fit:cover;border-radius:7px;border:1px solid var(--line);background:var(--card2);flex:0 0 auto}
   .oline{font-size:12.5px;color:var(--txt);margin:5px 0 8px;line-height:1.5;overflow-wrap:anywhere}
   .octl{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  .opayrow{display:flex;flex-wrap:wrap;align-items:center;gap:7px;font-size:11.5px;color:var(--sub);margin:2px 0 8px;padding:6px 9px;border-radius:8px;background:var(--card2);border:1px solid var(--line)}
+  .opayrow.wait{background:var(--goldSoft);border-color:color-mix(in srgb,var(--gold) 26%,transparent);color:var(--gold);font-weight:700}
+  .opayrow.ok{background:rgba(62,124,90,.10);border-color:rgba(62,124,90,.3);color:var(--ok);font-weight:700}
   .octl select{background:var(--card2);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:7px 8px;font-size:12.5px;outline:none;font-family:inherit;flex:0 0 auto}
   .octl input{background:var(--card2);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:7px 9px;font-size:12.5px;outline:none;font-family:inherit;flex:1;min-width:110px}
   .octl input:focus,.octl select:focus{border-color:var(--accent)}
@@ -758,6 +770,12 @@
       <input class="asearch" id="giftTxtInput" placeholder="送精美小礼 🎁" style="margin-bottom:0">
       <label style="margin-top:10px">🤝 邀请有礼文案（顾客「客服」页显示；订单带🎁推荐码时你核价减运费）</label>
       <input class="asearch" id="refTxtInput" placeholder="拉朋友来下首单，双方各减一笔国际运费 🚚" style="margin-bottom:0">
+      <label style="margin-top:10px">💳 收款码（DuitNow QR）— 顾客在「我的订单」照码转账 + 传付款截图，你在订单里确认</label>
+      <div style="display:flex;gap:9px;align-items:center;margin-top:2px">
+        <button class="btn" style="width:auto;flex:1;background:var(--card2);border:1px solid var(--line);color:var(--txt)" onclick="pickQr()">📤 上传/更换收款码</button>
+        <span id="qrState" style="font-size:12px;color:var(--sub);flex:0 0 auto"></span>
+      </div>
+      <input class="asearch" id="payNoteInput" placeholder="收款说明（如：转账后请上传截图并备注订单号）" style="margin:8px 0 0">
       <button class="btn" onclick="saveSettings()">保存设置</button>
       </div>
     </div>
@@ -1336,7 +1354,7 @@
   }
 
   // ===== 埋点：尽力而为，绝不阻塞体验；店主自己不计（错误除外，那个要收）=====
-  const BUILD='referral-v6';
+  const BUILD='pay-v7';
   let _errN=0;
   function track(t,opts){
     opts=opts||{};
@@ -1953,15 +1971,53 @@
       orderStatusHtml(o)+
       (o.note?'<div class="onote">备注/单号：'+esc(o.note)+'</div>':'')+
       '<div class="othumbs">'+thumbs+more+'</div>'+
+      payBlockHtml(o)+
       '<div class="ofoot"><div class="ol">共 '+o.count+' 件'+(o.total>0?' · <b>RM'+money(o.total)+'</b>':'')+'</div>'+
       '<button class="obtn" onclick="resendOrder('+o.ts+')">再发给客服 →</button></div></div>';
+  }
+  // 付款闭环（顾客端）：只对云端订单显示；已确认/待确认/去付款三态
+  function payBlockHtml(o){
+    if(!o.srv||o.status==='已取消'||!o.sid) return '';
+    if(o.pay==='已确认') return '<div class="payb ok">✅ 已确认收款,货已排单</div>';
+    if(o.pay==='待确认') return '<div class="payb wait">🕓 付款凭证已上传,等店主确认 <button class="paylink" onclick="pickProof('+o.sid+')">重新上传</button></div>';
+    const qr=(CFG.pay_qr_url||'').trim();
+    return '<div class="payb"><div class="payt">💳 客服核价后,照下面转账再上传截图</div>'+
+      (qr?'<img class="payqr" src="'+esc(qr)+'" alt="收款码" onclick="openLightbox(0,[\''+esc(qr).replace(/'/g,"\\'")+'\'])">':'')+
+      ((CFG.pay_note||'').trim()?'<div class="paynote">'+esc(CFG.pay_note)+'</div>':'')+
+      '<button class="payup" onclick="pickProof('+o.sid+')">已转账 · 上传付款截图</button></div>';
+  }
+  let _proofSid=null;
+  function pickProof(sid){ _proofSid=sid; let inp=document.getElementById('proofFile');
+    if(!inp){ inp=document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.id='proofFile'; inp.style.display='none'; inp.onchange=onProofPick; document.body.appendChild(inp); }
+    inp.value=''; inp.click();
+  }
+  async function onProofPick(e){
+    const f=e.target.files&&e.target.files[0]; if(!f) return; toast('上传中…');
+    try{
+      const dataUrl=await compressImg(f,1280,0.82); const sid=_proofSid;
+      const r=await fetch(FN+'/pay-369',{method:'POST',headers:fnHeaders(),body:JSON.stringify({action:'proof',sid:sid,ck:clientKey(),dataUrl})});
+      const j=await r.json().catch(()=>({}));
+      if(j&&j.ok){ toast('凭证已上传 ✅ 等店主确认'); haptic('medium');
+        const os=_srvOrders&&_srvOrders.find(x=>x.id===sid); if(os) os.pay_status='待确认'; renderOrdersSheet();
+      } else toast((j&&j.error)||'上传失败,重试');
+    }catch(err){ toast('上传失败,重试'); }
+  }
+  // 前端压图：宽超 1280 缩放 + JPEG 质量,控住上传体积
+  function compressImg(file,maxW,quality){
+    return new Promise((resolve,reject)=>{
+      const img=new Image(),url=URL.createObjectURL(file);
+      img.onload=()=>{ URL.revokeObjectURL(url); let w=img.width,h=img.height; if(w>maxW){ h=Math.round(h*maxW/w); w=maxW; }
+        const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(img,0,0,w,h);
+        try{ resolve(c.toDataURL('image/jpeg',quality)); }catch(err){ reject(err); } };
+      img.onerror=()=>{ URL.revokeObjectURL(url); reject(0); }; img.src=url;
+    });
   }
   // 合并本地留底和云端订单：云端为准（按 sid 对上就用云端那份），仅本机的老单排最后
   function mergedOrders(){
     if(!_srvOrders||!_srvOrders.length) return orders.slice();
     const srv=_srvOrders.map(r=>({srv:true,sid:r.id,no:r.order_no||'#—',ts:(Date.parse(r.created_at)||Date.now()),
       total:(r.total!=null?Number(r.total):null),count:(r.count!=null?r.count:(r.items||[]).reduce((a,it)=>a+(Number(it.qty)||0),0)),
-      items:(r.items||[]),status:r.status||'',note:r.note||''}));
+      items:(r.items||[]),status:r.status||'',note:r.note||'',pay:r.pay_status||''}));
     const sids=new Set(srv.map(r=>String(r.sid)));
     return srv.concat(orders.filter(o=>o.sid==null||!sids.has(String(o.sid))));
   }
@@ -2224,6 +2280,7 @@
         '<div class="ohead"><b>'+esc(o.order_no||('#'+o.id))+'</b><span>'+esc(ordTime(o.created_at))+'</span><span style="flex:1"></span>'+ordPill(st)+'</div>'+
         (th?'<div class="othumbs">'+th+'</div>':'')+
         '<div class="oline">'+sum+'　·　<b style="color:var(--price)">RM '+money(o.total||0)+'</b>'+(o.tg_id?'　·　TG '+esc(o.tg_id):'')+(o.referred_by?'　·　<span style="color:var(--gold);font-weight:700">🎁 推荐码 '+esc(o.referred_by)+'（减运费）</span>':'')+'</div>'+
+        payAdminHtml(o,id)+
         '<div class="octl">'+
           '<select id="ost_'+id+'">'+opts+'</select>'+
           '<input id="ono_'+id+'" placeholder="物流单号/备注" maxlength="200" value="'+esc(o.note||'')+'">'+
@@ -2231,6 +2288,26 @@
           '<button class="mini del" onclick="delOrder(\''+id+'\')">删</button>'+
         '</div></div>';
     }).join('');
+  }
+  // 付款闭环（后台）
+  function payAdminHtml(o,id){
+    if(!o.pay_status && !o.pay_proof) return '';
+    const s=o.pay_status||''; const cls=s==='已确认'?' ok':s==='待确认'?' wait':'';
+    let btns=''; if(o.pay_proof) btns+='<button class="mini ghost" onclick="viewProof(\''+id+'\')">看凭证</button>';
+    if(s==='待确认') btns+='<button class="mini" onclick="confirmPay(\''+id+'\')">✅ 确认收款</button>';
+    return '<div class="opayrow'+cls+'">💳 付款：'+esc(s||'未上传')+'　'+btns+'</div>';
+  }
+  async function payAdmin(action,params){
+    const r=await fetch(FN+'/pay-369',{method:'POST',headers:{...fnHeaders(),'x-admin-pin':getPin()},body:JSON.stringify(Object.assign({action},params||{}))});
+    return await r.json().catch(()=>({}));
+  }
+  async function viewProof(id){ const o=AORDERS.find(x=>oid(x.id)===String(id)); const r=await payAdmin('proofUrl',{sid:o?o.id:id}); if(r&&r.ok&&r.url){ if(hasMB()&&tg&&tg.openLink) tg.openLink(r.url); else window.open(r.url,'_blank'); } else toast((r&&r.error)||'没有凭证'); }
+  async function confirmPay(id){ const o=AORDERS.find(x=>oid(x.id)===String(id)); const r=await payAdmin('payConfirm',{sid:o?o.id:id}); if(r&&r.ok){ toast('已确认收款 ✅'); haptic('medium'); loadOrders(); } else toast((r&&r.error)||'失败'); }
+  function pickQr(){ let inp=document.getElementById('qrFile'); if(!inp){ inp=document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.id='qrFile'; inp.style.display='none'; inp.onchange=onQrPick; document.body.appendChild(inp); } inp.value=''; inp.click(); }
+  async function onQrPick(e){ const f=e.target.files&&e.target.files[0]; if(!f) return; toast('上传中…');
+    try{ const dataUrl=await compressImg(f,900,0.9); const r=await payAdmin('qrUpload',{dataUrl});
+      if(r&&r.ok){ CFG.pay_qr_url=r.url; toast('收款码已上传 ✅'); haptic('medium'); const el=document.getElementById('qrState'); if(el) el.textContent='已设置 ✅'; }
+      else toast((r&&r.error)||'上传失败'); }catch(err){ toast('上传失败,重试'); }
   }
   async function ordSave(id){
     const st=document.getElementById('ost_'+id).value;
@@ -2373,10 +2450,11 @@
       const r=await fetch(SUPABASE_URL+'/rest/v1/config_369?select=key,value',{headers:headers()});
       const rows=r.ok?await r.json():[];
       const m={}; rows.forEach(x=>m[x.key]=x.value||'');
-      [['noticeInput','notice'],['waInput','contact_wa'],['tgInput','contact_tg'],['giftAmtInput','gift_amt'],['giftTxtInput','gift_txt'],['refTxtInput','ref_text']].forEach(([id,k])=>{
+      [['noticeInput','notice'],['waInput','contact_wa'],['tgInput','contact_tg'],['giftAmtInput','gift_amt'],['giftTxtInput','gift_txt'],['refTxtInput','ref_text'],['payNoteInput','pay_note']].forEach(([id,k])=>{
         const el=document.getElementById(id);
         if(el&&document.activeElement!==el) el.value=m[k]||'';
       });
+      const qs=document.getElementById('qrState'); if(qs) qs.textContent=(m.pay_qr_url||'').trim()?'已设置 ✅':'未设置';
     }catch(e){}
   }
   async function saveSettings(){
@@ -2385,7 +2463,8 @@
               ['contact_tg',document.getElementById('tgInput').value.trim().replace(/^@/,'')],
               ['gift_amt',document.getElementById('giftAmtInput').value.replace(/[^\d.]/g,'')],
               ['gift_txt',document.getElementById('giftTxtInput').value.trim().slice(0,60)],
-              ['ref_text',document.getElementById('refTxtInput').value.trim().slice(0,120)]];
+              ['ref_text',document.getElementById('refTxtInput').value.trim().slice(0,120)],
+              ['pay_note',document.getElementById('payNoteInput').value.trim().slice(0,300)]];
     let ok=0;
     for(const [k,v] of kv){ const r=await adminCall('config',{key:k,value:v}).catch(()=>null); if(r&&r.ok) ok++; }
     if(ok===kv.length){
