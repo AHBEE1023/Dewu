@@ -1,0 +1,12 @@
+{
+  "name": "dewu-369",
+  "private": true,
+  "version": "1.0.0",
+  "description": "369 甄选 — 代购店面 mini-app（单文件静态站）",
+  "scripts": {
+    "test": "node scripts/smoke.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.48.0"
+  }
+}
