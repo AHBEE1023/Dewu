@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: pay-v7 -->
+<!-- build: group-v8 -->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -335,6 +335,33 @@
   .invite .cr .cn{flex:0 0 auto;font-size:11px;color:var(--gold);font-weight:700}
   .invite .ib{width:100%;background:var(--ink);color:var(--onInk);border:none;border-radius:12px;padding:12px;font-size:13.5px;font-weight:700;letter-spacing:.5px}
   .invite .ib:active{transform:scale(.98)}
+  /* 拼团 / 集运批次横幅（店面首屏） */
+  .campbn{background:linear-gradient(135deg,var(--ink),color-mix(in srgb,var(--ink) 78%,var(--gold)));color:var(--onInk);border-radius:16px;padding:14px 15px;margin:0 0 12px;box-shadow:0 6px 20px -12px rgba(0,0,0,.55);position:relative;overflow:hidden}
+  .campbn::after{content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:color-mix(in srgb,var(--gold) 30%,transparent)}
+  .campbn .ct{display:flex;align-items:center;gap:8px;position:relative}
+  .campbn .cbadge{flex:0 0 auto;font-size:10px;font-weight:800;letter-spacing:1px;background:var(--gold);color:var(--ink);padding:3px 8px;border-radius:20px}
+  .campbn h4{margin:0;font-size:15.5px;font-weight:800;letter-spacing:.3px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .campbn .cblurb{font-size:12px;color:color-mix(in srgb,var(--onInk) 82%,transparent);margin:6px 0 0;line-height:1.5;position:relative}
+  .campbn .cdrow{display:flex;align-items:center;gap:10px;margin-top:11px;position:relative}
+  .campbn .cd{flex:0 0 auto;display:flex;gap:4px;align-items:baseline;font-variant-numeric:tabular-nums}
+  .campbn .cd b{background:color-mix(in srgb,var(--onInk) 14%,transparent);border-radius:7px;padding:4px 6px;font-size:15px;font-weight:800;min-width:26px;text-align:center}
+  .campbn .cd i{font-style:normal;font-size:11px;opacity:.7;margin:0 1px}
+  .campbn .cd .clab{font-size:10.5px;opacity:.75;letter-spacing:.5px;margin-right:2px}
+  .campbn .cprog{flex:1;min-width:0}
+  .campbn .cbar{height:7px;border-radius:20px;background:color-mix(in srgb,var(--onInk) 20%,transparent);overflow:hidden}
+  .campbn .cbar>i{display:block;height:100%;border-radius:20px;background:var(--gold);transition:width .5s}
+  .campbn .cnum{font-size:10.5px;opacity:.85;margin-top:4px;letter-spacing:.3px}
+  .campbn.ended{background:var(--card2);color:var(--sub);box-shadow:none}
+  .campbn.ended::after{display:none}
+  .campbn.ended .cbadge{background:var(--line);color:var(--sub)}
+  /* 后台拼团卡 */
+  .camprow{border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin:8px 0;background:var(--card2)}
+  .camprow .crh{display:flex;align-items:center;gap:8px}
+  .camprow .crh b{flex:1;font-size:13.5px;color:var(--txt);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .camprow .cpin{flex:0 0 auto;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px}
+  .camprow .cpin.on{background:var(--ok);color:#fff}
+  .camprow .cpin.off{background:var(--line);color:var(--sub)}
+  .camprow .cmeta{font-size:11.5px;color:var(--sub);margin-top:5px;line-height:1.5}
 
   /* 底部导航 */
   #nav{position:fixed;left:0;right:0;bottom:0;max-width:720px;margin:0 auto;height:calc(var(--nav-h) + var(--safe-b));
@@ -637,6 +664,7 @@
     </div>
     <div class="tipbar hidden" id="tipbar"><div class="tx">第一次来？看中就点 + 加心愿单，一键发给客服即可下单。<span class="tgo" onclick="dismissTip();setTab('me')">看怎么买</span></div><button class="tclose" onclick="dismissTip()">✕</button></div>
     <div class="notice hidden" id="notice"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex:0 0 auto"><path d="M3 10v4a1 1 0 0 0 1 1h3l6 4V5L7 9H4a1 1 0 0 0-1 1Z"/><path d="M17 9a4 4 0 0 1 0 6"/></svg><div class="mq" id="noticeMq"></div></div>
+    <div id="campBanner" class="campbn hidden"></div>
     <div class="searchwrap">
       <div class="searchrow">
         <div class="qwrap">
@@ -777,6 +805,25 @@
       </div>
       <input class="asearch" id="payNoteInput" placeholder="收款说明（如：转账后请上传截图并备注订单号）" style="margin:8px 0 0">
       <button class="btn" onclick="saveSettings()">保存设置</button>
+      </div>
+    </div>
+    <div class="card" style="padding-bottom:10px">
+      <div onclick="toggleCampCard()" style="display:flex;align-items:center;cursor:pointer;margin-bottom:4px">
+        <label style="margin:0;flex:1;color:var(--txt);font-size:13.5px;font-weight:700">🚚 拼团 / 集运批次<span class="tgpin" id="campState"></span><span style="color:var(--sub);font-weight:500;font-size:12px">　开团 · 满单直邮</span></label>
+        <span id="campArrow" style="color:var(--sub);font-size:12px">▼</span>
+      </div>
+      <div id="campBody" class="hidden">
+        <div class="hint" style="margin-top:8px">开一个团挂在店面首屏：顾客看到<b>倒计时 + 已拼进度</b>，这段时间下的单会自动归到本团（订单里带 🚚 标记），凑够就一起走国际直邮、摊薄运费。一次只挂一个团，开新团会自动收起旧团。</div>
+        <label style="margin-top:10px">团名（店面大标题）</label>
+        <input class="asearch" id="campTitle" placeholder="例：本周日本直邮团" maxlength="40" style="margin-bottom:0">
+        <label style="margin-top:10px">一句话说明（可留空）</label>
+        <input class="asearch" id="campBlurb" placeholder="例：满 20 单本周日截单，一起走空运包税" maxlength="120" style="margin-bottom:0">
+        <div style="display:flex;gap:9px">
+          <div style="flex:1"><label style="margin-top:10px">目标单数（可留空）</label><input class="asearch" id="campTarget" inputmode="numeric" placeholder="20" style="margin-bottom:0"></div>
+          <div style="flex:1.3"><label style="margin-top:10px">截单时间（可留空）</label><input class="asearch" id="campDeadline" type="datetime-local" style="margin-bottom:0"></div>
+        </div>
+        <button class="btn" onclick="campCreate()" style="margin-top:12px"><span id="campNewTxt">🚀 开团 / 更换当前团</span></button>
+        <div id="campList" style="margin-top:12px"></div>
       </div>
     </div>
     <div class="card" style="padding-bottom:10px">
@@ -1101,7 +1148,7 @@
     }catch(e){ _loadFail=!ALL.length; }
     indexAll();
     _fresh=true; buildChips(); renderSeg(); render(); updateBadge(); updateFavBadge(); checkDeepLink();
-    loadConfig();
+    loadConfig(); loadCampaign();
   }
   let CFG={};
   async function loadConfig(){
@@ -1112,6 +1159,54 @@
       setNotice(CFG.notice||'');
       applyContact();
     }catch(e){}
+  }
+  // ===== 拼团 / 集运批次：店面读当前活跃团（anon 直读 active 行），跑倒计时 + 进度 =====
+  let _camp=null, _campTick=null;
+  function activeCampId(){ return (_camp && _camp.active!==false) ? _camp.id : null; }
+  async function loadCampaign(){
+    try{
+      const r=await fetch(SUPABASE_URL+'/rest/v1/campaigns_369?active=eq.true&select=id,title,blurb,target,joined,deadline&order=created_at.desc&limit=1',{headers:headers()});
+      const rows=r.ok?await r.json():[];
+      const c=rows&&rows[0]||null;
+      // 已过截止时间的团视同结束，不再展示
+      if(c && c.deadline && new Date(c.deadline).getTime()<=Date.now()){ _camp=null; }
+      else _camp=c;
+    }catch(e){ _camp=null; }
+    renderCampBanner();
+  }
+  function renderCampBanner(){
+    const box=document.getElementById('campBanner'); if(!box) return;
+    if(!_camp){ box.classList.add('hidden'); if(_campTick){ clearInterval(_campTick); _campTick=null; } return; }
+    const c=_camp;
+    let cd=''; if(c.deadline){ cd='<div class="cd" id="campCd" data-dl="'+esc(String(c.deadline))+'"><span class="clab">距截单</span></div>'; }
+    let prog='';
+    if(c.target && Number(c.target)>0){
+      const j=Math.max(0,Number(c.joined)||0), t=Number(c.target), pct=Math.min(100,Math.round(j/t*100));
+      const done=j>=t;
+      prog='<div class="cprog"><div class="cbar"><i style="width:'+pct+'%"></i></div><div class="cnum">'+(done?'✅ 已满 '+j+' 单，随时截单发货':('已拼 '+j+' / '+t+' 单 · 满单即发'))+'</div></div>';
+    } else if(c.joined!=null){
+      prog='<div class="cprog"><div class="cnum">已有 '+(Number(c.joined)||0)+' 位邻居拼这一批 🚚</div></div>';
+    }
+    box.innerHTML='<div class="ct"><span class="cbadge">🚚 拼团直邮</span><h4>'+esc(c.title||'本期拼团')+'</h4></div>'+
+      (c.blurb?'<div class="cblurb">'+esc(c.blurb)+'</div>':'')+
+      ((cd||prog)?'<div class="cdrow">'+cd+prog+'</div>':'');
+    box.classList.remove('hidden');
+    if(_campTick){ clearInterval(_campTick); _campTick=null; }
+    if(c.deadline){ tickCampCd(); _campTick=setInterval(tickCampCd,1000); }
+  }
+  function tickCampCd(){
+    const el=document.getElementById('campCd'); if(!el){ if(_campTick){clearInterval(_campTick);_campTick=null;} return; }
+    let ms=new Date(el.dataset.dl).getTime()-Date.now();
+    if(ms<=0){ el.innerHTML='<span class="clab">已截单</span>'; if(_campTick){clearInterval(_campTick);_campTick=null;} loadCampaign(); return; }
+    const d=Math.floor(ms/86400000); ms-=d*86400000;
+    const h=Math.floor(ms/3600000); ms-=h*3600000;
+    const m=Math.floor(ms/60000); ms-=m*60000;
+    const s=Math.floor(ms/1000);
+    const p2=n=>String(n).padStart(2,'0');
+    let parts='<span class="clab">距截单</span>';
+    if(d>0) parts+='<b>'+d+'</b><i>天</i>';
+    parts+='<b>'+p2(h)+'</b><i>:</i><b>'+p2(m)+'</b><i>:</i><b>'+p2(s)+'</b>';
+    el.innerHTML=parts;
   }
   // 联系方式优先级：后台配的 WhatsApp → 后台配的 TG 用户名（直达聊天）→ 兜底 Telegram 分享
   function contactHref(text){
@@ -1354,7 +1449,7 @@
   }
 
   // ===== 埋点：尽力而为，绝不阻塞体验；店主自己不计（错误除外，那个要收）=====
-  const BUILD='pay-v7';
+  const BUILD='group-v8';
   let _errN=0;
   function track(t,opts){
     opts=opts||{};
@@ -1871,7 +1966,7 @@
     if(!retried) track('order_sent',{meta:{count:o.count,total:o.total,items:(o.items||[]).map(it=>it.id)}}); // 只在首次发单记一次，重试不重复
     try{
       fetch(SUPABASE_URL+'/rest/v1/rpc/create_order_369',{method:'POST',headers:headers(),
-        body:JSON.stringify({ck:clientKey(),tg:tgId(),ono:o.no,its:o.items,tot:(o.total>0?o.total:null),cnt:o.count,rby:refBy()})})
+        body:JSON.stringify({ck:clientKey(),tg:tgId(),ono:o.no,its:o.items,tot:(o.total>0?o.total:null),cnt:o.count,rby:refBy(),camp:activeCampId()})})
       .then(r=>{ if(!r.ok) throw 0; return r.json(); })
       .then(id=>{ if(id==null) return; o.sid=id;
         const i=orders.findIndex(x=>x.ts===o.ts); if(i>=0){ orders[i].sid=id; localStorage.setItem('orders369',JSON.stringify(orders)); }
@@ -2279,7 +2374,7 @@
       return '<div class="oitem">'+
         '<div class="ohead"><b>'+esc(o.order_no||('#'+o.id))+'</b><span>'+esc(ordTime(o.created_at))+'</span><span style="flex:1"></span>'+ordPill(st)+'</div>'+
         (th?'<div class="othumbs">'+th+'</div>':'')+
-        '<div class="oline">'+sum+'　·　<b style="color:var(--price)">RM '+money(o.total||0)+'</b>'+(o.tg_id?'　·　TG '+esc(o.tg_id):'')+(o.referred_by?'　·　<span style="color:var(--gold);font-weight:700">🎁 推荐码 '+esc(o.referred_by)+'（减运费）</span>':'')+'</div>'+
+        '<div class="oline">'+sum+'　·　<b style="color:var(--price)">RM '+money(o.total||0)+'</b>'+(o.tg_id?'　·　TG '+esc(o.tg_id):'')+(o.referred_by?'　·　<span style="color:var(--gold);font-weight:700">🎁 推荐码 '+esc(o.referred_by)+'（减运费）</span>':'')+(o.campaign_id?'　·　<span style="color:var(--gold);font-weight:700">🚚 拼团单</span>':'')+'</div>'+
         payAdminHtml(o,id)+
         '<div class="octl">'+
           '<select id="ost_'+id+'">'+opts+'</select>'+
@@ -2308,6 +2403,68 @@
     try{ const dataUrl=await compressImg(f,900,0.9); const r=await payAdmin('qrUpload',{dataUrl});
       if(r&&r.ok){ CFG.pay_qr_url=r.url; toast('收款码已上传 ✅'); haptic('medium'); const el=document.getElementById('qrState'); if(el) el.textContent='已设置 ✅'; }
       else toast((r&&r.error)||'上传失败'); }catch(err){ toast('上传失败,重试'); }
+  }
+  // ===== 拼团 / 集运批次（后台）=====
+  let _campLoaded=false;
+  async function campApi(action,params){
+    const r=await fetch(FN+'/camp-369',{method:'POST',headers:{...fnHeaders(),'x-admin-pin':getPin()},body:JSON.stringify(Object.assign({action},params||{}))});
+    return await r.json().catch(()=>({}));
+  }
+  function toggleCampCard(){
+    const b=document.getElementById('campBody');
+    b.classList.toggle('hidden');
+    document.getElementById('campArrow').textContent=b.classList.contains('hidden')?'▼':'▲';
+    if(!b.classList.contains('hidden')&&!_campLoaded) loadCampAdmin();
+    haptic('light');
+  }
+  async function loadCampAdmin(){
+    const box=document.getElementById('campList'); if(box) box.innerHTML='<div class="hint">加载中…</div>';
+    const r=await campApi('campList');
+    if(!r||!r.ok){ if(box) box.innerHTML='<div class="hint">'+esc((r&&r.error)||'加载失败，检查后台密码')+'</div>'; return; }
+    _campLoaded=true; renderCampList(r.rows||[]);
+  }
+  function renderCampList(rows){
+    const box=document.getElementById('campList'); if(!box) return;
+    const active=rows.find(c=>c.active);
+    const pin=document.getElementById('campState');
+    if(pin){ pin.className='tgpin '+(active?'on':'off'); pin.textContent=active?'进行中':'未开团'; }
+    if(!rows.length){ box.innerHTML='<div class="hint">还没开过团。填上面表单点「开团」，店面首屏就会挂出拼团横幅。</div>'; return; }
+    box.innerHTML=rows.map(c=>{
+      const on=!!c.active;
+      let meta=[];
+      if(c.target) meta.push('已拼 '+(Number(c.joined)||0)+' / '+c.target+' 单');
+      else meta.push('已拼 '+(Number(c.joined)||0)+' 单');
+      if(c.deadline){ const t=new Date(c.deadline).getTime(); meta.push((t>Date.now()?'截单 ':'已过 ')+fmtDl(c.deadline)); }
+      const endBtn=on?'<button class="mini ghost" onclick="campEnd('+c.id+')">结束此团</button>':'';
+      return '<div class="camprow"><div class="crh"><b>'+esc(c.title||'—')+'</b><span class="cpin '+(on?'on':'off')+'">'+(on?'进行中':'已结束')+'</span></div>'+
+        (c.blurb?'<div class="cmeta">'+esc(c.blurb)+'</div>':'')+
+        '<div class="cmeta">'+meta.map(esc).join(' · ')+'</div>'+
+        (endBtn?'<div style="margin-top:8px;text-align:right">'+endBtn+'</div>':'')+'</div>';
+    }).join('');
+  }
+  function fmtDl(s){ try{ const d=new Date(s); const p=n=>String(n).padStart(2,'0'); return (d.getMonth()+1)+'月'+d.getDate()+'日 '+p(d.getHours())+':'+p(d.getMinutes()); }catch(e){ return ''; } }
+  async function campCreate(){
+    const title=(document.getElementById('campTitle').value||'').trim();
+    if(!title){ toast('先填团名'); return; }
+    const blurb=(document.getElementById('campBlurb').value||'').trim();
+    const tv=(document.getElementById('campTarget').value||'').trim();
+    const dv=(document.getElementById('campDeadline').value||'').trim();
+    const params={title,blurb};
+    if(tv) params.target=Number(tv);
+    if(dv){ const d=new Date(dv); if(!isNaN(d.getTime())) params.deadline=d.toISOString(); }
+    const btn=document.getElementById('campNewTxt'); if(btn) btn.textContent='开团中…';
+    const r=await campApi('campNew',params);
+    if(btn) btn.textContent='🚀 开团 / 更换当前团';
+    if(r&&r.ok){ toast('已开团 ✅ 店面首屏已挂出'); haptic('medium');
+      document.getElementById('campTitle').value=''; document.getElementById('campBlurb').value=''; document.getElementById('campTarget').value=''; document.getElementById('campDeadline').value='';
+      loadCampAdmin(); loadCampaign(); }
+    else toast((r&&r.error)||'开团失败');
+  }
+  async function campEnd(id){
+    if(!confirm('结束这个团？店面首屏的拼团横幅会撤下。')) return;
+    const r=await campApi('campEnd',{id});
+    if(r&&r.ok){ toast('已结束'); haptic('light'); loadCampAdmin(); loadCampaign(); }
+    else toast((r&&r.error)||'失败');
   }
   async function ordSave(id){
     const st=document.getElementById('ost_'+id).value;
