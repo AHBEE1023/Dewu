@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get("GEMINI_KEY");
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!apiKey || !supabaseUrl || !serviceRoleKey) {
+    if (!supabaseUrl || !serviceRoleKey) {
       console.error("Missing required Edge Function secrets");
       return json({ ok: false, error: "服务器配置不完整" }, 500, cors);
     }
@@ -31,6 +31,10 @@ Deno.serve(async (req) => {
     });
     const gate = await requireAdmin(req, supabase);
     if (!gate.ok) return json({ ok: false, error: gate.error }, gate.status, cors);
+    if (!apiKey) {
+      console.error("Missing GEMINI_KEY Edge Function secret");
+      return json({ ok: false, error: "解析服务尚未配置" }, 500, cors);
+    }
 
     const body: any = await req.json().catch(() => ({}));
     const rowId = body.rowId ? Number(body.rowId) : null;
