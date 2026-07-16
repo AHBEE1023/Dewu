@@ -2,7 +2,7 @@
 -- 拼团 / 集运批次：店主手动开一个团挂在店面首屏（倒计时 + 已拼进度），
 -- 这段时间下的单自动归到本团（orders.campaign_id），凑够一起走国际直邮、摊薄运费。
 -- 一次只挂一个 active 团（camp-369 开新团时会把旧团 active=false）。
--- anon 只能读 active 行；写团只走 camp-369（服务角色 + 店主 PIN）。
+-- anon 只能读 active 行；写团只走 camp-369（服务角色 + Supabase Auth 管理员）。
 -- ============================================================
 create table if not exists campaigns_369 (
   id bigserial primary key,

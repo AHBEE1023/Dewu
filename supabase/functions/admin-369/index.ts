@@ -1,20 +1,18 @@
-// admin-369 v12: 369 后台专用网关 —— PIN 校验(失败限速+自设强密码) 后代办 列表/改/删/入库/订单/通知/数据看板。
+// admin-369: 369 后台专用网关 —— Supabase Auth 管理员验证后代办列表/改/删/入库/订单/通知/数据看板。
 // 底表 products_369 / orders_369 已对 anon 完全锁死，后台一切读写都必须经过这里。
-// 密码优先读 Supabase Secrets 的 ADMIN_PIN_369，没设则用兜底值。
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const PIN = Deno.env.get("ADMIN_PIN_369") || "3690";
+import { createClient } from "npm:@supabase/supabase-js@2.110.6";
+import { requireAdmin } from "../_shared/admin-auth.ts";
 // 只允许改这些字段，防止越权写 created_by / client_ref 之类
 const PATCH_FIELDS = ["name_cn", "brand", "sku", "images", "image_url", "price_rmb", "price_myr", "sell_myr", "status", "orig_myr", "hot", "soldout", "category", "params", "variants", "review_shots", "video_url"];
 // 订单状态白名单，防止后台误写乱七八糟的状态
 const ORDER_STATUS = ["已发送", "已确认", "已付款", "已采购", "运输中", "已到手", "已取消"];
 // 顾客状态推送用的小图标，让通知更直观
-const STATUS_EMOJI = { "已发送": "📨", "已确认": "✅", "已付款": "💰", "已采购": "🛍️", "运输中": "🚚", "已到手": "📦", "已取消": "❌" };
+const STATUS_EMOJI: Record<string, string> = { "已发送": "📨", "已确认": "✅", "已付款": "💰", "已采购": "🛍️", "运输中": "🚚", "已到手": "📦", "已取消": "❌" };
 
 Deno.serve(async (req) => {
   const cors = {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-admin-pin, prefer",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, prefer",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
   };
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -23,13 +21,11 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_URL"),
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
   );
-  // PIN 校验：失败限速 + 店主自设强密码（哈希存 app_secrets）取代硬编码兜底
-  const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "unknown";
-  const gate = await adminAuth(supabase, ip, req.headers.get("x-admin-pin") || "");
+  const gate = await requireAdmin(req, supabase);
   if (!gate.ok) return json({ ok: false, error: gate.error }, gate.status, cors);
 
   try {
-    const body = await req.json().catch(() => ({}));
+    const body: any = await req.json().catch(() => ({}));
 
     switch (body.action) {
       case "ping":
@@ -47,7 +43,7 @@ Deno.serve(async (req) => {
 
       case "trend": { // 抓得物「动态/贴文」分享页 -> 标题/正文/作者/买家秀图（匹配商品在前端做）
         const url = (body.url || "").toString().trim();
-        if (!/^https?:\/\//.test(url)) return json({ ok: false, error: "请贴得物动态链接" }, 400, cors);
+        if (!isAllowedDewuUrl(url)) return json({ ok: false, error: "请贴得物官方动态链接" }, 400, cors);
         const html = await fetchTrendHtml(url);
         if (!html) return json({ ok: false, error: "抓取失败，得物可能临时限流，稍后重试" }, 200, cors);
         const t = extractTrend(html);
@@ -58,7 +54,7 @@ Deno.serve(async (req) => {
       case "patch": {
         const id = Number(body.id);
         if (!id) return json({ ok: false, error: "缺 id" }, 400, cors);
-        const fields = {};
+        const fields: Record<string, unknown> = {};
         for (const k of PATCH_FIELDS) if (k in (body.fields || {})) fields[k] = body.fields[k];
         if (!Object.keys(fields).length) return json({ ok: false, error: "没有可改字段" }, 400, cors);
         const { data, error } = await supabase
@@ -78,7 +74,7 @@ Deno.serve(async (req) => {
           product_id: id, name_cn: p.name_cn, qty, sold_myr: price, cost_myr: p.price_myr,
         });
         if (e1) return json({ ok: false, error: e1.message }, 500, cors);
-        const upd = { sold_count: (p.sold_count || 0) + qty };
+        const upd: Record<string, unknown> = { sold_count: (p.sold_count || 0) + qty };
         if (body.soldout) upd.soldout = true;
         const { data: row, error: e2 } = await supabase.from("products_369").update(upd).eq("id", id).select().maybeSingle();
         if (e2) return json({ ok: false, error: e2.message }, 500, cors);
@@ -295,14 +291,6 @@ Deno.serve(async (req) => {
         return json({ ok: true, rows: data }, 200, cors);
       }
 
-      case "setPin": { // 店主设置强密码（哈希存库，取代兜底 3690）
-        const np = String(body.pin || "").trim();
-        if (np.length < 6) return json({ ok: false, error: "新密码至少 6 位（建议数字+字母混合）" }, 400, cors);
-        if (np.length > 64) return json({ ok: false, error: "密码太长" }, 400, cors);
-        await setSecret(supabase, "admin_pin_hash", await sha256hex(np));
-        return json({ ok: true }, 200, cors);
-      }
-
       default:
         return json({ ok: false, error: "未知 action" }, 400, cors);
     }
@@ -338,11 +326,26 @@ async function fetchTrendHtml(url) {
           "Accept-Language": "zh-CN,zh;q=0.9",
         },
       }).finally(() => clearTimeout(timer));
-      if (resp.ok) { const h = await resp.text(); if (h && h.length > 800) return h; }
+      if (resp.ok && isAllowedDewuUrl(resp.url)) {
+        const declared = Number(resp.headers.get("content-length") || 0);
+        if (declared > 1_500_000) return null;
+        const bytes = new Uint8Array(await resp.arrayBuffer());
+        if (bytes.byteLength > 1_500_000) return null;
+        const h = new TextDecoder().decode(bytes);
+        if (h && h.length > 800) return h;
+      }
     } catch (_e) { /* retry */ }
     await new Promise((r) => setTimeout(r, 1200));
   }
   return null;
+}
+function isAllowedDewuUrl(value) {
+  try {
+    const url = new URL(String(value));
+    if (url.protocol !== "https:") return false;
+    const host = url.hostname.toLowerCase();
+    return ["dewu.com", "dw4.co"].some((allowed) => host === allowed || host.endsWith("." + allowed));
+  } catch (_e) { return false; }
 }
 function tjstr(html, key) {
   const m = html.match(new RegExp('"' + key + '":"((?:[^"\\\\]|\\\\.){0,600})"'));
@@ -362,31 +365,6 @@ function extractTrend(html) {
     images: imgs.slice(0, 12),
   };
 }
-// ===== 后台 PIN 校验：失败限速 + 自设强密码 =====
-async function adminAuth(supabase, ip, pin) {
-  const { data: row } = await supabase.from("admin_attempts_369").select("*").eq("ip", ip).maybeSingle();
-  const now = Date.now();
-  if (row && row.locked_until && new Date(row.locked_until).getTime() > now) {
-    const mins = Math.ceil((new Date(row.locked_until).getTime() - now) / 60000);
-    return { ok: false, status: 429, error: "尝试太多，请 " + mins + " 分钟后再试" };
-  }
-  const storedHash = (await getSecret(supabase, "admin_pin_hash")).trim();
-  const valid = pin ? (storedHash ? (await sha256hex(pin)) === storedHash : pin === PIN) : false;
-  if (valid) {
-    if (row && row.fails > 0) {
-      await supabase.from("admin_attempts_369").upsert({ ip, fails: 0, locked_until: null, updated_at: new Date().toISOString() });
-    }
-    return { ok: true, status: 200 };
-  }
-  const fails = (row ? row.fails : 0) + 1;
-  const upd = { ip, fails, updated_at: new Date().toISOString(), locked_until: fails >= 5 ? new Date(now + 10 * 60000).toISOString() : null };
-  await supabase.from("admin_attempts_369").upsert(upd);
-  return { ok: false, status: fails >= 5 ? 429 : 401, error: fails >= 5 ? "错误太多，已锁定 10 分钟" : "密码不对" };
-}
-async function sha256hex(s) {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
-  return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, "0")).join("");
-}
 // ===== 私密配置读写（app_secrets_369，只有 service role 能碰）=====
 async function getSecret(supabase, key) {
   const { data } = await supabase.from("app_secrets_369").select("value").eq("key", key).maybeSingle();
@@ -396,7 +374,7 @@ async function setSecret(supabase, key, value) {
   await supabase.from("app_secrets_369").upsert({ key, value: value ?? "", updated_at: new Date().toISOString() });
 }
 // ===== Telegram Bot API =====
-async function tgApi(token, method, params) {
+async function tgApi(token, method, params = {}) {
   const r = await fetch("https://api.telegram.org/bot" + token + "/" + method, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

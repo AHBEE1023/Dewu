@@ -2,15 +2,15 @@
 //  - pubkey(无鉴权)：给前端订阅用的 applicationServerKey
 //  - subscribe/unsubscribe(顾客)：存/删本设备订阅
 //  - send(服务器专用)：admin-369 改状态时用 service_role key 调用，推给该顾客
-//  - genKeys/test(店主 PIN)：首次生成密钥 / 给自己发测试推送
+//  - genKeys/test(Supabase Auth 管理员)：首次生成密钥 / 给自己发测试推送
 import * as webpush from "jsr:@negrel/webpush@0.3.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2.110.6";
+import { requireAdmin } from "../_shared/admin-auth.ts";
 
-const PIN = Deno.env.get("ADMIN_PIN_369") || "3690";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const cors = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-admin-pin",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -52,9 +52,8 @@ Deno.serve(async (req) => {
       return json({ ok: true, sent }, 200);
     }
 
-    // ---- 店主专用：PIN 加固 ----
-    const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "unknown";
-    const gate = await adminAuth(supabase, ip, req.headers.get("x-admin-pin") || "");
+    // ---- 店主专用：Supabase Auth + admin_users ----
+    const gate = await requireAdmin(req, supabase);
     if (!gate.ok) return json({ ok: false, error: gate.error }, gate.status);
 
     if (action === "genKeys") {
@@ -123,17 +122,5 @@ function bytesToB64url(bytes) {
   let bin = ""; for (const b of bytes) bin += String.fromCharCode(b);
   return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
-async function adminAuth(supabase, ip, pin) {
-  const { data: row } = await supabase.from("admin_attempts_369").select("*").eq("ip", ip).maybeSingle();
-  const now = Date.now();
-  if (row && row.locked_until && new Date(row.locked_until).getTime() > now) return { ok: false, status: 429, error: "尝试太多，稍后再试" };
-  const storedHash = (await getSecret(supabase, "admin_pin_hash")).trim();
-  const valid = pin ? (storedHash ? (await sha256hex(pin)) === storedHash : pin === PIN) : false;
-  if (valid) { if (row && row.fails > 0) await supabase.from("admin_attempts_369").upsert({ ip, fails: 0, locked_until: null, updated_at: new Date().toISOString() }); return { ok: true, status: 200 }; }
-  const fails = (row ? row.fails : 0) + 1;
-  await supabase.from("admin_attempts_369").upsert({ ip, fails, updated_at: new Date().toISOString(), locked_until: fails >= 5 ? new Date(now + 600000).toISOString() : null });
-  return { ok: false, status: fails >= 5 ? 429 : 401, error: fails >= 5 ? "错误太多，已锁定 10 分钟" : "密码不对" };
-}
-async function sha256hex(s) { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return Array.from(new Uint8Array(b), (x) => x.toString(16).padStart(2, "0")).join(""); }
 async function getSecret(supabase, key) { const { data } = await supabase.from("app_secrets_369").select("value").eq("key", key).maybeSingle(); return (data && data.value) ? String(data.value) : ""; }
 function json(obj, status) { return new Response(JSON.stringify(obj), { status, headers: { ...cors, "Content-Type": "application/json" } }); }

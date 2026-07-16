@@ -1,7 +1,7 @@
-// 369 甄选 · Service Worker v3 —— 保新鲜也要快：
+// 369 甄选 · Service Worker v4 —— 保新鲜也要快：
 // 同源请求走「网络 vs 2.5s 竞速」：网络先到用网络（并回填缓存）；网络慢/断，先用缓存秒开，后台继续更新。
 // 换版本立即接管并刷新已开页面；Supabase / 得物图 CDN 一律不接管。
-const V = '369-cache-v3';
+const V = '369-cache-v4';
 const NET_TIMEOUT = 2500;
 
 self.addEventListener('install', () => self.skipWaiting());
