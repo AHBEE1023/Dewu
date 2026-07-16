@@ -40,10 +40,13 @@ The enrolled administrator email for this deployment is `ahbee1023@gmail.com`. N
    supabase secrets set ALLOWED_SOURCE_HOSTS=dewu.com,dw4.co
    ```
 
-6. Deploy the function with JWT verification enabled. Do not add `--no-verify-jwt`:
+6. Deploy the function with the legacy gateway JWT check disabled. The function
+   validates the current Supabase Auth user and `admin_users` membership itself,
+   which also supports the project's publishable key. In the Dashboard, leave
+   **Verify JWT with legacy secret** off. With the CLI, run:
 
    ```bash
-   supabase functions deploy parse-dewu-link
+   supabase functions deploy parse-dewu-link --no-verify-jwt
    ```
 
 7. Deploy the frontend to Vercel. Open the management login with `?admin=1`, for example:

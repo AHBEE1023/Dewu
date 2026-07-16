@@ -415,5 +415,5 @@ enabled = true
 
 [functions.parse-dewu-link]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 entrypoint = "./functions/parse-dewu-link/index.ts"

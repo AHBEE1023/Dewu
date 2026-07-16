@@ -16,11 +16,10 @@ test('database migration removes anonymous writes and enrolls the explicit admin
 });
 
 test('Edge Function requires JWT, admin membership and a Dewu source host', () => {
-  assert.match(config, /\[functions\.parse-dewu-link\][\s\S]*verify_jwt = true/);
+  assert.match(config, /\[functions\.parse-dewu-link\][\s\S]*verify_jwt = false/);
   assert.match(edge, /supabase\.auth\.getUser\(token\)/);
   assert.match(edge, /\.from\("admin_users"\)/);
   assert.match(edge, /isAllowedSourceUrl\(sourceUrl\)/);
-  assert.doesNotMatch(edge, /--no-verify-jwt/);
 });
 
 test('storefront query requests only public catalog fields', () => {

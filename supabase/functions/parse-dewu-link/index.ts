@@ -10,7 +10,7 @@
 //
 // 解析出的字段用 service_role 直接入库 products_369，返回入库行给前端预览。
 // 需要设 secret：GEMINI_KEY（Google Gemini 解析用，去 aistudio.google.com 拿，有免费额度）
-// 部署：supabase functions deploy parse-dewu-link（verify_jwt 保持开启）
+// 部署时关闭旧版网关 verify_jwt；函数内部会验证当前 Auth 用户和管理员资格。
 // ============================================================
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.110.6";
 
