@@ -3,5 +3,5 @@
     "lib": ["deno.window", "dom"],
     "strict": false
   },
-  "nodeModulesDir": "manual"
+  "nodeModulesDir": "auto"
 }
