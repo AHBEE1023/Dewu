@@ -1,0 +1,2 @@
+-- Intentionally empty. Administrator Auth users must be created through the
+-- Supabase Auth API or Dashboard, never inserted directly into auth.users.

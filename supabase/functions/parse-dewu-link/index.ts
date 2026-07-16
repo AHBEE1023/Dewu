@@ -10,14 +10,39 @@
 //
 // 解析出的字段用 service_role 直接入库 products_369，返回入库行给前端预览。
 // 需要设 secret：GEMINI_KEY（Google Gemini 解析用，去 aistudio.google.com 拿，有免费额度）
-// 部署：supabase functions deploy parse-dewu-link --no-verify-jwt
+// 部署：supabase functions deploy parse-dewu-link（verify_jwt 保持开启）
 // ============================================================
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+
+type ParsedProduct = {
+  name_cn: string | null;
+  brand?: string | null;
+  sku?: string | null;
+  price_rmb?: number | null;
+  image_url?: string | null;
+};
+
+type ProductUpdate = {
+  name_cn?: string;
+  brand?: string | null;
+  sku?: string | null;
+  price_rmb?: number | null;
+  price_myr?: number | null;
+  image_url?: string;
+  images?: string[];
+};
+
+type DewuPage =
+  | { blocked: true }
+  | { blocked: false; text: string; images: string[]; image: string | null };
 
 // —— 人民币 → 马币 汇率（成本折算用，按实时行情自行调整）——
 const RATE_RMB_TO_MYR = 0.62;
 // —— 解析模型：Google Gemini（免费额度，跑在 Google 服务端）——
 const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") || "gemini-2.5-flash";
+const MAX_INPUT_CHARS = 4000;
+const MAX_PAGE_BYTES = 1_500_000;
+const DEFAULT_SOURCE_HOSTS = ["dewu.com", "dw4.co"];
 
 Deno.serve(async (req) => {
   const cors = {
@@ -26,41 +51,56 @@ Deno.serve(async (req) => {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
   };
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== "POST") return json({ ok: false, error: "只允许 POST" }, 405, cors);
 
   try {
-    const body = await req.json().catch(() => ({}));
-    const rowId = body.rowId ? Number(body.rowId) : null;
-    const input = (body.input || "").toString().trim();
-    const tgId = body.tgId ? Number(body.tgId) : null;
-    const reqId = body.reqId ? String(body.reqId).slice(0, 60) : null;
-
     const apiKey = Deno.env.get("GEMINI_KEY");
-    if (!apiKey) return json({ ok: false, error: "服务器未配置 GEMINI_KEY" }, 500, cors);
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL"),
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
-    );
-
-    // ★★ rowId 模式：前端用 REST 秒速插了占位行，数据库触发器回调本函数来解析回填。
-    // 前端全程只碰"快"的 REST，不用连"慢"的函数端点，弱网也能入库。
-    if (rowId) {
-      const { data: row } = await supabase.from("products_369").select("*").eq("id", rowId).maybeSingle();
-      if (!row) return json({ ok: false, error: "行不存在" }, 200, cors);
-      const rawText = (row.raw_text || "").toString();
-      const su = row.source_url || (rawText.match(/https?:\/\/[^\s，。、]+/) || [null])[0];
-      const rest = su ? rawText.replace(su, "").trim() : rawText;
-      // 立刻返回（~200ms），解析放后台跑——否则触发器的 pg_net 5 秒超时会掐断，函数被杀、回填不了。
-      const bg = fillRow(supabase, apiKey, rowId, rawText, su, !!su && rest.length < 8);
-      try { globalThis.EdgeRuntime?.waitUntil(bg); } catch (_e) { await bg; }
-      return json({ ok: true, rowId }, 200, cors);
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!apiKey || !supabaseUrl || !serviceRoleKey) {
+      console.error("Missing required Edge Function secrets");
+      return json({ ok: false, error: "服务器配置不完整" }, 500, cors);
     }
 
+    const authorization = req.headers.get("authorization") || "";
+    const token = authorization.replace(/^Bearer\s+/i, "").trim();
+    if (!token) return json({ ok: false, error: "请先登录管理员账号" }, 401, cors);
+
+    const supabase = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { data: authData, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !authData.user) {
+      return json({ ok: false, error: "登录已失效，请重新登录" }, 401, cors);
+    }
+    const { data: adminRow, error: adminError } = await supabase
+      .from("admin_users")
+      .select("user_id")
+      .eq("user_id", authData.user.id)
+      .maybeSingle();
+    if (adminError) {
+      console.error("Admin lookup failed", adminError.message);
+      return json({ ok: false, error: "无法验证管理员权限" }, 500, cors);
+    }
+    if (!adminRow) return json({ ok: false, error: "此账号没有管理员权限" }, 403, cors);
+
+    const body = await req.json().catch(() => ({})) as Record<string, unknown>;
+    const input = (body.input || "").toString().trim();
+    const tgValue = Number(body.tgId);
+    const tgId = body.tgId != null && Number.isSafeInteger(tgValue) && tgValue > 0 ? tgValue : null;
+    const reqId = body.reqId ? String(body.reqId).slice(0, 60) : null;
+
     if (!input) return json({ ok: false, error: "没有输入内容" }, 400, cors);
+    if (input.length > MAX_INPUT_CHARS) {
+      return json({ ok: false, error: `输入内容不能超过 ${MAX_INPUT_CHARS} 字` }, 400, cors);
+    }
 
     // —— 判断输入里有没有链接 ——
     const urlMatch = input.match(/https?:\/\/[^\s，。、]+/);
     const sourceUrl = urlMatch ? urlMatch[0] : null;
+    if (sourceUrl && !isAllowedSourceUrl(sourceUrl)) {
+      return json({ ok: false, error: "只支持得物官方商品链接" }, 400, cors);
+    }
     // 去掉链接后还剩多少字：几乎没剩 = 纯链接；剩很多 = 分享文字里夹了个链接
     const textWithoutUrl = sourceUrl ? input.replace(sourceUrl, "").trim() : input;
     const linkOnly = !!sourceUrl && textWithoutUrl.length < 8;
@@ -85,7 +125,7 @@ Deno.serve(async (req) => {
         source: "dewu",
         status: "待选",
         source_url: sourceUrl,
-        raw_text: input.slice(0, 4000),
+        raw_text: input.slice(0, MAX_INPUT_CHARS),
         created_by: tgId,
         client_ref: reqId,
       })
@@ -94,18 +134,29 @@ Deno.serve(async (req) => {
     if (error) return json({ ok: false, error: "入库失败：" + error.message }, 500, cors);
 
     const bg = fillRow(supabase, apiKey, data.id, input, sourceUrl, linkOnly);
-    try { globalThis.EdgeRuntime?.waitUntil(bg); } catch (_e) { await bg; }
+    const edgeRuntime = (globalThis as typeof globalThis & {
+      EdgeRuntime?: { waitUntil: (promise: Promise<unknown>) => void };
+    }).EdgeRuntime;
+    try { edgeRuntime ? edgeRuntime.waitUntil(bg) : await bg; } catch (_e) { await bg; }
 
     return json({ ok: true, product: data, pending: true }, 200, cors);
   } catch (e) {
-    return json({ ok: false, error: "解析服务错误：" + String(e) }, 500, cors);
+    console.error("parse-dewu-link failed", e);
+    return json({ ok: false, error: "解析服务暂时不可用，请稍后重试" }, 500, cors);
   }
 });
 
 // —— 抓页面(图) → Gemini 解析 → 回填这一行（占位行已存在，按 rowId 更新）——
-async function fillRow(supabase, apiKey, rowId, material0, sourceUrl, linkOnly) {
+async function fillRow(
+  supabase: SupabaseClient,
+  apiKey: string,
+  rowId: number,
+  material0: string,
+  sourceUrl: string | null,
+  linkOnly: boolean,
+) {
   try {
-    let material = material0, fromPage = false, gallery = null;
+    let material = material0, fromPage = false, gallery: string[] | null = null;
     // 有链接就抓页面：拿商品图；纯链接还得靠页面文字来解析
     if (sourceUrl) {
       const page = await fetchDewuPage(sourceUrl);
@@ -121,19 +172,28 @@ async function fillRow(supabase, apiKey, rowId, material0, sourceUrl, linkOnly) 
     }
 
     const parsed = await parseWithGemini(apiKey, material, fromPage);
-    const upd = {};
+    const upd: ProductUpdate = {};
     if (parsed && parsed.name_cn) {
       const priceRmb = toNum(parsed.price_rmb);
-      upd.name_cn = parsed.name_cn;
-      upd.brand = emptyToNull(parsed.brand);
-      upd.sku = emptyToNull(parsed.sku);
-      upd.price_rmb = priceRmb;
-      upd.price_myr = priceRmb != null ? Math.round(priceRmb * RATE_RMB_TO_MYR * 100) / 100 : null;
+      const validPriceRmb = priceRmb != null && priceRmb >= 0 && priceRmb <= 10_000_000 ? priceRmb : null;
+      upd.name_cn = cleanText(parsed.name_cn, 240) || "⚠️ 没解析出商品，点『编辑』手填或删除";
+      upd.brand = cleanText(parsed.brand, 120);
+      upd.sku = cleanText(parsed.sku, 120);
+      upd.price_rmb = validPriceRmb;
+      upd.price_myr = validPriceRmb != null ? Math.round(validPriceRmb * RATE_RMB_TO_MYR * 100) / 100 : null;
     } else {
       upd.name_cn = "⚠️ 没解析出商品，点『编辑』手填或删除";
     }
-    const imageUrl = (gallery && gallery[0]) || emptyToNull(parsed && parsed.image_url);
-    if (imageUrl) { upd.image_url = imageUrl; upd.images = gallery && gallery.length ? gallery : [imageUrl]; }
+    const safeGallery = (gallery || [])
+      .map(safeHttpsUrl)
+      .filter((url): url is string => Boolean(url))
+      .slice(0, 12);
+    const parsedImage = safeHttpsUrl(parsed && parsed.image_url);
+    const imageUrl = safeGallery[0] || parsedImage;
+    if (imageUrl) {
+      upd.image_url = imageUrl;
+      upd.images = safeGallery.length ? safeGallery : [imageUrl];
+    }
     await supabase.from("products_369").update(upd).eq("id", rowId);
   } catch (e) {
     const s = String(e);
@@ -144,9 +204,59 @@ async function fillRow(supabase, apiKey, rowId, material0, sourceUrl, linkOnly) 
   }
 }
 
-// —— 抓得物页面：返回文字，或判定被拦 ——
-async function fetchDewuPage(url) {
+function allowedSourceHosts(): string[] {
+  const configured = (Deno.env.get("ALLOWED_SOURCE_HOSTS") || "")
+    .split(",")
+    .map((host) => host.trim().toLowerCase())
+    .filter(Boolean);
+  return configured.length ? configured : DEFAULT_SOURCE_HOSTS;
+}
+
+function isAllowedSourceUrl(value: string): boolean {
   try {
+    const url = new URL(value);
+    if (url.protocol !== "https:") return false;
+    const hostname = url.hostname.toLowerCase();
+    return allowedSourceHosts().some(
+      (allowed) => hostname === allowed || hostname.endsWith(`.${allowed}`)
+    );
+  } catch (_e) {
+    return false;
+  }
+}
+
+async function readTextLimited(resp: Response, maxBytes: number): Promise<string> {
+  const length = Number(resp.headers.get("content-length") || 0);
+  if (Number.isFinite(length) && length > maxBytes) throw new Error("PAGE_TOO_LARGE");
+  if (!resp.body) return "";
+
+  const reader = resp.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > maxBytes) {
+      await reader.cancel();
+      throw new Error("PAGE_TOO_LARGE");
+    }
+    chunks.push(value);
+  }
+
+  const merged = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(merged);
+}
+
+// —— 抓得物页面：返回文字，或判定被拦 ——
+async function fetchDewuPage(url: string): Promise<DewuPage> {
+  try {
+    if (!isAllowedSourceUrl(url)) return { blocked: true };
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 12000);
     const resp = await fetch(url, {
@@ -161,7 +271,10 @@ async function fetchDewuPage(url) {
     }).finally(() => clearTimeout(timer));
 
     if (!resp.ok) return { blocked: true };
-    const html = await resp.text();
+    if (!isAllowedSourceUrl(resp.url)) return { blocked: true };
+    const contentType = (resp.headers.get("content-type") || "").toLowerCase();
+    if (contentType && !contentType.includes("text/html")) return { blocked: true };
+    const html = await readTextLimited(resp, MAX_PAGE_BYTES);
 
     // 拦截/验证页特征：太短，或出现验证/滑块/风控关键词
     const blockedSigns = ["验证", "滑块", "captcha", "punish", "安全验证", "拦截", "机器人", "abnormal"];
@@ -189,13 +302,13 @@ async function fetchDewuPage(url) {
 // 所以优先抓 pro-img；没有再退回 trade/gondor（部分商品如毛绒公仔用它当主图）。
 // node-common/…是「得物」水印占位图，一律跳过。
 const RE_PROIMG = /https?:(?:\\?\/){2}[^"'\\ ]*?pro-img(?:\\?\/)(?:origin|cut)-img(?:\\?\/)[^"'\\ ]+?\.(?:jpg|jpeg|png|webp)/gi;
-function collectRe(html, re) {
+function collectRe(html: string, re: RegExp): string[] {
   const seen = new Set(), out = [];
   let m; re.lastIndex = 0;
   while ((m = re.exec(html))) { const u = unescapeUrl(m[0]); if (!seen.has(u)) { seen.add(u); out.push(u); } }
   return out;
 }
-function galleryStart(html) {
+function galleryStart(html: string): number {
   let from = 0, idx;
   while ((idx = html.indexOf('"images":[{"url":"', from)) >= 0) {
     const head = html.slice(idx + 17, idx + 400);
@@ -204,7 +317,7 @@ function galleryStart(html) {
   }
   return html.indexOf('"images":[{"url":"');
 }
-function extractImages(html) {
+function extractImages(html: string): string[] {
   // ① 优先：商品主图库 pro-img（同一张的 cut/origin 按文件名去重，保留 origin 高清）
   const all = collectRe(html, RE_PROIMG);
   if (all.length) {
@@ -242,7 +355,7 @@ function extractImages(html) {
   return [...seen.values()].map((x) => x.url).slice(0, 10);
 }
 // —— 单张主图（图库抓不到时的兜底）——
-function extractMain(html) {
+function extractMain(html: string): string | null {
   const g = extractImages(html);
   if (g[0]) return g[0];
   let m = html.match(/"images"\s*:\s*\[\s*\{\s*"url"\s*:\s*"(https?:(?:\\\/|\/)[^"\\]+)"/);
@@ -255,12 +368,12 @@ function extractMain(html) {
   if (m) return unescapeUrl(m[1]);
   return null;
 }
-function unescapeUrl(u) {
+function unescapeUrl(u: string): string {
   return u.replace(/\\u002F/gi, "/").replace(/\\\//g, "/").replace(/&amp;/g, "&").trim();
 }
 
 // —— 粗略把 HTML 变成可读文字（保留内嵌 JSON，便于 Gemini 抠字段）——
-function htmlToText(html) {
+function htmlToText(html: string): string {
   return html
     .replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, " $1 ") // 保留 script 内的 JSON 文本
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
@@ -271,7 +384,7 @@ function htmlToText(html) {
 }
 
 // —— 调 Gemini，结构化输出商品字段（关 thinking 提速，temperature 0 稳定）——
-async function parseWithGemini(apiKey, material, fromPage) {
+async function parseWithGemini(apiKey: string, material: string, fromPage: boolean): Promise<ParsedProduct | null> {
   const instr =
     "你是得物（poizon）商品信息解析器。从给定内容里抠出单个商品的：中文名(name_cn)、品牌(brand)、" +
     "货号SKU(sku)、得物人民币价格(price_rmb，元，纯数字)、商品主图链接(image_url)。" +
@@ -283,8 +396,7 @@ async function parseWithGemini(apiKey, material, fromPage) {
   const url =
     "https://generativelanguage.googleapis.com/v1beta/models/" +
     GEMINI_MODEL +
-    ":generateContent?key=" +
-    apiKey;
+    ":generateContent";
 
   const payload = {
     contents: [{ parts: [{ text: instr + "\n\n" + prefix + material }] }],
@@ -312,7 +424,10 @@ async function parseWithGemini(apiKey, material, fromPage) {
     try {
       const resp = await fetch(url, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          "x-goog-api-key": apiKey,
+        },
         body: JSON.stringify(payload),
       });
       const data = await resp.json();
@@ -324,7 +439,7 @@ async function parseWithGemini(apiKey, material, fromPage) {
         throw new Error(lastErr);
       }
       const cand = (data.candidates || [])[0];
-      const text = ((cand?.content?.parts) || []).map((p) => p?.text ?? "").join("");
+      const text = ((cand?.content?.parts) || []).map((p: { text?: string }) => p?.text ?? "").join("");
       try {
         return JSON.parse(text);
       } catch (_e) {
@@ -339,7 +454,7 @@ async function parseWithGemini(apiKey, material, fromPage) {
 }
 
 // —— 从分享文字里快速猜个临时名（占位用，后台解析好会覆盖）——
-function quickName(input, url) {
+function quickName(input: string, url: string | null): string | null {
   let t = input;
   if (url) t = t.split(url).join(" ");
   t = t
@@ -352,16 +467,26 @@ function quickName(input, url) {
     .trim();
   return t ? "⏳ " + t.slice(0, 40) : null;
 }
-function toNum(v) {
+function toNum(v: unknown): number | null {
   if (v == null || v === "") return null;
   const n = Number(String(v).replace(/[^\d.]/g, ""));
   return Number.isFinite(n) ? n : null;
 }
-function emptyToNull(v) {
+function cleanText(v: unknown, maxLength: number): string | null {
   const s = (v ?? "").toString().trim();
-  return s ? s : null;
+  return s ? s.slice(0, maxLength) : null;
 }
-function json(obj, status, cors) {
+function safeHttpsUrl(v: unknown): string | null {
+  const s = (v ?? "").toString().trim();
+  if (!s || s.length > 2048) return null;
+  try {
+    const url = new URL(s);
+    return url.protocol === "https:" ? url.toString() : null;
+  } catch (_e) {
+    return null;
+  }
+}
+function json(obj: unknown, status: number, cors: Record<string, string>): Response {
   return new Response(JSON.stringify(obj), {
     status,
     headers: { ...cors, "Content-Type": "application/json" },
