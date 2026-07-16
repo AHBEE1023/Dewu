@@ -34,6 +34,7 @@ assert.doesNotMatch(parse, /GEMINI_KEY\s*=.*\|\|/);
 assert.match(parse, /isAllowedSourceUrl/);
 assert.match(parse, /x-goog-api-key/);
 assert.match(parse, /MAX_PAGE_BYTES/);
+assert.ok(parse.indexOf('requireAdmin(req, supabase)') < parse.indexOf('if (!apiKey)'), 'anonymous calls must be rejected before Gemini configuration is checked');
 
 assert.match(migration, /create table if not exists public\.admin_users/i);
 assert.match(migration, /revoke all on table public\.products_369 from public, anon, authenticated/i);
