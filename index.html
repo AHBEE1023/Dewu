@@ -1131,7 +1131,28 @@
   const FN = SUPABASE_URL+'/functions/v1';
   const ADMIN_EMAIL = 'ahbee1023@gmail.com';
   const authDb = window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{
-    auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}
+    auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+  });
+
+  // 密码找回链接返回本页后，Supabase 会建立一次 recovery 会话；立即让管理员设置新密码。
+  let _adminRecoveryOpen=false;
+  async function finishAdminRecovery(){
+    if(_adminRecoveryOpen) return;
+    _adminRecoveryOpen=true;
+    try{
+      const password=prompt('请设置新的后台密码（至少 8 位）');
+      if(password===null){ toast('尚未修改密码'); return; }
+      if(password.length<8){ alert('新密码至少需要 8 位，请重新打开邮件链接设置。'); return; }
+      const confirmPassword=prompt('请再输入一次新密码');
+      if(confirmPassword!==password){ alert('两次密码不一致，请重新打开邮件链接设置。'); return; }
+      const {error}=await authDb.auth.updateUser({password});
+      if(error){ alert('密码修改失败：'+error.message); return; }
+      try{ history.replaceState({},document.title,location.pathname+location.search); }catch(e){}
+      alert('密码设置成功。现在可以使用新密码进入后台。');
+    } finally { _adminRecoveryOpen=false; }
+  }
+  authDb.auth.onAuthStateChange((event)=>{
+    if(event==='PASSWORD_RECOVERY') setTimeout(()=>finishAdminRecovery(),0);
   });
 
   const tg = window.Telegram && window.Telegram.WebApp;
@@ -1273,8 +1294,14 @@
     if(data&&data.session){
       try{ const r=await adminCall('ping'); if(r&&r.ok) return true; }catch(e){}
     }
-    const password=prompt('请输入 Supabase 管理员密码\n'+ADMIN_EMAIL);
+    const password=prompt('请输入 Supabase 管理员密码\n'+ADMIN_EMAIL+'\n\n忘记密码：留空后按“确定”，系统会发送重设邮件');
     if(password===null) return false;
+    if(password===''){
+      const {error}=await authDb.auth.resetPasswordForEmail(ADMIN_EMAIL,{redirectTo:location.origin+location.pathname});
+      if(error){ alert('重设邮件发送失败：'+error.message); return false; }
+      alert('重设邮件已发送到 '+ADMIN_EMAIL+'。请打开最新邮件里的链接。');
+      return false;
+    }
     const {data:login,error}=await authDb.auth.signInWithPassword({email:ADMIN_EMAIL,password});
     if(error||!login.session){ toast('邮箱或密码不正确'); return false; }
     try{
