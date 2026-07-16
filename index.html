@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <title>369 甄选 · 正品好物</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <style>
   :root{
     --bg:#0e0f13; --card:#171922; --card2:#1e2130; --line:#2a2e3a;
@@ -215,10 +216,22 @@
   @keyframes sp{to{transform:rotate(360deg)}}
   .toast{position:fixed;left:50%;bottom:calc(90px + var(--safe-b));transform:translateX(-50%);background:#000d;border:1px solid var(--line);color:#fff;padding:10px 16px;border-radius:12px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:90;max-width:90%;text-align:center}
   .toast.show{opacity:1}
+
+  /* ============ 管理员登录 ============ */
+  #loginView{min-height:100vh;padding:calc(70px + env(safe-area-inset-top,0px)) 20px 40px;display:flex;align-items:flex-start;justify-content:center}
+  .loginbox{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px}
+  .loginbox .logo{margin:0 auto 14px}
+  .loginbox h1{text-align:center;font-size:20px;margin:0 0 5px}
+  .loginbox>p{text-align:center;color:var(--sub);font-size:12.5px;line-height:1.5;margin:0 0 20px}
+  .loginbox .fld input{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:11px;color:var(--txt);padding:12px;font-size:14px;outline:none}
+  .loginbox .fld input:focus{border-color:var(--accent)}
+  .loginerr{display:none;margin-top:12px;color:#ffb3bd;background:rgba(255,85,102,.12);border:1px solid rgba(255,85,102,.35);padding:10px 11px;border-radius:10px;font-size:12.5px;line-height:1.5}
+  .loginerr.show{display:block}
+  .logout{margin-left:auto;border:1px solid var(--line);background:var(--card2);color:var(--sub);border-radius:9px;padding:7px 10px;font-size:12px}
 </style>
 </head>
 <body>
-  <button id="switch" onclick="toggleMode()"><span id="switchTxt">后台</span></button>
+  <button id="switch" class="hidden" onclick="toggleMode()"><span id="switchTxt">后台</span></button>
 
   <!-- ============ 顾客店面 ============ -->
   <div id="shopView">
@@ -275,9 +288,22 @@
     <button data-tab="me" onclick="setTab('me')"><span class="i">💬</span>客服</button>
   </div>
 
+  <!-- ============ 管理员登录 ============ -->
+  <div id="loginView" class="hidden">
+    <div class="loginbox">
+      <div class="logo">369</div>
+      <h1>管理员登录</h1>
+      <p>顾客无需登录。只有登记过的管理员账号可以进入商品后台。</p>
+      <div class="fld"><label>管理员邮箱</label><input id="adminEmail" type="email" autocomplete="username" readonly></div>
+      <div class="fld"><label>密码</label><input id="adminPassword" type="password" autocomplete="current-password" placeholder="输入 Supabase Auth 密码" onkeydown="if(event.key==='Enter')adminLogin()"></div>
+      <button class="btn" id="loginBtn" onclick="adminLogin()">登录后台</button>
+      <div class="loginerr" id="loginMsg"></div>
+    </div>
+  </div>
+
   <!-- ============ 后台 ============ -->
   <div id="adminView" class="hidden">
-    <div class="ahead"><div class="logo">369</div><div><h1>后台管理</h1><p>解析入库 · 定价 · 上架</p></div></div>
+    <div class="ahead"><div class="logo">369</div><div><h1>后台管理</h1><p>解析入库 · 定价 · 上架</p></div><button class="logout" onclick="adminLogout()">退出</button></div>
     <div class="stats">
       <div class="stat" id="fAll" onclick="setAFilter('all')"><b id="stAll">0</b><span>总货品</span></div>
       <div class="stat up" id="fUp" onclick="setAFilter('up')"><b id="stUp">0</b><span>已上架</span></div>
@@ -328,18 +354,21 @@
   const SUPABASE_ANON_KEY = 'sb_publishable_bmLjilJuTOfkFKIn-tLIIw_ynG4h4de';
   const SHOP_NAME = '369 甄选';
   const CONTACT_WA = '';      // 你的 WhatsApp 号（如 60123456789）；留空走 Telegram 分享
-  const ADMIN_PIN = '';       // 进后台密码；留空 = 免密直接进（想加密码填个数字即可）
+  const ADMIN_EMAIL = 'ahbee1023@gmail.com';
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}
+  });
 
   const tg = window.Telegram && window.Telegram.WebApp;
   if (tg) { try { tg.ready(); tg.expand(); tg.setHeaderColor && tg.setHeaderColor('#0e0f13'); } catch(e){} }
   document.getElementById('shopName').textContent = SHOP_NAME;
   document.getElementById('meShop').textContent = SHOP_NAME;
+  document.getElementById('adminEmail').value = ADMIN_EMAIL;
   (function(){ const c=document.getElementById('waCard'); c.href = CONTACT_WA?('https://wa.me/'+CONTACT_WA):('https://t.me/share/url?url='+encodeURIComponent('你好，想问下 '+SHOP_NAME+' 的货')); })();
 
   function tgId(){ try{ const u=tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user; return u&&u.id?u.id:null; }catch(e){ return null; } }
-  function headers(){ return { 'apikey':SUPABASE_ANON_KEY, 'Authorization':'Bearer '+SUPABASE_ANON_KEY, 'Content-Type':'application/json', 'Prefer':'return=representation' }; }
   function money(v){ return Number(v).toLocaleString(undefined,{maximumFractionDigits:2}); }
-  function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function haptic(t){ try{ tg&&tg.HapticFeedback&&tg.HapticFeedback.impactOccurred(t||'light'); }catch(e){} }
   let toastTimer;
   function toast(t){ const el=document.getElementById('toast'); el.textContent=t; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),1700); }
@@ -357,36 +386,67 @@
     if(on('lightbox')){ closeLightbox(); return; }
     if(on('edit')){ closeEdit(); return; }
     if(on('sheet')){ closeSheet(); return; }
-    if(mode==='admin'){ setMode('shop'); return; }
+    if(mode!=='shop'){ setMode('shop'); return; }
     if(tab!=='shop'){ setTab('shop'); return; }
   }
   function updateBack(){
     if(!(tg&&tg.BackButton)) return;
     const on=(id)=>document.getElementById(id).classList.contains('show');
-    const need=on('lightbox')||on('edit')||on('sheet')||mode==='admin'||tab!=='shop';
+    const need=on('lightbox')||on('edit')||on('sheet')||mode!=='shop'||tab!=='shop';
     try{ need?tg.BackButton.show():tg.BackButton.hide(); }catch(e){}
   }
   if(tg&&tg.BackButton){ try{ tg.BackButton.onClick(handleBack); }catch(e){} }
 
   // ===== 视角切换 =====
   let mode='shop';
-  function toggleMode(){
-    if(mode==='shop'){
-      if(ADMIN_PIN && localStorage.getItem('a369_ok')!==ADMIN_PIN){
-        const p=prompt('后台密码'); if(p===null) return;
-        if(p!==ADMIN_PIN){ toast('密码不对'); return; }
-        localStorage.setItem('a369_ok',ADMIN_PIN);
-      }
+  let adminReady=false;
+  const adminRequested=()=>new URLSearchParams(location.search).get('admin')==='1';
+  async function verifyAdminSession(session){
+    if(!session||!session.user) return false;
+    const {data,error}=await db.from('admin_users').select('user_id').eq('user_id',session.user.id).maybeSingle();
+    return !error&&!!data;
+  }
+  async function bootstrapAuth(){
+    const {data}=await db.auth.getSession();
+    adminReady=await verifyAdminSession(data&&data.session);
+    document.getElementById('switch').classList.toggle('hidden',!(adminReady||adminRequested()));
+    if(adminRequested()) setMode(adminReady?'admin':'login');
+    else { setMode('shop'); load(); }
+  }
+  async function adminLogin(){
+    const pwd=document.getElementById('adminPassword').value;
+    const msg=document.getElementById('loginMsg'), btn=document.getElementById('loginBtn');
+    msg.classList.remove('show'); msg.textContent='';
+    if(!pwd){ msg.textContent='请输入密码。'; msg.classList.add('show'); return; }
+    btn.disabled=true; btn.textContent='登录中…';
+    try{
+      const {data,error}=await db.auth.signInWithPassword({email:ADMIN_EMAIL,password:pwd});
+      if(error) throw new Error('邮箱或密码不正确。');
+      adminReady=await verifyAdminSession(data.session);
+      if(!adminReady){ await db.auth.signOut(); throw new Error('这个账号没有后台管理员权限。'); }
+      document.getElementById('adminPassword').value='';
+      document.getElementById('switch').classList.remove('hidden');
       setMode('admin');
-    } else setMode('shop');
+    }catch(e){ msg.textContent=String(e&&e.message||e); msg.classList.add('show'); }
+    finally{ btn.disabled=false; btn.textContent='登录后台'; }
+  }
+  async function adminLogout(){
+    await db.auth.signOut(); adminReady=false;
+    document.getElementById('switch').classList.toggle('hidden',!adminRequested());
+    toast('已安全退出后台'); setMode('shop'); load();
+  }
+  function toggleMode(){
+    if(mode==='shop') setMode(adminReady?'admin':'login');
+    else setMode('shop');
   }
   function setMode(m){
     mode=m;
-    show('adminView', m==='admin');
-    ['shopView','cartView','checkout','meView','nav'].forEach(id=>document.getElementById(id).classList.toggle('hidden', m==='admin' || (id!=='nav'&&document.getElementById(id).id!==curViewId())));
+    show('adminView',m==='admin'); show('loginView',m==='login');
+    if(m==='shop') setTab(tab);
+    else ['shopView','cartView','checkout','meView','nav'].forEach(id=>show(id,false));
     document.getElementById('switchTxt').textContent = m==='shop'?'后台':'🛍 店面';
     window.scrollTo(0,0);
-    if(m==='admin'){ loadAdmin(); } else { setTab(tab); load(); }
+    if(m==='admin') loadAdmin();
     updateBack();
   }
   function curViewId(){ return tab==='shop'?'shopView':tab==='cart'?'cartView':'meView'; }
@@ -410,9 +470,17 @@
   async function load(){
     if(!ALL.length) skeleton();
     try{
-      const r=await fetch(SUPABASE_URL+'/rest/v1/products_369?select=*&status=eq.已上架&order=created_at.desc&limit=300',{headers:headers()});
-      ALL=r.ok?await r.json():[];
-    }catch(e){ ALL=[]; }
+      const {data,error}=await db.from('products_369')
+        .select('id,name_cn,brand,sku,sell_myr,image_url,images,status,created_at')
+        .eq('status','已上架').order('created_at',{ascending:false}).limit(300);
+      if(error) throw error;
+      ALL=data||[];
+    }catch(e){
+      console.error('catalog load failed',e); ALL=[]; buildChips(); updateBadge();
+      document.getElementById('shopCount').textContent='';
+      document.getElementById('grid').innerHTML='<div class="empty"><div class="big">⚠️</div>商品加载失败<br><button class="mini" style="margin-top:12px" onclick="load()">重新加载</button></div>';
+      return;
+    }
     buildChips(); render(); updateBadge(); checkDeepLink();
   }
   let _deepDone=false;
@@ -426,9 +494,13 @@
   function buildChips(){
     const brands=[...new Set(ALL.map(p=>p.brand).filter(Boolean))];
     const box=document.getElementById('chips');
-    if(!brands.length){ box.innerHTML=''; return; }
-    box.innerHTML=['<span class="chip'+(brandFilter===''?' on':'')+'" onclick="setBrand(\'\')">全部</span>']
-      .concat(brands.map(b=>'<span class="chip'+(brandFilter===b?' on':'')+'" onclick="setBrand(\''+esc(b).replace(/'/g,"\\'")+'\')">'+esc(b)+'</span>')).join('');
+    box.replaceChildren();
+    if(!brands.length) return;
+    [['','全部'],...brands.map(b=>[b,b])].forEach(([value,label])=>{
+      const chip=document.createElement('button');
+      chip.type='button'; chip.className='chip'+(brandFilter===value?' on':''); chip.textContent=label;
+      chip.addEventListener('click',()=>setBrand(value)); box.appendChild(chip);
+    });
   }
   function setBrand(b){ brandFilter=b; buildChips(); render(); }
   function cycleSort(){ const i=SORTS.findIndex(s=>s[0]===sort); sort=SORTS[(i+1)%SORTS.length][0]; document.getElementById('sortBtn').textContent=SORTS.find(s=>s[0]===sort)[1]; render(); }
@@ -480,6 +552,9 @@
       '</div>'+
       '<button onclick="shareProduct('+p.id+')" style="width:100%;margin-top:12px;background:none;border:none;color:var(--sub);font-size:13px;font-weight:600">🔗 分享这件好物</button>'+
       '</div>';
+    document.querySelectorAll('#sheetContent [data-lightbox-url]').forEach(img=>{
+      img.addEventListener('click',()=>openLightbox(img.dataset.lightboxUrl||''));
+    });
     document.getElementById('sheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
   }
   function closeSheet(){ document.getElementById('sheet').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
@@ -494,14 +569,13 @@
   function galleryHtml(p){
     const imgs=(p.images&&p.images.length)?p.images:(p.image_url?[p.image_url]:[]);
     if(!imgs.length) return '';
-    const lb=(u)=>"openLightbox('"+esc(u).replace(/'/g,"\\'")+"')";
-    if(imgs.length===1) return '<img class="sheet-img" style="cursor:zoom-in" src="'+esc(imgs[0])+'" referrerpolicy="no-referrer" onclick="'+lb(imgs[0])+'" alt="">';
+    if(imgs.length===1) return '<img class="sheet-img" style="cursor:zoom-in" src="'+esc(imgs[0])+'" data-lightbox-url="'+esc(imgs[0])+'" referrerpolicy="no-referrer" alt="">';
     return '<div class="gwrap"><div class="gscroll" id="gscroll" onscroll="gdots()">'+
-      imgs.map(u=>'<div class="gslide"><img src="'+esc(u)+'" referrerpolicy="no-referrer" loading="lazy" onclick="'+lb(u)+'" alt=""></div>').join('')+
+      imgs.map(u=>'<div class="gslide"><img src="'+esc(u)+'" data-lightbox-url="'+esc(u)+'" referrerpolicy="no-referrer" loading="lazy" alt=""></div>').join('')+
       '</div><div class="gcount" id="gcount">1/'+imgs.length+'</div>'+
       '<div class="gdots" id="gdots">'+imgs.map((_,i)=>'<span class="gdot'+(i===0?' on':'')+'"></span>').join('')+'</div></div>';
   }
-  function openLightbox(u){ const el=document.getElementById('lightbox'); document.getElementById('lbimg').src=u; el.classList.add('show'); updateBack(); }
+  function openLightbox(u){ const safe=safeHttpsUrl(u); if(!safe)return; const el=document.getElementById('lightbox'); document.getElementById('lbimg').src=safe; el.classList.add('show'); updateBack(); }
   function closeLightbox(){ document.getElementById('lightbox').classList.remove('show'); updateBack(); }
   function gdots(){
     const s=document.getElementById('gscroll'); if(!s) return;
@@ -575,9 +649,14 @@
   async function loadAdmin(){
     if(!AROWS.length) document.getElementById('list').innerHTML='<div class="empty">加载中…</div>';
     try{
-      const r=await fetch(SUPABASE_URL+'/rest/v1/products_369?select=*&order=created_at.desc&limit=200',{headers:headers()});
-      AROWS=r.ok?await r.json():[];
-    }catch(e){ AROWS=[]; }
+      const {data,error}=await db.from('products_369').select('*').order('created_at',{ascending:false}).limit(200);
+      if(error) throw error;
+      AROWS=data||[];
+    }catch(e){
+      console.error('admin catalog load failed',e); AROWS=[];
+      document.getElementById('list').innerHTML='<div class="empty">后台商品加载失败<br><button class="mini" style="margin-top:12px" onclick="loadAdmin()">重新加载</button></div>';
+      return;
+    }
     const up=AROWS.filter(p=>p.status==='已上架').length, wait=AROWS.filter(p=>p.sell_myr==null).length;
     document.getElementById('stAll').textContent=AROWS.length;
     document.getElementById('stUp').textContent=up;
@@ -629,33 +708,22 @@
         '</div></div></div>';
     }).join('');
   }
-  function extractUrl(s){ const m=(s||'').match(/https?:\/\/[^\s，。、]+/); return m?m[0]:null; }
-  // 前端本地先猜个临时名占位（后台解析好会覆盖）
-  function clientQuickName(input,url){
-    let t=input||''; if(url) t=t.split(url).join(' ');
-    t=t.replace(/【[^】]*】/g,' ').replace(/[A-Za-z0-9_]+发现一件好物[，,]?/g,' ')
-       .replace(/点击链接直接打开/g,' ').replace(/复制此?(条)?(链接|信息|口令)[\s\S]*$/g,' ')
-       .replace(/[a-z0-9]{6,}(?=\s)/gi,' ').replace(/\s+/g,' ').trim();
-    return t?('⏳ '+t.slice(0,40)):'⏳ 解析中…';
-  }
   // 按 reqId 精确查库：只要有哪次请求送达了，这行就查得到
   async function findByRef(reqId){
     try{
-      const url=SUPABASE_URL+'/rest/v1/products_369?client_ref=eq.'+encodeURIComponent(reqId)+'&select=id,name_cn&limit=1';
-      const r=await fetch(url,{headers:headers()}); if(!r.ok) return null;
-      const rows=await r.json(); return (rows&&rows[0])||null;
+      const {data,error}=await db.from('products_369').select('id,name_cn').eq('client_ref',reqId).limit(1).maybeSingle();
+      return error?null:data;
     }catch(_e){ return null; }
   }
-  // ★ 用「快」的 REST 直接插占位行（和加载列表同一个通道，请求极短，弱网也过得去）。
-  //   插入后数据库触发器在服务器端调解析函数把名字/价格/图回填。前端全程不碰「慢」的函数端点。
-  async function restInsert(input,reqId){
-    const url=extractUrl(input);
-    const row={ name_cn:clientQuickName(input,url), source:'dewu', status:'待选', source_url:url, raw_text:input.slice(0,4000), client_ref:reqId, created_by:tgId() };
-    const ctrl=new AbortController(); const timer=setTimeout(()=>ctrl.abort(),12000);
-    const r=await fetch(SUPABASE_URL+'/rest/v1/products_369',{method:'POST',headers:headers(),body:JSON.stringify(row),signal:ctrl.signal}).finally(()=>clearTimeout(timer));
-    if(r.status===409){ return await findByRef(reqId); }   // 同 reqId 已入库，去重
-    if(!r.ok) throw new Error('REST '+r.status);
-    const rows=await r.json().catch(()=>null); return (rows&&rows[0])||null;
+  async function invokeParser(input,reqId){
+    const {data,error}=await db.functions.invoke('parse-dewu-link',{body:{input:input,reqId:reqId,tgId:tgId()}});
+    if(error){
+      let detail='';
+      try{ detail=(await error.context.json()).error||''; }catch(_e){}
+      throw new Error(detail||error.message||'解析服务请求失败');
+    }
+    if(!data||data.ok!==true) throw new Error((data&&data.error)||'解析服务没有返回结果');
+    return data.product||null;
   }
   function parseDone(name){
     const pending=!name||/^[⏳⚠]/.test(name);
@@ -670,26 +738,33 @@
     if(!input){ showMsg('warn','先贴点内容再解析。'); return; }
     hideMsg(); const btn=document.getElementById('go'), goTxt=document.getElementById('goTxt');
     btn.disabled=true; goTxt.innerHTML='<span class="spin"></span>';
-    // 一次解析用同一个 reqId，弱网就反复重发直到有一发送达；唯一索引去重，不会重复入库。
+    // 一次解析使用同一个 reqId；弱网重试仍由数据库唯一索引去重。
     const reqId='r'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
-    const MAX=6;
+    const MAX=3;
     try{
       let done=null;
       for(let i=0;i<MAX;i++){
         const hit=await findByRef(reqId); if(hit){ done=hit; break; } // 前面哪发其实成了
-        try{ done=await restInsert(input,reqId); if(done) break; }
-        catch(_e){ /* 这发没送达，继续 */ }
+        try{ done=await invokeParser(input,reqId); if(done) break; }
+        catch(e){
+          if(i===MAX-1) throw e;
+        }
         if(i<MAX-1){ showMsg('warn','网络不稳，正在自动重试上传…（'+(i+2)+'/'+MAX+'）'); await new Promise(r=>setTimeout(r,2500)); }
       }
       hideMsg();
       if(done){ parseDone(done.name_cn); return; }
       const hit=await findByRef(reqId);
       if(hit){ parseDone(hit.name_cn); return; }
-      showMsg('bad','这个网络反复连不上服务器（试了'+MAX+'次都没送达）。请换个网络、或到信号好的地方再试一次。');
+      showMsg('bad','解析请求没有成功送达，请稍后再试。');
     }
+    catch(e){ showMsg('bad',String(e&&e.message||e)); }
     finally{ btn.disabled=false; goTxt.textContent='解析入库'; loadAdmin(); }
   }
-  async function patch(id,fields){ const r=await fetch(SUPABASE_URL+'/rest/v1/products_369?id=eq.'+id,{method:'PATCH',headers:headers(),body:JSON.stringify(fields)}); return r.ok; }
+  async function patch(id,fields){
+    const {error}=await db.from('products_369').update(fields).eq('id',id);
+    if(error) console.error('product update failed',error);
+    return !error;
+  }
   async function saveItem(id){
     const v=document.getElementById('sell_'+id).value.trim(); const sell=v===''?null:Number(v);
     if(v!==''&&!Number.isFinite(sell)){ toast('售价填数字'); return; }
@@ -705,8 +780,8 @@
   }
   async function delItem(id){
     if(!confirm('确定删除这条货品？')) return;
-    const r=await fetch(SUPABASE_URL+'/rest/v1/products_369?id=eq.'+id,{method:'DELETE',headers:headers()});
-    if(r.ok){ toast('已删除'); loadAdmin(); } else toast('删除失败');
+    const {error}=await db.from('products_369').delete().eq('id',id);
+    if(!error){ toast('已删除'); loadAdmin(); } else { console.error(error); toast('删除失败'); }
   }
   // 后台完整编辑
   function openEdit(id){
@@ -733,7 +808,12 @@
     document.getElementById('edit').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
   }
   function closeEdit(){ document.getElementById('edit').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
-  function eImgs(){ return document.getElementById('e_imgs').value.split('\n').map(s=>s.trim()).filter(Boolean); }
+  function safeHttpsUrl(value){
+    try{ const u=new URL(value); return u.protocol==='https:'&&value.length<=2048?u.toString():null; }
+    catch(_e){ return null; }
+  }
+  function eRawImgs(){ return document.getElementById('e_imgs').value.split('\n').map(s=>s.trim()).filter(Boolean); }
+  function eImgs(){ return eRawImgs().map(safeHttpsUrl).filter(Boolean); }
   function ePrev(){ const im=eImgs()[0]||''; const el=document.getElementById('e_prev'); el.src=im; el.style.visibility=im?'visible':'hidden'; }
   // 上传前先在浏览器里把大图压到 ≤1600px（省流量、少失败、存储更省）
   function downscale(file,max){
@@ -754,11 +834,12 @@
     const txt=document.getElementById('upTxt'), old=txt.innerHTML; txt.innerHTML='<span class="spin"></span> 上传中…';
     try{
       const f=await downscale(f0,1600);
-      const path='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)+'.jpg';
-      const r=await fetch(SUPABASE_URL+'/storage/v1/object/product-369/'+path,{method:'POST',
-        headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Content-Type':f.type||'image/jpeg','x-upsert':'true'},body:f});
-      if(!r.ok) throw new Error('上传失败('+r.status+')，图太大或网络问题');
-      const pub=SUPABASE_URL+'/storage/v1/object/public/product-369/'+path;
+      const exts={'image/png':'png','image/webp':'webp','image/gif':'gif','image/jpeg':'jpg'};
+      const path='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,8)+'.'+(exts[f.type]||'jpg');
+      const {data,error}=await db.storage.from('product-369').upload(path,f,{contentType:f.type||'image/jpeg',upsert:false});
+      if(error) throw new Error(error.message||'上传失败，图太大或网络问题');
+      const {data:pubData}=db.storage.from('product-369').getPublicUrl(data.path);
+      const pub=pubData.publicUrl;
       const ta=document.getElementById('e_imgs'); ta.value=(ta.value.trim()?ta.value.trim()+'\n':'')+pub; ePrev();
       toast('图片已上传 ✅'); haptic('light');
     }catch(e){ toast(String(e&&e.message||e)); }
@@ -770,6 +851,7 @@
     const sell=num(document.getElementById('e_sell').value);
     if(status==='已上架'&&sell==null){ toast('上架必须有售价'); return; }
     const imgs=eImgs();
+    if(imgs.length!==eRawImgs().length){ toast('图库只接受有效的 HTTPS 图片链接'); return; }
     const fields={
       name_cn:document.getElementById('e_name').value.trim()||'(无名)',
       brand:document.getElementById('e_brand').value.trim()||null,
@@ -784,7 +866,7 @@
 
   // 启动
   updateBadge();
-  load();
+  bootstrapAuth();
 </script>
 </body>
 </html>
