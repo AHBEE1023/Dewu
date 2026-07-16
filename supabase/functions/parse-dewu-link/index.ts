@@ -12,7 +12,7 @@
 // 需要设 secret：GEMINI_KEY（Google Gemini 解析用，去 aistudio.google.com 拿，有免费额度）
 // 部署：supabase functions deploy parse-dewu-link（verify_jwt 保持开启）
 // ============================================================
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.110.6";
 
 type ParsedProduct = {
   name_cn: string | null;
