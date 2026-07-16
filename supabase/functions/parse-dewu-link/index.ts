@@ -1,9 +1,12 @@
 // parse-dewu-link v23: 正则优先零成本解析 + 页面抓取重试 + 价格三级优先（发售价/元格式authPrice/分格式众数）+ 检查点日志
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2.110.6";
+import { requireAdmin } from "../_shared/admin-auth.ts";
 
 const RATE_RMB_TO_MYR = 0.62;
 const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") || "gemini-2.5-flash";
-const GEMINI_KEY = Deno.env.get("GEMINI_KEY") || "AQ.Ab8RN6KQ_HFb0bChwAUgtqzs9HZKj4zLhlp4JagZ17J4Y6ybkw";
+const MAX_INPUT_CHARS = 4000;
+const MAX_PAGE_BYTES = 1_500_000;
+const DEFAULT_SOURCE_HOSTS = ["dewu.com", "dw4.co"];
 
 Deno.serve(async (req) => {
   const cors = {
@@ -12,36 +15,48 @@ Deno.serve(async (req) => {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
   };
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== "POST") return json({ ok: false, error: "只允许 POST" }, 405, cors);
 
   try {
-    const body = await req.json().catch(() => ({}));
+    const apiKey = Deno.env.get("GEMINI_KEY");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!apiKey || !supabaseUrl || !serviceRoleKey) {
+      console.error("Missing required Edge Function secrets");
+      return json({ ok: false, error: "服务器配置不完整" }, 500, cors);
+    }
+
+    const supabase = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const gate = await requireAdmin(req, supabase);
+    if (!gate.ok) return json({ ok: false, error: gate.error }, gate.status, cors);
+
+    const body: any = await req.json().catch(() => ({}));
     const rowId = body.rowId ? Number(body.rowId) : null;
     const input = (body.input || "").toString().trim();
     const tgId = body.tgId ? Number(body.tgId) : null;
     const reqId = body.reqId ? String(body.reqId).slice(0, 60) : null;
-
-    const apiKey = GEMINI_KEY;
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL"),
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
-    );
 
     if (rowId) {
       const { data: row } = await supabase.from("products_369").select("*").eq("id", rowId).maybeSingle();
       if (!row) return json({ ok: false, error: "行不存在" }, 200, cors);
       const rawText = (row.raw_text || "").toString();
       const su = row.source_url || (rawText.match(/https?:\/\/[^\s，。、]+/) || [null])[0];
+      if (su && !isAllowedSourceUrl(su)) return json({ ok: false, error: "只支持得物官方链接" }, 400, cors);
       const rest = su ? rawText.replace(su, "").trim() : rawText;
       const bg = fillRow(supabase, apiKey, rowId, rawText, su, !!su && rest.length < 8);
-      try { globalThis.EdgeRuntime?.waitUntil(bg); } catch (_e) { await bg; }
+      const runtime = (globalThis as any).EdgeRuntime;
+      try { runtime?.waitUntil(bg); } catch (_e) { await bg; }
       return json({ ok: true, rowId }, 200, cors);
     }
 
     if (!input) return json({ ok: false, error: "没有输入内容" }, 400, cors);
+    if (input.length > MAX_INPUT_CHARS) return json({ ok: false, error: `输入内容不能超过 ${MAX_INPUT_CHARS} 字` }, 400, cors);
 
     const urlMatch = input.match(/https?:\/\/[^\s，。、]+/);
     const sourceUrl = urlMatch ? urlMatch[0] : null;
+    if (sourceUrl && !isAllowedSourceUrl(sourceUrl)) return json({ ok: false, error: "只支持得物官方链接" }, 400, cors);
     const textWithoutUrl = sourceUrl ? input.replace(sourceUrl, "").trim() : input;
     const linkOnly = !!sourceUrl && textWithoutUrl.length < 8;
 
@@ -63,7 +78,7 @@ Deno.serve(async (req) => {
         source: "dewu",
         status: "待选",
         source_url: sourceUrl,
-        raw_text: input.slice(0, 4000),
+        raw_text: input.slice(0, MAX_INPUT_CHARS),
         created_by: tgId,
         client_ref: reqId,
       })
@@ -72,11 +87,13 @@ Deno.serve(async (req) => {
     if (error) return json({ ok: false, error: "入库失败：" + error.message }, 500, cors);
 
     const bg = fillRow(supabase, apiKey, data.id, input, sourceUrl, linkOnly);
-    try { globalThis.EdgeRuntime?.waitUntil(bg); } catch (_e) { await bg; }
+    const runtime = (globalThis as any).EdgeRuntime;
+    try { runtime?.waitUntil(bg); } catch (_e) { await bg; }
 
     return json({ ok: true, product: data, pending: true }, 200, cors);
   } catch (e) {
-    return json({ ok: false, error: "解析服务错误：" + String(e) }, 500, cors);
+    console.error("parse-dewu-link failed", e);
+    return json({ ok: false, error: "解析服务暂时不可用，请稍后重试" }, 500, cors);
   }
 });
 
@@ -104,29 +121,30 @@ async function fillRow(supabase, apiKey, rowId, material0, sourceUrl, linkOnly) 
     }
 
     // v21：先走零成本纯代码解析——名字+价格都抠到了就不调 AI（免费、不限流、毫秒级）
-    let parsed;
+    let parsed: any;
     console.log("[dbg] row", rowId, "path=", (st && st.name && st.priceRmb != null) ? "regex" : "gemini");
     if (st && st.name && st.priceRmb != null) {
       parsed = { name_cn: st.name, brand: st.brand, sku: st.sku, price_rmb: st.priceRmb, image_url: null };
     } else {
       parsed = await parseWithGemini(apiKey, material, fromPage);
     }
-    const upd = {};
+    const upd: Record<string, any> = {};
     if (parsed && parsed.name_cn) {
       const priceRmb = toNum(parsed.price_rmb);
-      upd.name_cn = parsed.name_cn;
-      upd.brand = emptyToNull(parsed.brand);
+      const validPriceRmb = priceRmb != null && priceRmb >= 0 && priceRmb <= 10_000_000 ? priceRmb : null;
+      upd.name_cn = cleanText(parsed.name_cn, 240) || "⚠️ 没解析出商品，点『编辑』手填或删除";
+      upd.brand = cleanText(parsed.brand, 120);
       // 分享文字里「XXX发现一件好物」的 XXX 是分享人用户名，绝不能当成货号
-      let skuVal = emptyToNull(parsed.sku);
+      let skuVal = cleanText(parsed.sku, 120);
       const um = (material0 || "").match(/([A-Za-z0-9_]{3,})发现一件好物/);
       if (um && skuVal && skuVal.replace(/\s/g, "") === um[1]) skuVal = null;
       upd.sku = skuVal;
-      upd.price_rmb = priceRmb;
-      upd.price_myr = priceRmb != null ? Math.round(priceRmb * RATE_RMB_TO_MYR * 100) / 100 : null;
+      upd.price_rmb = validPriceRmb;
+      upd.price_myr = validPriceRmb != null ? Math.round(validPriceRmb * RATE_RMB_TO_MYR * 100) / 100 : null;
     } else {
       upd.name_cn = "⚠️ 没解析出商品，点『编辑』手填或删除";
     }
-    const imageUrl = (gallery && gallery[0]) || emptyToNull(parsed && parsed.image_url);
+    const imageUrl = safeHttpsUrl((gallery && gallery[0]) || (parsed && parsed.image_url));
     if (imageUrl) { upd.image_url = imageUrl; upd.images = gallery && gallery.length ? gallery : [imageUrl]; }
     // 参数/规格只在行里还没有时写入——重解析不冲掉店主的勾选和定价
     if (pageParams || pageVariants) {
@@ -155,6 +173,7 @@ async function fetchDewuPage(url) {
 }
 async function fetchDewuPageOnce(url) {
   try {
+    if (!isAllowedSourceUrl(url)) return { blocked: true };
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 12000);
     const resp = await fetch(url, {
@@ -169,7 +188,14 @@ async function fetchDewuPageOnce(url) {
     }).finally(() => clearTimeout(timer));
 
     if (!resp.ok) return { blocked: true };
-    const html = await resp.text();
+    if (!isAllowedSourceUrl(resp.url)) return { blocked: true };
+    const contentType = (resp.headers.get("content-type") || "").toLowerCase();
+    if (contentType && !contentType.includes("text/html") && !contentType.includes("application/xhtml+xml")) return { blocked: true };
+    const declaredLength = Number(resp.headers.get("content-length") || 0);
+    if (declaredLength > MAX_PAGE_BYTES) return { blocked: true };
+    const bytes = new Uint8Array(await resp.arrayBuffer());
+    if (bytes.byteLength > MAX_PAGE_BYTES) return { blocked: true };
+    const html = new TextDecoder().decode(bytes);
 
     const blockedSigns = ["验证", "滑块", "captcha", "punish", "安全验证", "拦截", "机器人", "abnormal"];
     const looksBlocked =
@@ -375,8 +401,7 @@ async function parseWithGemini(apiKey, material, fromPage) {
   const url =
     "https://generativelanguage.googleapis.com/v1beta/models/" +
     GEMINI_MODEL +
-    ":generateContent?key=" +
-    apiKey;
+    ":generateContent";
 
   const payload = {
     contents: [{ parts: [{ text: instr + "\n\n" + prefix + material }] }],
@@ -404,7 +429,7 @@ async function parseWithGemini(apiKey, material, fromPage) {
     try {
       const resp = await fetch(url, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
         body: JSON.stringify(payload),
       });
       const data = await resp.json();
@@ -447,9 +472,34 @@ function toNum(v) {
   const n = Number(String(v).replace(/[^\d.]/g, ""));
   return Number.isFinite(n) ? n : null;
 }
-function emptyToNull(v) {
+function cleanText(v, maxLength) {
   const s = (v ?? "").toString().trim();
-  return s ? s : null;
+  return s ? s.slice(0, maxLength) : null;
+}
+function safeHttpsUrl(v) {
+  const s = (v ?? "").toString().trim();
+  if (!s || s.length > 2048) return null;
+  try {
+    const url = new URL(s);
+    return url.protocol === "https:" ? url.toString() : null;
+  } catch (_e) {
+    return null;
+  }
+}
+function isAllowedSourceUrl(v) {
+  try {
+    const url = new URL(String(v));
+    if (url.protocol !== "https:") return false;
+    const configured = (Deno.env.get("ALLOWED_SOURCE_HOSTS") || "")
+      .split(",")
+      .map((host) => host.trim().toLowerCase())
+      .filter(Boolean);
+    const allowed = configured.length ? configured : DEFAULT_SOURCE_HOSTS;
+    const hostname = url.hostname.toLowerCase();
+    return allowed.some((host) => hostname === host || hostname.endsWith("." + host));
+  } catch (_e) {
+    return false;
+  }
 }
 function json(obj, status, cors) {
   return new Response(JSON.stringify(obj), {

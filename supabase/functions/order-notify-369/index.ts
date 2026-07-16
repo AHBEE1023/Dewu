@@ -4,7 +4,7 @@
 //   2) 用 `update ... where notified_owner=false returning` 原子翻转，
 //      同一单最多推一次（防重发/并发重复通知）。
 // bot token / 店主 chat 存在 app_secrets_369（service role 才可读），没配就静默跳过。
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2.110.6";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",

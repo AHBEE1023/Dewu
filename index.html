@@ -23,6 +23,7 @@
 <meta property="og:title" content="369 甄选 · 正品好物" />
 <meta property="og:description" content="正品好物 · 假一赔十 · 马来包邮" />
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.6/dist/umd/supabase.js"></script>
 <style>
   /* 精品买手店配色：暖象牙纸感 + 克制的金作点缀 + 红色只留给价格 */
   :root{
@@ -1031,10 +1032,10 @@
     </div>
     <div class="card" style="padding-bottom:14px">
       <div style="display:flex;align-items:center;gap:10px">
-        <label style="margin:0;flex:1;color:var(--txt);font-size:13.5px;font-weight:700">🔒 后台安全<span style="color:var(--sub);font-weight:500;font-size:12px">　改登录密码</span></label>
-        <button class="mini" onclick="setAdminPin()">改密码</button>
+        <label style="margin:0;flex:1;color:var(--txt);font-size:13.5px;font-weight:700">🔒 后台安全<span style="color:var(--sub);font-weight:500;font-size:12px">　Supabase 管理员账号</span></label>
+        <button class="mini" onclick="adminLogout()">退出登录</button>
       </div>
-      <div class="hint" style="margin-top:8px">默认密码太弱（易被猜）。设一个 6 位以上、数字+字母混合的强密码，登录失败 5 次会自动锁 10 分钟。</div>
+      <div class="hint" style="margin-top:8px">后台使用 Supabase Auth 登录；密码不会保存在网页或浏览器本地存储中。</div>
     </div>
     <div class="card">
       <label>⭐ 从得物动态导入买家秀（贴晒图/好评贴链接，自动认商品、图进评论区）</label>
@@ -1128,7 +1129,10 @@
   const RATE_RMB_TO_MYR = 0.62; // 人民币→马币成本折算，和解析函数里的 RATE_RMB_TO_MYR 保持一致
   const CONTACT_WA = '';      // 你的 WhatsApp 号（如 60123456789）；留空走 Telegram 分享
   const FN = SUPABASE_URL+'/functions/v1';
-  // 后台密码不在网页里！存在服务器（admin-369 函数，改密码用 Supabase Secrets 的 ADMIN_PIN_369）
+  const ADMIN_EMAIL = 'ahbee1023@gmail.com';
+  const authDb = window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{
+    auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}
+  });
 
   const tg = window.Telegram && window.Telegram.WebApp;
   const _reduceMotion = !!(window.matchMedia && matchMedia('(prefers-reduced-motion:reduce)').matches); // 尊重系统「减少动态效果」
@@ -1169,6 +1173,12 @@
   function headers(){ return { 'apikey':SUPABASE_ANON_KEY, 'Authorization':'Bearer '+SUPABASE_ANON_KEY, 'Content-Type':'application/json', 'Prefer':'return=representation' }; }
   // 调 Edge Function 用的头：不带 Prefer（不在函数 CORS 白名单里，带了会被浏览器预检拦掉）
   function fnHeaders(){ return { 'apikey':SUPABASE_ANON_KEY, 'Authorization':'Bearer '+SUPABASE_ANON_KEY, 'Content-Type':'application/json' }; }
+  async function adminHeaders(){
+    const {data,error}=await authDb.auth.getSession();
+    const session=data&&data.session;
+    if(error||!session||!session.access_token) throw new Error('AUTH');
+    return { 'apikey':SUPABASE_ANON_KEY, 'Authorization':'Bearer '+session.access_token, 'Content-Type':'application/json' };
+  }
   function money(v){ return Number(v).toLocaleString(undefined,{maximumFractionDigits:2}); }
   // 得物 CDN 支持阿里云 OSS 缩图：列表用小图省流量提速，看大图才加载原图
   function im(u,w){
@@ -1245,26 +1255,46 @@
     if(_logoTaps>=5){ _logoTaps=0; adminEntry=true; localStorage.setItem('a369_entry','1'); refreshSwitch(); toast('后台入口已开启'); haptic('medium'); }
   }
 
-  // ===== 后台通道：密码在服务端校验，读写都走 admin-369 函数 =====
-  function getPin(){ return localStorage.getItem('a369_pin')||''; }
+  // ===== 后台通道：Supabase Auth 会话 + admin_users，读写都走受保护函数 =====
   async function adminCall(action,payload){
-    const r=await fetch(FN+'/admin-369',{method:'POST',headers:{...fnHeaders(),'x-admin-pin':getPin()},body:JSON.stringify(Object.assign({action:action},payload||{}))});
-    if(r.status===401){ localStorage.removeItem('a369_pin'); toast('后台密码失效，请重新进入'); if(mode==='admin') setMode('shop'); throw new Error('PIN'); }
+    const r=await fetch(FN+'/admin-369',{method:'POST',headers:await adminHeaders(),body:JSON.stringify(Object.assign({action:action},payload||{}))});
+    if(r.status===401||r.status===403){ await authDb.auth.signOut(); toast('管理员登录已失效，请重新登录'); if(mode==='admin') setMode('shop'); throw new Error('AUTH'); }
     return await r.json();
+  }
+  async function parseAdmin(payload){
+    const r=await fetch(FN+'/parse-dewu-link',{method:'POST',headers:await adminHeaders(),body:JSON.stringify(payload||{})});
+    if(r.status===401||r.status===403){ await authDb.auth.signOut(); toast('管理员登录已失效，请重新登录'); if(mode==='admin') setMode('shop'); throw new Error('AUTH'); }
+    const j=await r.json().catch(()=>({}));
+    return j&&j.product?{...j,row:j.product}:j;
+  }
+
+  async function ensureAdminLogin(){
+    const {data}=await authDb.auth.getSession();
+    if(data&&data.session){
+      try{ const r=await adminCall('ping'); if(r&&r.ok) return true; }catch(e){}
+    }
+    const password=prompt('请输入 Supabase 管理员密码\n'+ADMIN_EMAIL);
+    if(password===null) return false;
+    const {data:login,error}=await authDb.auth.signInWithPassword({email:ADMIN_EMAIL,password});
+    if(error||!login.session){ toast('邮箱或密码不正确'); return false; }
+    try{
+      const r=await adminCall('ping');
+      if(r&&r.ok) return true;
+    }catch(e){}
+    await authDb.auth.signOut(); toast('这个账号没有后台管理员权限'); return false;
+  }
+
+  async function adminLogout(){
+    await authDb.auth.signOut();
+    if(mode==='admin') setMode('shop');
+    toast('已安全退出后台');
   }
 
   // ===== 视角切换 =====
   let mode='shop';
   async function toggleMode(){
     if(mode==='shop'){
-      if(!getPin()){
-        const p=prompt('后台密码'); if(p===null) return;
-        let r=null;
-        try{ r=await fetch(FN+'/admin-369',{method:'POST',headers:{...fnHeaders(),'x-admin-pin':p.trim()},body:JSON.stringify({action:'ping'})}); }catch(e){}
-        if(!r){ toast('网络不稳，再试一次'); return; }
-        if(r.status===401){ toast('密码不对'); return; }
-        localStorage.setItem('a369_pin',p.trim());
-      }
+      if(!(await ensureAdminLogin())) return;
       setMode('admin');
     } else setMode('shop');
   }
@@ -2671,7 +2701,7 @@
     const p=AROWS.find(x=>x.id===id); if(!p) return;
     if(!(p.raw_text||p.source_url)){ toast('这条没存原始内容，点「编辑」手填吧'); return; }
     await patch(id,{name_cn:'⏳ 重新解析中…'});
-    try{ fetch(FN+'/parse-dewu-link',{method:'POST',headers:fnHeaders(),body:JSON.stringify({rowId:id})}); }catch(e){}
+    try{ fetch(FN+'/parse-dewu-link',{method:'POST',headers:await adminHeaders(),body:JSON.stringify({rowId:id})}); }catch(e){}
     toast('已重新解析，稍等自动补上'); haptic('light');
     _pollN=0; loadAdmin();
   }
@@ -2910,7 +2940,7 @@
     return '<div class="opayrow'+cls+'">💳 付款：'+esc(s||'未上传')+'　'+btns+'</div>';
   }
   async function payAdmin(action,params){
-    const r=await fetch(FN+'/pay-369',{method:'POST',headers:{...fnHeaders(),'x-admin-pin':getPin()},body:JSON.stringify(Object.assign({action},params||{}))});
+    const r=await fetch(FN+'/pay-369',{method:'POST',headers:await adminHeaders(),body:JSON.stringify(Object.assign({action},params||{}))});
     return await r.json().catch(()=>({}));
   }
   async function viewProof(id){ const o=AORDERS.find(x=>oid(x.id)===String(id)); const r=await payAdmin('proofUrl',{sid:o?o.id:id}); if(r&&r.ok&&r.url){ if(hasMB()&&tg&&tg.openLink) tg.openLink(r.url); else window.open(r.url,'_blank'); } else toast((r&&r.error)||'没有凭证'); }
@@ -2924,7 +2954,7 @@
   // ===== 拼团 / 集运批次（后台）=====
   let _campLoaded=false;
   async function campApi(action,params){
-    const r=await fetch(FN+'/camp-369',{method:'POST',headers:{...fnHeaders(),'x-admin-pin':getPin()},body:JSON.stringify(Object.assign({action},params||{}))});
+    const r=await fetch(FN+'/camp-369',{method:'POST',headers:await adminHeaders(),body:JSON.stringify(Object.assign({action},params||{}))});
     return await r.json().catch(()=>({}));
   }
   function toggleCampCard(){
@@ -2937,7 +2967,7 @@
   async function loadCampAdmin(){
     const box=document.getElementById('campList'); if(box) box.innerHTML='<div class="hint">加载中…</div>';
     const r=await campApi('campList');
-    if(!r||!r.ok){ if(box) box.innerHTML='<div class="hint">'+esc((r&&r.error)||'加载失败，检查后台密码')+'</div>'; return; }
+    if(!r||!r.ok){ if(box) box.innerHTML='<div class="hint">'+esc((r&&r.error)||'加载失败，请重新登录后台')+'</div>'; return; }
     _campLoaded=true; renderCampList(r.rows||[]);
   }
   function renderCampList(rows){
@@ -2986,7 +3016,7 @@
   // ===== 顾客评价管理（后台）=====
   let _revModLoaded=false;
   async function revApi(action,params){
-    const r=await fetch(FN+'/review-369',{method:'POST',headers:{...fnHeaders(),'x-admin-pin':getPin()},body:JSON.stringify(Object.assign({action},params||{}))});
+    const r=await fetch(FN+'/review-369',{method:'POST',headers:await adminHeaders(),body:JSON.stringify(Object.assign({action},params||{}))});
     return await r.json().catch(()=>({}));
   }
   function toggleRevCard(){
@@ -2999,7 +3029,7 @@
   async function loadRevMod(manual){
     const box=document.getElementById('revModList'); if(box&&(manual||!_revModLoaded)) box.innerHTML='<div class="hint">加载中…</div>';
     const r=await revApi('modList');
-    if(!r||!r.ok){ if(box) box.innerHTML='<div class="hint">'+esc((r&&r.error)||'加载失败，检查后台密码')+'</div>'; return; }
+    if(!r||!r.ok){ if(box) box.innerHTML='<div class="hint">'+esc((r&&r.error)||'加载失败，请重新登录后台')+'</div>'; return; }
     _revModLoaded=true; renderRevMod(r.rows||[]);
   }
   function renderRevMod(rows){
@@ -3020,7 +3050,7 @@
   async function revDel(id){ if(!confirm('删除这条评价？删了就没了')) return; const r=await revApi('modDel',{id}); if(r&&r.ok){ toast('已删除'); haptic('light'); loadRevMod(true); } else toast((r&&r.error)||'失败'); }
   // ===== 到货推送（后台）=====
   let _apushLoaded=false;
-  async function pushAdmin(action,params){ const r=await fetch(FN+'/push-369',{method:'POST',headers:{...fnHeaders(),'x-admin-pin':getPin()},body:JSON.stringify(Object.assign({action},params||{}))}); return await r.json().catch(()=>({})); }
+  async function pushAdmin(action,params){ const r=await fetch(FN+'/push-369',{method:'POST',headers:await adminHeaders(),body:JSON.stringify(Object.assign({action},params||{}))}); return await r.json().catch(()=>({})); }
   function toggleAdminPush(){ const b=document.getElementById('apushBody'); b.classList.toggle('hidden'); document.getElementById('apushArrow').textContent=b.classList.contains('hidden')?'▼':'▲'; if(!b.classList.contains('hidden')&&!_apushLoaded) initAdminPush(); haptic('light'); }
   async function initAdminPush(){
     const line=document.getElementById('apushLine'); if(line) line.textContent='初始化中…';
@@ -3028,7 +3058,7 @@
     _apushLoaded=!!(s&&s.ok);
     const st=document.getElementById('apushState'); const ok=s&&s.ok&&s.hasKeys;
     if(st){ st.className='tgpin '+(ok?'on':'off'); st.textContent=ok?'已就绪':'未就绪'; }
-    if(line) line.innerHTML=(s&&s.ok)?('推送已就绪 · 当前 <b>'+(s.subs||0)+'</b> 台设备开了到货提醒'):'初始化失败，检查后台密码后重试';
+    if(line) line.innerHTML=(s&&s.ok)?('推送已就绪 · 当前 <b>'+(s.subs||0)+'</b> 台设备开了到货提醒'):'初始化失败，请重新登录后台后重试';
   }
   async function adminPushTest(){
     const r=await pushAdmin('test',{ck:clientKey()});
@@ -3037,13 +3067,13 @@
   }
   // ===== 顾客账号（后台）=====
   let _accLoaded=false, _acctMap={};
-  async function accApi(action,params){ const r=await fetch(FN+'/account-369',{method:'POST',headers:{...fnHeaders(),'x-admin-pin':getPin()},body:JSON.stringify(Object.assign({action},params||{}))}); return await r.json().catch(()=>({})); }
+  async function accApi(action,params){ const r=await fetch(FN+'/account-369',{method:'POST',headers:await adminHeaders(),body:JSON.stringify(Object.assign({action},params||{}))}); return await r.json().catch(()=>({})); }
   async function ensureAcctMap(){ if(_accLoaded) return; try{ const r=await accApi('adminList'); if(r&&r.ok){ _accLoaded=true; _acctMap={}; (r.rows||[]).forEach(a=>{ _acctMap[a.client_key]=a; }); if(document.getElementById('accBody')&&!document.getElementById('accBody').classList.contains('hidden')) renderAccList(r.rows||[]); } }catch(e){} }
   function toggleAccCard(){ const b=document.getElementById('accBody'); b.classList.toggle('hidden'); document.getElementById('accArrow').textContent=b.classList.contains('hidden')?'▼':'▲'; if(!b.classList.contains('hidden')) loadAccounts(); haptic('light'); }
   async function loadAccounts(manual){
     const box=document.getElementById('accList'); if(box&&(manual||!_accLoaded)) box.innerHTML='<div class="hint">加载中…</div>';
     const r=await accApi('adminList');
-    if(!r||!r.ok){ if(box) box.innerHTML='<div class="hint">'+esc((r&&r.error)||'加载失败，检查后台密码')+'</div>'; return; }
+    if(!r||!r.ok){ if(box) box.innerHTML='<div class="hint">'+esc((r&&r.error)||'加载失败，请重新登录后台')+'</div>'; return; }
     _accLoaded=true; _acctMap={}; (r.rows||[]).forEach(a=>{ _acctMap[a.client_key]=a; });
     renderAccList(r.rows||[]);
     if(AORDERS.length) renderOrders(); // 订单卡带出账号/地址
@@ -3193,13 +3223,6 @@
       }).join('')+'</div>';
     }catch(e){ box.innerHTML='<div class="hint">网络不稳</div>'; }
   }
-  async function setAdminPin(){
-    const np=prompt('设置新的后台密码（≥6 位，建议数字+字母混合）'); if(np===null) return;
-    const p=np.trim(); if(p.length<6){ toast('至少 6 位'); return; }
-    const r=await adminCall('setPin',{pin:p}).catch(()=>null);
-    if(r&&r.ok){ localStorage.setItem('a369_pin',p); toast('密码已更新 ✅ 下次登录用新密码'); haptic('medium'); }
-    else toast((r&&r.error)||'设置失败');
-  }
   async function loadNoticeInput(){
     try{
       const r=await fetch(SUPABASE_URL+'/rest/v1/config_369?select=key,value',{headers:headers()});
@@ -3274,7 +3297,7 @@
         if(!/限流|抓取失败/.test(lastErr)) break; // 非限流错误（视频贴/链接问题）不重试
       }catch(e){
         lastErr=String(e&&e.message||e);
-        if(lastErr.includes('PIN')){ btn.disabled=false; box.classList.remove('hidden'); box.innerHTML='<div style="font-size:12.5px;color:var(--bad)">后台密码失效了，退出后台重进一次（连点logo5次→密码3690）</div>'; return; }
+        if(lastErr.includes('AUTH')){ btn.disabled=false; box.classList.remove('hidden'); box.innerHTML='<div style="font-size:12.5px;color:var(--bad)">管理员登录已失效，请退出后台后重新登录。</div>'; return; }
       }
       if(i<2) await new Promise(r2=>setTimeout(r2,2500));
     }
@@ -3403,10 +3426,10 @@
       let done=null;
       for(let i=0;i<MAX;i++){
         try{
-          const r=await adminCall('insert',{input:input,reqId:reqId,tgId:tgId()});
+          const r=await parseAdmin({input:input,reqId:reqId,tgId:tgId()});
           if(r&&r.ok&&r.row){ done=r.row; break; }
           if(r&&r.error&&!/网络|服务错误/.test(r.error)){ showMsg('bad',r.error); return; }
-        }catch(e){ if(String(e).includes('PIN')) return; /* 网络问题继续重试 */ }
+        }catch(e){ if(String(e).includes('AUTH')) return; /* 网络问题继续重试 */ }
         if(i<MAX-1){ showMsg('warn','网络不稳，正在自动重试上传…（'+(i+2)+'/'+MAX+'）'); await new Promise(r=>setTimeout(r,2500)); }
       }
       hideMsg();
@@ -3445,10 +3468,10 @@
       let row=null;
       for(let i=0;i<6;i++){
         try{
-          const r=await adminCall('insert',{input:ptext,reqId:reqId,tgId:tgId()});
+          const r=await parseAdmin({input:ptext,reqId:reqId,tgId:tgId()});
           if(r&&r.ok&&r.row){ row=r.row; break; }
           if(r&&r.error&&!/网络|服务错误/.test(r.error)){ showMsg('bad',r.error); return; }
-        }catch(e){ if(String(e).includes('PIN')) return; }
+        }catch(e){ if(String(e).includes('AUTH')) return; }
         if(i<5){ showMsg('warn','网络不稳，正在自动重试…（'+(i+2)+'/6）'); await new Promise(r2=>setTimeout(r2,2500)); }
       }
       if(!row){ showMsg('bad','这个网络反复连不上服务器。换个网络或到信号好的地方再试。'); return; }
@@ -3583,8 +3606,9 @@
         txt.innerHTML='<span class="spin"></span> 上传中 '+(i+1)+'/'+files.length+'…';
         const f=await downscale(files[i],1600);
         const path='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)+'.jpg';
+        const ah=await adminHeaders();
         const r=await fetch(SUPABASE_URL+'/storage/v1/object/product-369/'+path,{method:'POST',
-          headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Content-Type':f.type||'image/jpeg','x-upsert':'true'},body:f});
+          headers:{...ah,'Content-Type':f.type||'image/jpeg','x-upsert':'true'},body:f});
         if(!r.ok) throw new Error('第'+(i+1)+'张上传失败('+r.status+')');
         const pub=SUPABASE_URL+'/storage/v1/object/public/product-369/'+path;
         const ta=document.getElementById('e_imgs'); ta.value=(ta.value.trim()?ta.value.trim()+'\n':'')+pub; ok++;
@@ -3627,8 +3651,9 @@
         txt.innerHTML='<span class="spin"></span> 上传中 '+(i+1)+'/'+files.length+'…';
         const f=await downscale(files[i],1400);
         const path='rv'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)+'.jpg';
+        const ah=await adminHeaders();
         const r=await fetch(SUPABASE_URL+'/storage/v1/object/product-369/'+path,{method:'POST',
-          headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Content-Type':f.type||'image/jpeg','x-upsert':'true'},body:f});
+          headers:{...ah,'Content-Type':f.type||'image/jpeg','x-upsert':'true'},body:f});
         if(!r.ok) throw new Error('第'+(i+1)+'张上传失败('+r.status+')');
         _rvShots.push(SUPABASE_URL+'/storage/v1/object/public/product-369/'+path); ok++;
       }
