@@ -2,8 +2,8 @@
 -- 369 可观测性 & 后台加固
 -- 1) events_369：埋点 + 错误 + 解析监控，一张表用 type 区分。
 --    底表对 anon 锁死；匿名端只能走 track_369 RPC 写入（类型白名单 + 尺寸限制）。
--- 2) admin_attempts_369：后台 PIN 失败次数 + 锁定，防暴力猜。
--- 3) app_secrets_369.admin_pin_hash：店主自设强密码（sha-256），取代硬编码兜底 3690。
+-- 2) admin_attempts_369：旧版 PIN 登录审计表；保留仅为兼容已有数据。
+-- 3) app_secrets_369：服务端私密配置（管理员登录已迁移到 Supabase Auth）。
 -- ============================================================
 
 create table if not exists events_369 (
@@ -44,7 +44,7 @@ $$;
 revoke all on function public.track_369(text, bigint, text, jsonb, text, text) from public;
 grant execute on function public.track_369(text, bigint, text, jsonb, text, text) to anon, authenticated;
 
--- 后台 PIN 失败限速表（服务角色管理）
+-- 旧版后台 PIN 失败限速表（服务角色管理，保留兼容）
 create table if not exists admin_attempts_369 (
   ip text primary key,
   fails int not null default 0,

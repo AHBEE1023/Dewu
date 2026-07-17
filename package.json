@@ -4,9 +4,11 @@
   "version": "1.0.0",
   "description": "369 甄选 — 代购店面 mini-app（单文件静态站）",
   "scripts": {
-    "test": "node scripts/smoke.js"
+    "test": "node scripts/security-test.js && node scripts/smoke.js",
+    "test:security": "node scripts/security-test.js"
   },
   "devDependencies": {
+    "@supabase/supabase-js": "^2.110.6",
     "playwright": "^1.48.0"
   }
 }

@@ -1,0 +1,30 @@
+[auth]
+enable_signup = false
+
+# These functions either expose an intentional customer action or perform their
+# own current-user/admin validation. The legacy gateway JWT verifier is kept off
+# so current publishable keys work; admin actions still require a verified Auth
+# access token and public.admin_users membership inside the function.
+[functions.admin-369]
+verify_jwt = false
+
+[functions.account-369]
+verify_jwt = false
+
+[functions.camp-369]
+verify_jwt = false
+
+[functions.pay-369]
+verify_jwt = false
+
+[functions.push-369]
+verify_jwt = false
+
+[functions.review-369]
+verify_jwt = false
+
+[functions.parse-dewu-link]
+verify_jwt = false
+
+[functions.order-notify-369]
+verify_jwt = false

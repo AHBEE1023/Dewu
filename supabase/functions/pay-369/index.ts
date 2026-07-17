@@ -1,20 +1,19 @@
-// pay-369: 付款闭环。默认 action='proof' 是顾客上传付款截图(无需 PIN，但必须是订单主人)。
-// 其余 action(qrUpload/proofUrl/payConfirm)是店主专用，用和 admin-369 同一套加固 PIN 校验
-// (admin_attempts_369 失败限速 + app_secrets 里的自设强密码哈希)。
+// pay-369: 付款闭环。默认 action='proof' 是顾客上传付款截图（必须是订单主人）。
+// 其余 action(qrUpload/proofUrl/payConfirm)要求 Supabase Auth 管理员身份。
 // 收款码 + 付款截图都存私有桶 pay369，anon 无 policy 完全锁死。
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2.110.6";
+import { requireAdmin } from "../_shared/admin-auth.ts";
 
-const PIN = Deno.env.get("ADMIN_PIN_369") || "3690";
 const cors = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-admin-pin",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
-    const body = await req.json().catch(() => ({}));
+    const body: any = await req.json().catch(() => ({}));
     const action = body.action || "proof";
     const supabase = createClient(Deno.env.get("SUPABASE_URL"), Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
 
@@ -39,9 +38,8 @@ Deno.serve(async (req) => {
       return json({ ok: true }, 200);
     }
 
-    // ===== 店主专用：PIN 加固校验 =====
-    const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "unknown";
-    const gate = await adminAuth(supabase, ip, req.headers.get("x-admin-pin") || "");
+    // ===== 店主专用：Supabase Auth + admin_users =====
+    const gate = await requireAdmin(req, supabase);
     if (!gate.ok) return json({ ok: false, error: gate.error }, gate.status, cors);
 
     if (action === "qrUpload") {
@@ -80,19 +78,7 @@ function decodeImg(dataUrl) {
   let bytes; try { bytes = Uint8Array.from(atob(m[3]), (c) => c.charCodeAt(0)); } catch (_e) { return null; }
   return { contentType, ext, bytes };
 }
-async function adminAuth(supabase, ip, pin) {
-  const { data: row } = await supabase.from("admin_attempts_369").select("*").eq("ip", ip).maybeSingle();
-  const now = Date.now();
-  if (row && row.locked_until && new Date(row.locked_until).getTime() > now) return { ok: false, status: 429, error: "尝试太多，稍后再试" };
-  const storedHash = (await getSecret(supabase, "admin_pin_hash")).trim();
-  const valid = pin ? (storedHash ? (await sha256hex(pin)) === storedHash : pin === PIN) : false;
-  if (valid) { if (row && row.fails > 0) await supabase.from("admin_attempts_369").upsert({ ip, fails: 0, locked_until: null, updated_at: new Date().toISOString() }); return { ok: true, status: 200 }; }
-  const fails = (row ? row.fails : 0) + 1;
-  await supabase.from("admin_attempts_369").upsert({ ip, fails, updated_at: new Date().toISOString(), locked_until: fails >= 5 ? new Date(now + 600000).toISOString() : null });
-  return { ok: false, status: fails >= 5 ? 429 : 401, error: fails >= 5 ? "错误太多，已锁定 10 分钟" : "密码不对" };
-}
-async function sha256hex(s) { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return Array.from(new Uint8Array(b), (x) => x.toString(16).padStart(2, "0")).join(""); }
 async function getSecret(supabase, key) { const { data } = await supabase.from("app_secrets_369").select("value").eq("key", key).maybeSingle(); return (data && data.value) ? String(data.value) : ""; }
 async function tgSend(token, chat, text) { try { const r = await fetch("https://api.telegram.org/bot" + token + "/sendMessage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: chat, text, parse_mode: "HTML", disable_web_page_preview: true }) }); return r.ok; } catch (_e) { return false; } }
 function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
-function json(obj, status, c) { return new Response(JSON.stringify(obj), { status, headers: { ...(c || cors), "Content-Type": "application/json" } }); }
+function json(obj, status, c = cors) { return new Response(JSON.stringify(obj), { status, headers: { ...c, "Content-Type": "application/json" } }); }

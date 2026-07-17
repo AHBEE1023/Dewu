@@ -1,8 +1,3 @@
-// ⚠️ 暂未启用 —— Supabase Auth 管理员鉴权(并行会话 2026-07-16 部署过的变体,已回退)。
-// 它要求前端先用 supabase.auth 邮箱+密码登录,并在 public.admin_users 有成员行。
-// 现状:线上前端与其余 6 个管理函数(camp/pay/review/push/account/feed)都走 x-admin-pin,
-// 单独启用这一套会让后台面板 401。待未来一次性迁移全部函数+前端时再用。
-// admin_users 表和 ahbee1023@gmail.com 的账号已在库里,不需要重建。
 import type { SupabaseClient, User } from "npm:@supabase/supabase-js@2.110.6";
 
 export type AdminAuthResult = {

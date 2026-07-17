@@ -1,23 +1,26 @@
-// feed-369: 到货动态(店主发布端,加固 PIN 校验)。发贴/列表/下架 + 可选同步商品库存。
-// 店面读动态直接走 REST(anon 可读 active 行),不经过这里。
-// 照片沿用 product-369 桶的既有上传通道(前端直传,前缀 fd),这里只收公开 URL 并校验来源。
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+// feed-369: 到货动态(店主发布端,Supabase Auth 管理员验证)。发贴/列表/下架 + 可选同步商品库存。
+// 店面读动态直接走 REST(anon 可读 active 行)，不经过这里。
+// 照片沿用 product-369 桶通道(管理员会话直传,前缀 fd)，这里只收公开 URL 并校验来源。
+import { createClient } from "npm:@supabase/supabase-js@2.110.6";
+import { requireAdmin } from "../_shared/admin-auth.ts";
 
-const PIN = Deno.env.get("ADMIN_PIN_369") || "3690";
 const cors = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-admin-pin",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL"),
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
+  );
+  const gate = await requireAdmin(req, supabase);
+  if (!gate.ok) return json({ ok: false, error: gate.error }, gate.status);
+
   try {
-    const body = await req.json().catch(() => ({}));
-    const supabase = createClient(Deno.env.get("SUPABASE_URL"), Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
-    const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "unknown";
-    const gate = await adminAuth(supabase, ip, req.headers.get("x-admin-pin") || "");
-    if (!gate.ok) return json({ ok: false, error: gate.error }, gate.status);
+    const body: any = await req.json().catch(() => ({}));
 
     if (body.action === "postList") {
       const { data, error } = await supabase.from("posts_369").select("*").order("created_at", { ascending: false }).limit(30);
@@ -31,8 +34,8 @@ Deno.serve(async (req) => {
       // 照片必须是本项目 storage 的公开 URL,防注入
       const pubPrefix = Deno.env.get("SUPABASE_URL") + "/storage/v1/object/public/";
       const photos = (Array.isArray(body.photos) ? body.photos : [])
-        .map((u) => String(u || "").trim())
-        .filter((u) => u.startsWith(pubPrefix) && u.length < 300)
+        .map((u: unknown) => String(u || "").trim())
+        .filter((u: string) => u.startsWith(pubPrefix) && u.length < 300)
         .slice(0, 4);
 
       let product_id = null, pname = null, pprice = null;
@@ -71,17 +74,4 @@ Deno.serve(async (req) => {
   }
 });
 
-async function adminAuth(supabase, ip, pin) {
-  const { data: row } = await supabase.from("admin_attempts_369").select("*").eq("ip", ip).maybeSingle();
-  const now = Date.now();
-  if (row && row.locked_until && new Date(row.locked_until).getTime() > now) return { ok: false, status: 429, error: "尝试太多，稍后再试" };
-  const storedHash = (await getSecret(supabase, "admin_pin_hash")).trim();
-  const valid = pin ? (storedHash ? (await sha256hex(pin)) === storedHash : pin === PIN) : false;
-  if (valid) { if (row && row.fails > 0) await supabase.from("admin_attempts_369").upsert({ ip, fails: 0, locked_until: null, updated_at: new Date().toISOString() }); return { ok: true, status: 200 }; }
-  const fails = (row ? row.fails : 0) + 1;
-  await supabase.from("admin_attempts_369").upsert({ ip, fails, updated_at: new Date().toISOString(), locked_until: fails >= 5 ? new Date(now + 600000).toISOString() : null });
-  return { ok: false, status: fails >= 5 ? 429 : 401, error: fails >= 5 ? "错误太多，已锁定 10 分钟" : "密码不对" };
-}
-async function sha256hex(s) { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return Array.from(new Uint8Array(b), (x) => x.toString(16).padStart(2, "0")).join(""); }
-async function getSecret(supabase, key) { const { data } = await supabase.from("app_secrets_369").select("value").eq("key", key).maybeSingle(); return (data && data.value) ? String(data.value) : ""; }
-function json(obj, status) { return new Response(JSON.stringify(obj), { status, headers: { ...cors, "Content-Type": "application/json" } }); }
+function json(obj: unknown, status: number) { return new Response(JSON.stringify(obj), { status, headers: { ...cors, "Content-Type": "application/json" } }); }

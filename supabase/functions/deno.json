@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "lib": ["deno.window", "dom"],
+    "strict": false
+  },
+  "nodeModulesDir": "auto"
+}
