@@ -1,11 +1,15 @@
-// admin-369 v12: 369 后台专用网关 —— PIN 校验(失败限速+自设强密码) 后代办 列表/改/删/入库/订单/通知/数据看板。
+// admin-369 v14: 369 后台专用网关 —— PIN 校验(失败限速+自设强密码) 后代办 列表/改/删/入库/订单/通知/数据看板。
+// v14: 商品新增 stock 库存字段(可编辑,null=不限量);成交(sale)自动扣减库存、撤销(unsale)加回;
+//      移植 Auth 变体的安全加固:trend 抓取仅限得物域名(防 SSRF)+ 响应体积上限 1.5MB。
+// 注:曾有并行会话部署过 Supabase Auth(admin_users 表)鉴权变体,代码存于 _shared/admin-auth.ts,
+//    待未来把全部 7 个管理函数 + 前端一起迁过去,单独迁这一个会打断线上 PIN 后台。
 // 底表 products_369 / orders_369 已对 anon 完全锁死，后台一切读写都必须经过这里。
 // 密码优先读 Supabase Secrets 的 ADMIN_PIN_369，没设则用兜底值。
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const PIN = Deno.env.get("ADMIN_PIN_369") || "3690";
 // 只允许改这些字段，防止越权写 created_by / client_ref 之类
-const PATCH_FIELDS = ["name_cn", "brand", "sku", "images", "image_url", "price_rmb", "price_myr", "sell_myr", "status", "orig_myr", "hot", "soldout", "category", "params", "variants", "review_shots", "video_url"];
+const PATCH_FIELDS = ["name_cn", "brand", "sku", "images", "image_url", "price_rmb", "price_myr", "sell_myr", "status", "orig_myr", "hot", "soldout", "category", "params", "variants", "review_shots", "video_url", "stock"];
 // 订单状态白名单，防止后台误写乱七八糟的状态
 const ORDER_STATUS = ["已发送", "已确认", "已付款", "已采购", "运输中", "已到手", "已取消"];
 // 顾客状态推送用的小图标，让通知更直观
@@ -47,7 +51,7 @@ Deno.serve(async (req) => {
 
       case "trend": { // 抓得物「动态/贴文」分享页 -> 标题/正文/作者/买家秀图（匹配商品在前端做）
         const url = (body.url || "").toString().trim();
-        if (!/^https?:\/\//.test(url)) return json({ ok: false, error: "请贴得物动态链接" }, 400, cors);
+        if (!isAllowedDewuUrl(url)) return json({ ok: false, error: "请贴得物官方动态链接" }, 400, cors);
         const html = await fetchTrendHtml(url);
         if (!html) return json({ ok: false, error: "抓取失败，得物可能临时限流，稍后重试" }, 200, cors);
         const t = extractTrend(html);
@@ -61,6 +65,10 @@ Deno.serve(async (req) => {
         const fields = {};
         for (const k of PATCH_FIELDS) if (k in (body.fields || {})) fields[k] = body.fields[k];
         if (!Object.keys(fields).length) return json({ ok: false, error: "没有可改字段" }, 400, cors);
+        if ("stock" in fields) { // 库存:空=不限量(null),否则钳成非负整数
+          const s = fields.stock;
+          fields.stock = (s == null || s === "") ? null : (Number.isFinite(Number(s)) ? Math.max(0, Math.floor(Number(s))) : null);
+        }
         const { data, error } = await supabase
           .from("products_369").update(fields).eq("id", id).select().maybeSingle();
         if (error) return json({ ok: false, error: error.message }, 500, cors);
@@ -79,6 +87,7 @@ Deno.serve(async (req) => {
         });
         if (e1) return json({ ok: false, error: e1.message }, 500, cors);
         const upd = { sold_count: (p.sold_count || 0) + qty };
+        if (p.stock != null) upd.stock = Math.max(0, p.stock - qty); // 有限量的货,成交顺手扣库存
         if (body.soldout) upd.soldout = true;
         const { data: row, error: e2 } = await supabase.from("products_369").update(upd).eq("id", id).select().maybeSingle();
         if (e2) return json({ ok: false, error: e2.message }, 500, cors);
@@ -117,9 +126,13 @@ Deno.serve(async (req) => {
         const { error: e1 } = await supabase.from("sales_369").delete().eq("id", sid);
         if (e1) return json({ ok: false, error: e1.message }, 500, cors);
         if (s0.product_id) {
-          const { data: p } = await supabase.from("products_369").select("sold_count").eq("id", s0.product_id).maybeSingle();
-          // 撤销成交时一并取消售罄标记（sale 可能顺手标了售罄，不撤会一直挂「已售罄」）
-          if (p) await supabase.from("products_369").update({ sold_count: Math.max(0, (p.sold_count || 0) - s0.qty), soldout: false }).eq("id", s0.product_id);
+          const { data: p } = await supabase.from("products_369").select("sold_count,stock").eq("id", s0.product_id).maybeSingle();
+          // 撤销成交时一并取消售罄标记（sale 可能顺手标了售罄，不撤会一直挂「已售罄」）;有限量的货把库存加回去
+          if (p) {
+            const back = { sold_count: Math.max(0, (p.sold_count || 0) - s0.qty), soldout: false };
+            if (p.stock != null) back.stock = p.stock + s0.qty;
+            await supabase.from("products_369").update(back).eq("id", s0.product_id);
+          }
         }
         return json({ ok: true }, 200, cors);
       }
@@ -338,11 +351,27 @@ async function fetchTrendHtml(url) {
           "Accept-Language": "zh-CN,zh;q=0.9",
         },
       }).finally(() => clearTimeout(timer));
-      if (resp.ok) { const h = await resp.text(); if (h && h.length > 800) return h; }
+      // 防 SSRF:重定向后的最终地址也必须还在得物域内;响应体积设上限防内存打爆
+      if (resp.ok && isAllowedDewuUrl(resp.url)) {
+        const declared = Number(resp.headers.get("content-length") || 0);
+        if (declared > 1_500_000) return null;
+        const bytes = new Uint8Array(await resp.arrayBuffer());
+        if (bytes.byteLength > 1_500_000) return null;
+        const h = new TextDecoder().decode(bytes);
+        if (h && h.length > 800) return h;
+      }
     } catch (_e) { /* retry */ }
     await new Promise((r) => setTimeout(r, 1200));
   }
   return null;
+}
+function isAllowedDewuUrl(value) {
+  try {
+    const url = new URL(String(value));
+    if (url.protocol !== "https:") return false;
+    const host = url.hostname.toLowerCase();
+    return ["dewu.com", "dw4.co"].some((allowed) => host === allowed || host.endsWith("." + allowed));
+  } catch (_e) { return false; }
 }
 function tjstr(html, key) {
   const m = html.match(new RegExp('"' + key + '":"((?:[^"\\\\]|\\\\.){0,600})"'));

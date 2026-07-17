@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: firstscreen-v15 -->
+<!-- build: curator-v16 -->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -779,6 +779,81 @@
   @keyframes sp{to{transform:rotate(360deg)}}
   .toast{position:fixed;left:50%;bottom:calc(90px + var(--safe-b));transform:translateX(-50%);background:#000d;border:1px solid var(--line);color:#fff;padding:10px 16px;border-radius:12px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:90;max-width:90%;text-align:center}
   .toast.show{opacity:1}
+  /* ============ 主理人版 curator-v16 ============ */
+  .curator{display:flex;align-items:center;gap:10px}
+  .cinfo{flex:1;min-width:0}
+  .cinfo h1{font-size:17px;margin:0;font-weight:800;letter-spacing:.5px;line-height:1.15}
+  .cinfo .cstat{margin:2px 0 0;font-size:11px;color:var(--sub);font-weight:500;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cmeta{margin-top:2px;font-size:10.5px;color:var(--gold);font-weight:700;line-height:1.55}
+  .cmeta .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#3E7C5A;box-shadow:0 0 0 2.5px color-mix(in srgb,#3E7C5A 22%,transparent);animation:liveblink 2.2s infinite;margin-right:4px}
+  @keyframes liveblink{0%,100%{opacity:1}50%{opacity:.45}}
+  .hicons{display:flex;gap:7px;flex:0 0 auto}
+  .hic{position:relative;width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--txt);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow)}
+  .hic:active{transform:scale(.94)}
+  .hic .cartn{position:absolute;top:-4px;right:-4px;background:var(--price);color:#fff;font-size:9.5px;font-weight:800;min-width:15px;height:15px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+  .hic .favdot{top:-2px;left:auto;right:-2px;box-shadow:0 0 0 2px var(--card)}
+  /* 到货卡(首页) */
+  .arrive{margin:0 0 12px;background:var(--card);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;border:1px solid color-mix(in srgb,#3E7C5A 22%,var(--line))}
+  .arrive .arrhd{display:flex;align-items:center;gap:6px;padding:9px 13px 0;font-size:10.5px;font-weight:800;letter-spacing:1.2px;color:#3E7C5A}
+  .arrive .live{width:7px;height:7px;border-radius:50%;background:#3E7C5A;animation:liveblink 1.6s infinite;flex:0 0 auto}
+  .arrive .ago{color:var(--sub);font-weight:600;letter-spacing:.2px}
+  .arrive .more{margin-left:auto;color:var(--sub);font-weight:600;letter-spacing:.2px;cursor:pointer}
+  .arrive .arrbody{display:flex;gap:11px;padding:9px 13px 12px;cursor:pointer}
+  .arrive .arrbody img{width:86px;height:86px;border-radius:12px;object-fit:cover;flex:0 0 auto;background:var(--card2)}
+  .arrive .arrtx{flex:1;min-width:0}
+  .arrive .arrtx .t{font-size:13.5px;font-weight:600;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .arrive .pchip{display:flex;align-items:center;gap:6px;margin-top:7px;font-size:11.5px;color:var(--sub);white-space:nowrap;overflow:hidden}
+  .arrive .pchip b{color:var(--price);font-weight:800}
+  .rtsub{margin-left:7px;font-weight:500;letter-spacing:.2px;color:var(--sub);text-transform:none}
+  /* 帮我找入口条 */
+  .srcbar{display:flex;align-items:center;gap:10px;margin:0 0 12px;background:var(--card);border:1px dashed color-mix(in srgb,var(--gold) 55%,var(--line));border-radius:14px;padding:10px 13px;cursor:pointer;box-shadow:var(--shadow)}
+  .srcbar .si{font-size:17px;flex:0 0 auto}
+  .srcbar .st{flex:1;min-width:0}
+  .srcbar .st b{display:block;font-size:13px}
+  .srcbar .st span{font-size:11px;color:var(--sub)}
+  .srcbar .ar{color:var(--sub);font-size:15px}
+  /* 库存四态徽章 */
+  .stok{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:800;padding:2.5px 8px;border-radius:7px;letter-spacing:.2px;flex:0 0 auto;white-space:nowrap}
+  .stok.in{background:color-mix(in srgb,#3E7C5A 12%,transparent);color:#3E7C5A}
+  .stok.low{background:color-mix(in srgb,#C0392B 10%,transparent);color:#C0392B}
+  .stok.pre{background:var(--goldSoft);color:var(--gold)}
+  .stok.out{background:var(--card2);color:var(--sub)}
+  .stchip{position:absolute;left:8px;bottom:8px;z-index:2;font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:7px;color:#fff;letter-spacing:.4px}
+  .stchip.in{background:#3E7C5A}
+  .stchip.low{background:#C0392B}
+  /* 到货 Tab */
+  #feedView{padding:14px 16px calc(var(--nav-h) + var(--safe-b) + 16px);max-width:560px;margin:0 auto}
+  .fvhead{font-size:16px;font-weight:800;letter-spacing:.5px}
+  .fpost{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:13px;margin-bottom:12px}
+  .fphd{display:flex;align-items:center;gap:9px}
+  .logo.sm{width:30px;height:30px;border-radius:9px;font-size:10.5px;box-shadow:none}
+  .fpwho{flex:1;min-width:0}
+  .fpwho b{display:block;font-size:12.5px}
+  .fpwho span{font-size:10.5px;color:var(--sub)}
+  .fptx{font-size:13.5px;line-height:1.6;margin:8px 0 0;white-space:pre-wrap;word-break:break-word}
+  .fpimgs{display:grid;gap:5px;margin-top:9px;border-radius:12px;overflow:hidden}
+  .fpimgs img{width:100%;height:100%;object-fit:cover;background:var(--card2);display:block}
+  .fpimgs.n1{grid-template-columns:1fr}
+  .fpimgs.n1 img{max-height:340px}
+  .fpimgs.n2{grid-template-columns:1fr 1fr}
+  .fpimgs.n2 img{aspect-ratio:1}
+  .fpimgs.n3{grid-template-columns:1fr 1fr 1fr}
+  .fpimgs.n3 img{aspect-ratio:1}
+  .fpimgs.n4{grid-template-columns:1fr 1fr}
+  .fpimgs.n4 img{aspect-ratio:1.35}
+  .fpprod{display:flex;align-items:center;gap:9px;margin-top:10px;background:var(--card2);border-radius:12px;padding:8px 10px;cursor:pointer}
+  .fpprod img{width:40px;height:40px;border-radius:9px;object-fit:cover;flex:0 0 auto;background:var(--card)}
+  .fpprod .fpp{flex:1;min-width:0}
+  .fpprod .fpp b{display:block;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fpprod .fpp span{font-size:11.5px;color:var(--price);font-weight:800}
+  .fpprod .go{font-size:11.5px;color:var(--sub);flex:0 0 auto}
+  /* 帮我找弹层 */
+  .srcta{width:100%;min-height:88px;border:1px solid var(--line);border-radius:12px;background:var(--card2);color:var(--txt);padding:11px;font-size:14px;line-height:1.5;resize:vertical;font-family:inherit}
+  .srcphoto{display:flex;gap:8px;align-items:flex-start;background:var(--goldSoft);border-radius:11px;padding:9px 12px;font-size:11.5px;color:var(--gold);font-weight:600;line-height:1.45;margin-top:10px}
+  /* 详情页库存提示行 */
+  .stline{margin:7px 0 0;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .stline.in{color:#3E7C5A}
+  .stline.low{color:#C0392B}
 </style>
 </head>
 <body>
@@ -788,9 +863,17 @@
   <div id="shopView">
     <div class="ptr" id="ptr"><div class="ptr-i">↓</div></div>
     <div class="hero">
-      <div class="brand">
+      <div class="curator">
         <div class="logo" onclick="logoTap()">369</div>
-        <div><h1 id="shopName">369 甄选</h1><p id="heroSub">PREMIUM SELECT</p></div>
+        <div class="cinfo">
+          <h1 id="shopName">369 甄选</h1>
+          <p class="cstat" id="curStat">主理人代购 · 得物直采人肉带回</p>
+          <div class="cmeta" id="curMeta"><span class="dot"></span>接单中 · 看中直接下单</div>
+        </div>
+        <div class="hicons">
+          <button class="hic" onclick="setTab('list');setListSub('fav')" aria-label="我的收藏"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.5-1.5 3-3.3 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3.4 1-4.5 2.5C10.9 4 9.3 3 7.5 3A5.5 5.5 0 0 0 2 8.5c0 2.2 1.5 4 3 5.5l7 7z"/></svg><span class="favdot hidden" id="favDot"></span></button>
+          <button class="hic" id="hdrBag" onclick="setTab('list');setListSub('cart')" aria-label="我的心愿单"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg><span class="cartn hidden" id="navBadge">0</span></button>
+        </div>
       </div>
       <div class="trust"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.6-3 8.4-7 10-4-1.6-7-5.4-7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>正品保证<span class="sep">·</span>假一赔十<span class="sep">·</span>支持验货<span class="sep">·</span>马来直邮</div>
     </div>
@@ -806,6 +889,9 @@
       </div>
       <div class="shist hidden" id="shist"></div>
     </div>
+    <div id="arriveCard" class="arrive hidden"></div>
+    <div id="stockShelf" class="recent hidden"></div>
+    <div class="srcbar" id="srcBar" role="button" tabindex="0" onclick="openSrc()"><span class="si">🔎</span><div class="st"><b>没看到想要的？帮你找</b><span>说个名字/发张图 · 得物比价 + 验货报价</span></div><span class="ar">›</span></div>
     <div class="filterbar" id="filterbar">
       <div class="seg" id="seg"></div>
       <div class="chips" id="chips"></div>
@@ -817,6 +903,13 @@
     <div class="sechead" id="gridHead">严选好物 · CURATED</div>
     <div class="grid" id="grid"></div>
     <div class="pfoot" id="pfoot">369 PREMIUM SELECT<span>正品保证 · 假一赔十 · 马来直邮</span></div>
+  </div>
+
+  <!-- ============ 到货动态（一级 Tab）============ -->
+  <div id="feedView" class="hidden">
+    <div class="fvhead">到货动态 · ARRIVALS</div>
+    <p class="vsub" style="margin-top:3px">主理人人肉带回 · 到一件晒一件，看到就是有货</p>
+    <div id="feedList"></div>
   </div>
 
   <!-- ============ 清单（收藏 + 心愿单 合并）============ -->
@@ -872,7 +965,7 @@
   <!-- 底部导航 -->
   <div id="nav">
     <button data-tab="shop" class="on" onclick="setTab('shop')"><span class="i"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5V20a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-9.5"/><path d="M3.2 6.5 5 3.6A1.2 1.2 0 0 1 6 3h12a1.2 1.2 0 0 1 1 .6l1.8 2.9a2.6 2.6 0 0 1-2.3 4 2.7 2.7 0 0 1-2.5-1.7 2.7 2.7 0 0 1-5 0 2.7 2.7 0 0 1-5 0 2.7 2.7 0 0 1-2.5 1.7 2.6 2.6 0 0 1-2.3-4Z"/></svg></span>首页</button>
-    <button data-tab="list" onclick="setTab('list')"><span class="i"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg></span>清单<span class="cartn hidden" id="navBadge">0</span><span class="favdot hidden" id="favDot"></span></button>
+    <button data-tab="feed" onclick="setTab('feed')"><span class="i"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4h14v12H1z"/><path d="M15 9h4l4 4v3h-8V9z"/><circle cx="5.5" cy="18.5" r="2.2"/><circle cx="18" cy="18.5" r="2.2"/></svg></span>到货<span class="favdot hidden" id="feedDot"></span></button>
     <button data-tab="orders" onclick="setTab('orders')"><span class="i"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8l2 3v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7z"/><path d="M9 10h6M9 14h6"/></svg></span>订单<span class="cartn hidden" id="ordDot">0</span></button>
     <button data-tab="me" onclick="setTab('me')"><span class="i"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></svg></span>我的</button>
   </div>
@@ -913,6 +1006,8 @@
       <div id="setBody" class="hidden">
       <label style="margin-top:8px">📢 公告（店面顶部滚动，留空不显示）</label>
       <input class="asearch" id="noticeInput" placeholder="例：🎉 本周新到 Jellycat，下单送小礼物" style="margin-bottom:0">
+      <label style="margin-top:10px">🧑‍💼 主理人状态一句话（首页头像旁的绿点文案）</label>
+      <input class="asearch" id="curStatInput" maxlength="40" placeholder="例：东京连线中 · 周五截单发货" style="margin-bottom:0">
       <label style="margin-top:10px">💬 WhatsApp 号（如 60123456789 — 填了顾客下单/问价直达你）</label>
       <input class="asearch" id="waInput" inputmode="numeric" placeholder="60123456789" style="margin-bottom:0">
       <label style="margin-top:10px">✈️ Telegram 用户名（不带 @；WhatsApp 留空时顾客走这里）</label>
@@ -950,6 +1045,28 @@
         </div>
         <button class="btn" onclick="campCreate()" style="margin-top:12px"><span id="campNewTxt">🚀 开团 / 更换当前团</span></button>
         <div id="campList" style="margin-top:12px"></div>
+      </div>
+    </div>
+    <div class="card" style="padding-bottom:10px">
+      <div onclick="toggleFeedCard()" style="display:flex;align-items:center;cursor:pointer;margin-bottom:4px">
+        <label style="margin:0;flex:1;color:var(--txt);font-size:13.5px;font-weight:700">📣 发到货动态<span style="color:var(--sub);font-weight:500;font-size:12px">　拍一张 · 发一条 · 全店看见</span></label>
+        <span id="feedArrow" style="color:var(--sub);font-size:12px">▼</span>
+      </div>
+      <div id="feedBody" class="hidden">
+        <div class="hint" style="margin-top:8px">今天到什么货，拍张照发一条。店面首页「最新到货」+ 到货 Tab 都会展示；关联商品还能顺手把<b>现货库存</b>数同步上，店面自动挂「现货秒发 / 仅剩 N 件」。发完可一键复制文案去发 WhatsApp Status。</div>
+        <input type="file" id="fdFile" accept="image/*" multiple style="display:none" onchange="fdUpload(this)">
+        <div class="upbtn" onclick="document.getElementById('fdFile').click()" style="margin-top:10px"><span id="fdUpTxt">📷 拍 / 选到货照片（最多 4 张）</span></div>
+        <div class="rvthumbs" id="fdThumbs"></div>
+        <label style="margin-top:10px">说一句（必填）</label>
+        <textarea id="fdText" maxlength="300" style="min-height:64px" placeholder="例：Jellycat 巴塞罗熊到了 3 只，现场拆一只验给你们看 ✅"></textarea>
+        <label style="margin-top:10px">关联商品（选填 · 顾客点动态直达下单）</label>
+        <select class="asearch" id="fdProd" style="margin-bottom:0"><option value="">不关联</option></select>
+        <div style="display:flex;gap:9px">
+          <div style="flex:1"><label style="margin-top:10px">这批几件（选填）</label><input class="asearch" id="fdQty" inputmode="numeric" placeholder="3" style="margin-bottom:0"></div>
+          <div style="flex:1.6"><label style="margin-top:10px;display:flex;gap:6px;align-items:center;color:var(--txt)"><input type="checkbox" id="fdSync" style="width:auto;accent-color:#3E7C5A" checked>同步为该商品现货库存</label><div class="hint" style="margin:6px 0 0">卖一件后台记一单会自动减一</div></div>
+        </div>
+        <button class="btn" onclick="fdPublish(this)" style="margin-top:12px">🚀 发布到店面</button>
+        <div id="fdList" style="margin-top:12px"></div>
       </div>
     </div>
     <div class="card" style="padding-bottom:10px">
@@ -1109,6 +1226,21 @@
     <div class="sheet-in"><div class="close"><button onclick="closeGb()" aria-label="关闭">✕</button></div><div id="gbContent" style="padding:6px 18px calc(22px + var(--safe-b))"></div></div>
   </div>
 
+  <!-- 帮我找（代寻）弹层 -->
+  <div class="sheet" id="srcSheet" onclick="if(event.target===this)closeSrc()">
+    <div class="sheet-in"><div class="close"><button onclick="closeSrc()" aria-label="关闭">✕</button></div>
+      <div style="padding:6px 18px calc(22px + var(--safe-b))">
+        <h2 style="font-size:17px;margin:0 0 4px">🔎 帮我找 · SOURCING</h2>
+        <p style="margin:0 0 12px;font-size:12.5px;color:var(--sub);line-height:1.5">店里没有的也能带：说说你想要什么，主理人去得物帮你找同款、比价、验货后报你一口价。</p>
+        <textarea class="srcta" id="srcTxt" maxlength="500" placeholder="例：Jellycat 巴塞罗那熊 30cm 棕色；或 adidas 三叶草 T 恤 M 码 白色…说得越具体越快找到"></textarea>
+        <input class="srcta" id="srcBudget" maxlength="50" style="min-height:0;height:44px;margin-top:9px" placeholder="预算（选填，例：RM200 以内）">
+        <div class="srcphoto">📷 有截图/照片？点发送后直接甩到 WhatsApp 对话里，配图找得更准。</div>
+        <button class="gbcta" style="margin-top:13px" onclick="srcSubmit(this)">发送给主理人 →</button>
+        <div class="gbtip">提交后跳转 WhatsApp 确认，找到后按「实拍 + 验货报告 + 报价」回复你，不买也没关系。</div>
+      </div>
+    </div>
+  </div>
+
   <!-- 全屏看图（可左右滑动切换） -->
   <div id="lightbox" onclick="closeLightbox()">
     <button class="lbx" onclick="closeLightbox()" aria-label="关闭">✕</button>
@@ -1200,6 +1332,7 @@
     if(on('sentlay')){ closeSent(); return; }
     if(on('sharelay')){ closeShare(); return; }
     if(on('acctSheet')){ closeAcct(); return; }
+    if(on('srcSheet')){ closeSrc(); return; }
     if(on('gbSheet')){ closeGb(); return; }
     if(on('revSheet')){ closeRev(); return; }
     if(on('salesSheet')){ closeSales(); return; }
@@ -1210,14 +1343,15 @@
   }
   function anyOverlay(){
     const on=(id)=>{ const el=document.getElementById(id); return !!el&&el.classList.contains('show'); };
-    return on('lightbox')||on('sentlay')||on('sharelay')||on('acctSheet')||on('gbSheet')||on('revSheet')||on('salesSheet')||on('edit')||on('sheet');
+    return on('lightbox')||on('sentlay')||on('sharelay')||on('acctSheet')||on('srcSheet')||on('gbSheet')||on('revSheet')||on('salesSheet')||on('edit')||on('sheet');
   }
   // 浏览器/安卓返回键关弹层：开弹层压一条历史，back 弹出时关掉最上层；✕ 关闭时把那条历史消化掉
   let _ovPushed=false,_ovIgnorePop=false;
   function ovSyncHistory(){
     const open=anyOverlay();
     if(open&&!_ovPushed){ try{ history.pushState({ov369:1},''); _ovPushed=true; }catch(e){} }
-    else if(!open&&_ovPushed){ _ovPushed=false; _ovIgnorePop=true; try{ history.back(); }catch(e){ _ovIgnorePop=false; } }
+    // 只有栈顶确实是弹层压的那条才回退，防「快开快关」竞态把历史弹过头（弹过头=页面直接退出）
+    else if(!open&&_ovPushed){ _ovPushed=false; if(history.state&&history.state.ov369){ _ovIgnorePop=true; try{ history.back(); }catch(e){ _ovIgnorePop=false; } } }
   }
   window.addEventListener('popstate',()=>{
     if(_ovIgnorePop){ _ovIgnorePop=false; return; }
@@ -1233,7 +1367,7 @@
   // role=button 的元素支持 Enter/空格 触发（chips、FAQ、联想等非原生按钮）
   document.addEventListener('keydown',(e)=>{ if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.matches&&e.target.matches('[role="button"]')){ e.preventDefault(); e.target.click(); } });
   // 键盘 Esc 关弹层（无障碍 / 桌面端）
-  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ const on=(id)=>document.getElementById(id).classList.contains('show'); if(on('lightbox')||on('sentlay')||on('sharelay')||on('acctSheet')||on('gbSheet')||on('revSheet')||on('salesSheet')||on('edit')||on('sheet')) handleBack(); } });
+  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ const on=(id)=>document.getElementById(id).classList.contains('show'); if(on('lightbox')||on('sentlay')||on('sharelay')||on('acctSheet')||on('srcSheet')||on('gbSheet')||on('revSheet')||on('salesSheet')||on('edit')||on('sheet')) handleBack(); } });
 
   // ===== 后台隐藏入口：连点 logo 5 次才显示「后台」按钮，顾客看不到 =====
   let adminEntry = localStorage.getItem('a369_entry')==='1';
@@ -1279,23 +1413,25 @@
     if(m==='admin'){ loadAdmin(); } else { setTab(tab); load(); }
     updateBack(); updateMainButton();
   }
-  function curViewId(){ return tab==='shop'?'shopView':tab==='orders'?'ordView':tab==='me'?'meView':(listSub==='fav'?'favView':'cartView'); }
+  function curViewId(){ return tab==='shop'?'shopView':tab==='feed'?'feedView':tab==='orders'?'ordView':tab==='me'?'meView':(listSub==='fav'?'favView':'cartView'); }
 
-  // ===== 底部 Tab：首页 / 清单(收藏+心愿单) / 订单 / 我的 =====
+  // ===== 底部 Tab：首页 / 到货 / 订单 / 我的（清单挪到首页右上 ❤🛍 图标）=====
   let tab='shop';
   let listSub='cart'; try{ listSub=localStorage.getItem('listsub369')||'cart'; }catch(e){}
   function setTab(t){
     tab=t;
     const isList=(t==='list');
     show('shopView', t==='shop');
+    show('feedView', t==='feed');
     show('listSeg', isList);
     show('ordView', t==='orders');
     show('meView', t==='me');
     if(isList){ setListSub(listSub); }
     else { show('favView',false); show('cartView',false); show('checkout',false); }
-    document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on', b.dataset.tab===t));
+    document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on', b.dataset.tab===t||(isList&&b.dataset.tab==='shop')));
     window.scrollTo(0,0);
     const t2=document.getElementById('top2'); if(t2) t2.classList.add('hidden');
+    if(t==='feed') renderFeed();
     if(t==='orders') loadOrdersView();
     if(t==='me'){ renderInvite(); renderPushCard(); renderAcctCard(); }
     haptic('light'); updateBack(); updateMainButton();
@@ -1353,13 +1489,14 @@
     if(!ALL.length) skeleton();
     try{
       // 列表不拉 review_shots（单件可达 20+ 条长链接，是首屏最重的字段），详情页打开时按件懒取
-      const r=await fetch(SUPABASE_URL+'/rest/v1/products_369_shop?select=id,name_cn,brand,sku,category,sell_myr,orig_myr,image_url,images,created_at,sold_count,hot,soldout,views,params,variants,video_url&order=created_at.desc&limit=300',{headers:headers()});
+      const r=await fetch(SUPABASE_URL+'/rest/v1/products_369_shop?select=id,name_cn,brand,sku,category,sell_myr,orig_myr,image_url,images,created_at,sold_count,hot,soldout,views,params,variants,video_url,stock&order=created_at.desc&limit=300',{headers:headers()});
       if(!r.ok) throw new Error('http '+r.status);
       ALL=await r.json(); _loadFail=false;
     }catch(e){ _loadFail=!ALL.length; }
     indexAll();
     _fresh=true; buildChips(); renderSeg(); render(); updateBadge(); updateFavBadge(); checkDeepLink();
-    loadConfig(); loadCampaign(); loadReviewStats();
+    renderArrive(); // 商品到位后立刻把到货卡/现货货架接上（loadFeed 可能先回也可能后回，两边都调，幂等）
+    loadConfig(); loadCampaign(); loadReviewStats(); loadFeed();
   }
   // 真人评价聚合：把「★均分 · N评价」接进店面卡片 + 排序（有评价才显示）
   let _rstats={};
@@ -1379,6 +1516,7 @@
       CFG={}; rows.forEach(x=>CFG[x.key]=x.value||'');
       setNotice(CFG.notice||'');
       applyContact();
+      if(CFG.curator_status&&ALL.length) render(); // 主理人状态一句话到了再刷一次头部数据行
     }catch(e){}
   }
   // ===== 拼团 / 集运批次：店面读当前活跃团（anon 直读 active 行），跑倒计时 + 进度 =====
@@ -1471,6 +1609,113 @@
     el.innerHTML=parts;
   }
   function closeGb(){ document.getElementById('gbSheet').classList.remove('show'); document.body.style.overflow=''; if(_gbTick){ clearInterval(_gbTick); _gbTick=null; } updateBack(); }
+
+  // ===== 库存四态：null=预订(默认) / >3=现货秒发 / 1–3=仅剩N件 / 0或售罄=已抢完 =====
+  function soldOut(p){ return !!(p&&(p.soldout||p.stock===0)); }
+  function stockState(p){ if(soldOut(p)) return 'out'; if(p.stock!=null&&p.stock>0) return p.stock<=3?'low':'in'; return 'pre'; }
+  function stockBadge(p){
+    const st=stockState(p);
+    if(st==='in') return '<span class="stok in">✓ 现货 · 秒发</span>';
+    if(st==='low') return '<span class="stok low">🔥 仅剩 '+p.stock+' 件</span>';
+    if(st==='out') return '<span class="stok out">已抢完</span>';
+    return '<span class="stok pre">预订 · 7–14天</span>';
+  }
+  // ===== 到货动态：店主发布的开箱贴（anon 直读 active 行）=====
+  let _posts=[]; let _feedSeen=Number(localStorage.getItem('feedseen369')||0);
+  async function loadFeed(){
+    try{
+      const r=await fetch(SUPABASE_URL+'/rest/v1/posts_369?select=id,created_at,text,photos,product_id,pname,pprice,qty&active=eq.true&order=created_at.desc&limit=30',{headers:headers()});
+      if(!r.ok) return; const rows=await r.json(); if(!Array.isArray(rows)) return;
+      _posts=rows; renderArrive(); updateFeedDot(); if(tab==='feed') renderFeed();
+    }catch(e){}
+  }
+  function timeAgo(ts){
+    const s=(Date.now()-new Date(ts).getTime())/1000;
+    if(s<90) return '刚刚'; if(s<3600) return Math.floor(s/60)+' 分钟前';
+    if(s<86400) return Math.floor(s/3600)+' 小时前'; if(s<7*86400) return Math.floor(s/86400)+' 天前';
+    const d=new Date(ts); return (d.getMonth()+1)+'月'+d.getDate()+'日';
+  }
+  function updateFeedDot(){ const b=document.getElementById('feedDot'); if(!b) return; b.classList.toggle('hidden', !_posts.some(p=>new Date(p.created_at).getTime()>_feedSeen)); }
+  // 首页「最新到货」卡 + 「现货秒发」货架
+  function renderArrive(){
+    const box=document.getElementById('arriveCard');
+    if(box){
+      const po=_posts[0];
+      if(!po){ box.classList.add('hidden'); box.innerHTML=''; }
+      else{
+        const ph=(po.photos&&po.photos[0])||'';
+        const pr=po.product_id?ALL.find(x=>x.id===po.product_id):null;
+        const open=pr?('openSheet('+pr.id+')'):"setTab('feed')";
+        // 到货卡上位，轮播橱窗立刻让位（首次 loadFeed 常晚于首次 render，这里直接收）
+        const featEl=document.getElementById('feat');
+        if(featEl&&!featEl.classList.contains('hidden')){ featEl.classList.add('hidden'); if(typeof stopFeatAuto==='function') stopFeatAuto(); window._featKey=''; }
+        box.classList.remove('hidden');
+        box.innerHTML='<div class="arrhd"><span class="live"></span>最新到货 · JUST IN<span class="ago">'+timeAgo(po.created_at)+'</span><span class="more" onclick="event.stopPropagation();setTab(\'feed\')">全部动态 ›</span></div>'+
+          '<div class="arrbody" onclick="'+open+'">'+
+          (ph?'<img src="'+esc(im(ph,300))+'" referrerpolicy="no-referrer" loading="lazy" onerror="imgFB(this)" alt="">':'')+
+          '<div class="arrtx"><div class="t">'+esc(po.text)+'</div>'+
+          (pr?'<div class="pchip">'+stockBadge(pr)+'<b>'+(pr.sell_myr!=null?'RM'+money(pr.sell_myr):'')+'</b><span style="overflow:hidden;text-overflow:ellipsis">'+esc(pr.name_cn||'')+'</span></div>'
+             :(po.qty?'<div class="pchip"><span class="stok low">这批带回 '+po.qty+' 件</span></div>':''))+
+          '</div></div>';
+      }
+    }
+    renderShelf();
+  }
+  function renderShelf(){
+    const box=document.getElementById('stockShelf'); if(!box) return;
+    const list=ALL.filter(p=>!soldOut(p)&&p.stock!=null&&p.stock>0&&p.image_url).slice(0,10);
+    if(!list.length){ box.classList.add('hidden'); box.innerHTML=''; return; }
+    box.classList.remove('hidden');
+    box.innerHTML='<div class="rt" style="letter-spacing:1.5px">现货秒发 · IN MALAYSIA<span class="rtsub">已在马来 · 下单 1–3 天到手</span></div><div class="rscroll">'+list.map(p=>
+      '<div class="ritem" style="width:96px" onclick="openSheet('+p.id+')">'+
+      '<div style="position:relative"><img style="width:96px;height:96px" src="'+esc(im(p.image_url,240))+'" referrerpolicy="no-referrer" loading="lazy" onerror="imgFB(this)" alt="">'+
+      '<span class="stchip '+(stockState(p)==='low'?'low':'in')+'" style="left:5px;bottom:5px">'+(stockState(p)==='low'?'剩'+p.stock+'件':'现货')+'</span></div>'+
+      '<div style="white-space:normal;height:27px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">'+esc(p.name_cn||'')+'</div>'+
+      (p.sell_myr!=null?'<div style="color:var(--price);font-weight:700;font-size:11px;margin-top:1px">RM'+money(p.sell_myr)+'</div>':'')+
+      '</div>').join('')+'</div>';
+  }
+  // 到货 Tab 时间线
+  function renderFeed(){
+    const box=document.getElementById('feedList'); if(!box) return;
+    _feedSeen=Date.now(); try{ localStorage.setItem('feedseen369',String(_feedSeen)); }catch(e){} updateFeedDot();
+    if(!_posts.length){
+      box.innerHTML='<div class="empty" style="padding:44px 16px"><div class="big">📦</div>还没有到货动态<br><span style="font-size:12.5px">主理人到货就会晒在这里，先去首页逛逛 →</span></div>'+srcBarHtml();
+      return;
+    }
+    box.innerHTML=_posts.map(po=>{
+      const pr=po.product_id?ALL.find(x=>x.id===po.product_id):null;
+      const phs=Array.isArray(po.photos)?po.photos.filter(Boolean).slice(0,4):[];
+      return '<div class="fpost">'+
+        '<div class="fphd"><div class="logo sm">369</div><div class="fpwho"><b>369 甄选 · 主理人</b><span>'+timeAgo(po.created_at)+(po.qty?' · 这批带回 '+po.qty+' 件':'')+'</span></div></div>'+
+        '<div class="fptx">'+esc(po.text)+'</div>'+
+        (phs.length?'<div class="fpimgs n'+phs.length+'">'+phs.map(u=>'<img src="'+esc(im(u,700))+'" referrerpolicy="no-referrer" loading="lazy" onerror="imgFB(this)" alt="">').join('')+'</div>':'')+
+        (pr?'<div class="fpprod" onclick="openSheet('+pr.id+')">'+(pr.image_url?'<img src="'+esc(im(pr.image_url,120))+'" referrerpolicy="no-referrer" onerror="imgFB(this)" alt="">':'')+
+            '<div class="fpp"><b>'+esc(pr.name_cn||'')+'</b><span>'+(pr.sell_myr!=null?'RM '+money(pr.sell_myr):'问价')+'</span></div>'+stockBadge(pr)+'<span class="go">看货 ›</span></div>'
+          :(po.pname?'<div class="fpprod" style="cursor:default"><div class="fpp"><b>'+esc(po.pname)+'</b>'+(po.pprice!=null?'<span>RM '+money(po.pprice)+'</span>':'')+'</div><span class="stok out">已下架</span></div>':''))+
+      '</div>';
+    }).join('')+srcBarHtml();
+  }
+  function srcBarHtml(){ return '<div class="srcbar" role="button" tabindex="0" onclick="openSrc()" style="margin-top:2px"><span class="si">🔎</span><div class="st"><b>没看到想要的？帮你找</b><span>说个名字/发张图 · 得物比价 + 验货报价</span></div><span class="ar">›</span></div>'; }
+  // ===== 帮我找（代寻）：落库一条 + 跳 WhatsApp 正式聊 =====
+  function openSrc(){
+    document.getElementById('srcSheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
+    track('sourcing_open'); haptic('light');
+    setTimeout(()=>{ const t=document.getElementById('srcTxt'); if(t&&!t.value) t.focus(); },250);
+  }
+  function closeSrc(){ document.getElementById('srcSheet').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
+  function srcSubmit(btn){
+    const txt=(document.getElementById('srcTxt').value||'').trim();
+    const budget=(document.getElementById('srcBudget').value||'').trim();
+    if(txt.length<2){ toast('先说说你想找什么～'); haptic('medium'); return; }
+    // 落库给店主看选品雷达；失败也不拦 WhatsApp（真正的聊天在那边）
+    try{ fetch(SUPABASE_URL+'/rest/v1/rpc/log_sourcing_369',{method:'POST',headers:headers(),body:JSON.stringify({p_ck:clientKey(),p_txt:txt,p_budget:budget||null})}).catch(()=>{}); }catch(e){}
+    track('sourcing_submit',{q:txt.slice(0,120)});
+    const msg='🔎 帮我找这个：\n'+txt+(budget?'\n预算：'+budget:'')+'\n（有图我这就发你）';
+    const a=document.createElement('a'); a.href=contactHref(msg); a.target='_blank'; a.rel='noopener'; document.body.appendChild(a); a.click(); a.remove();
+    closeSrc(); document.getElementById('srcTxt').value=''; document.getElementById('srcBudget').value='';
+    toast('已带到 WhatsApp，有截图直接发那边 📷'); haptic('medium');
+  }
+
   // 联系方式优先级：后台配的 WhatsApp → 后台配的 TG 用户名（直达聊天）→ 兜底 Telegram 分享
   function contactHref(text){
     const wa=((CFG.contact_wa||CONTACT_WA)||'').replace(/[^\d]/g,'');
@@ -1618,7 +1863,17 @@
     else list.sort((a,b)=>(b.hot?1:0)-(a.hot?1:0)); // 综合：热卖优先，其余保持最新在前
     const grid=document.getElementById('grid');
     grid.classList.toggle('anim',_fresh); _fresh=false; // 只在数据刚拉回来时做入场动画，搜索筛选时不闪
-    const hs=document.getElementById('heroSub'); if(hs) hs.textContent='PREMIUM SELECT'+(ALL.length?' · '+ALL.length+' ITEMS':'');
+    // 主理人数据行：累计带回件数（sold_count 合计）+ 真人好评分（有才显示）
+    const cm=document.getElementById('curMeta');
+    if(cm){
+      const soldN=ALL.reduce((s,p)=>s+(Number(p.sold_count)||0),0);
+      const rArr=Object.values(_rstats); const rCnt=rArr.reduce((s,x)=>s+x.cnt,0);
+      const rAvg=rCnt?(rArr.reduce((s,x)=>s+x.avg*x.cnt,0)/rCnt):0;
+      let meta='<span class="dot"></span>'+esc(CFG.curator_status||'接单中 · 看中直接下单');
+      if(soldN>0) meta+='<span style="opacity:.4">·</span>已带回 '+soldN+' 件';
+      if(rCnt>=3) meta+='<span style="opacity:.4">·</span>★'+rAvg.toFixed(1)+' 好评';
+      cm.innerHTML=meta;
+    }
     const mc=document.getElementById('meCount'); if(mc) mc.textContent=ALL.length||'—';
     renderRecent(); buildSubfilter();
     // 橱窗：无筛选时优先展示热卖；没有热卖就兜底展示最新上架，黄金位永不空着
@@ -1626,8 +1881,8 @@
     const featEl=document.getElementById('feat');
     // 首页橱窗改成可滑动轮播：热卖优先，最新补足，最多 5 张（黄金位永不空着）
     let picks=[];
-    if(!filtered&&sort==='new'){
-      const seen=new Set(), add=p=>{ if(p&&p.image_url&&!p.soldout&&!seen.has(p.id)){ seen.add(p.id); picks.push(p); } };
+    if(!filtered&&sort==='new'&&!_posts.length){ // 有到货动态时首页大位让给「最新到货」卡，轮播退场
+      const seen=new Set(), add=p=>{ if(p&&p.image_url&&!soldOut(p)&&!seen.has(p.id)){ seen.add(p.id); picks.push(p); } };
       ALL.filter(p=>p.hot).forEach(add); ALL.forEach(add);
       picks=picks.slice(0,5);
     }
@@ -1640,8 +1895,8 @@
     if(!list.length){
       // 搜索没结果：给推荐位（在售的，ALL 已按新→旧/热卖），别让顾客走
       if(q && ALL.length){
-        const sugg=ALL.filter(p=>!p.soldout&&p.image_url).slice(0,6);
-        grid.innerHTML='<div class="empty" style="padding:34px 16px 14px"><div class="big">🔍</div>没找到「'+esc(q)+'」<br><span style="font-size:12.5px">换个关键词，或看看店主推荐 👇</span></div>'+sugg.map(cardHtml).join('');
+        const sugg=ALL.filter(p=>!soldOut(p)&&p.image_url).slice(0,6);
+        grid.innerHTML='<div class="empty" style="padding:34px 16px 14px"><div class="big">🔍</div>没找到「'+esc(q)+'」<br><span style="font-size:12.5px">店里没有？主理人帮你从得物找 👇</span><br><button onclick="openSrc()" style="margin-top:12px;background:var(--ink);border:none;color:var(--onInk);border-radius:20px;padding:10px 22px;font-size:13px;font-weight:700">🔎 帮我找「'+esc(q.slice(0,12))+'」</button></div>'+sugg.map(cardHtml).join('');
         return;
       }
       const inner=ALL.length
@@ -1686,7 +1941,7 @@
     Object.keys(fav).forEach(id=>{ const p=ALL.find(x=>x.id==id); if(p) bump(p,4); });
     if(!Object.keys(bw).length&&!Object.keys(cw).length){ box.classList.add('hidden'); return; }
     const skip=new Set(recentIds.slice(0,3));
-    const scored=ALL.filter(p=>!p.soldout&&p.image_url&&!skip.has(p.id)).map(p=>{
+    const scored=ALL.filter(p=>!soldOut(p)&&p.image_url&&!skip.has(p.id)).map(p=>{
       let s=0; const b=brandOf(p); if(b&&bw[b])s+=bw[b]; if(p.category&&cw[p.category])s+=cw[p.category]*0.8; return {p,s};
     }).filter(x=>x.s>0).sort((a,b)=>b.s-a.s).slice(0,10);
     if(scored.length<2){ box.classList.add('hidden'); return; }
@@ -1703,12 +1958,14 @@
     const nImg=(p.images&&p.images.length)||0;
     const isNew=p.created_at&&(Date.now()-new Date(p.created_at).getTime())<3*86400000;
     const corner=p.hot?'<span class="hotbadge">HOT</span>':(isNewSince(p)?'<span class="newbadge">上新</span>':(isNew?'<span class="newbadge">NEW</span>':''));
+    const st=stockState(p);
+    const stchip=(st==='in')?'<span class="stchip in">现货秒发</span>':(st==='low')?'<span class="stchip low">仅剩 '+p.stock+' 件</span>':'';
     return '<div class="prod" data-id="'+p.id+'">'+
       '<div class="thumb" onclick="openSheet('+p.id+')">'+thumb(p)+
         (nImg>1?'<span class="imgbadge">'+nImg+' 图</span>':'')+corner+
         (p.video_url?'<span class="playic">▶</span>':'')+
-        favBtn(p.id)+
-        (p.soldout?'<div class="soldcover"><span>已售罄</span></div>':
+        favBtn(p.id)+stchip+
+        (soldOut(p)?'<div class="soldcover"><span>已抢完</span></div>':
           '<button class="addbtn'+(inCart?' in':'')+'" aria-label="加入心愿单" onclick="event.stopPropagation();cardAdd('+p.id+',this)">'+(inCart?'✓':'+')+'</button>')+
       '</div>'+
       '<div class="pinfo" onclick="openSheet('+p.id+')">'+
@@ -1718,7 +1975,7 @@
   }
 
   // ===== 埋点：尽力而为，绝不阻塞体验；店主自己不计（错误除外，那个要收）=====
-  const BUILD='firstscreen-v15';
+  const BUILD='curator-v16';
   let _errN=0;
   function track(t,opts){
     opts=opts||{};
@@ -1769,12 +2026,16 @@
     if(p.sold_count>0) proof.push('已售 <b>'+p.sold_count+'</b>');
     if(p.views>10) proof.push('<b>'+p.views+'</b> 人看过');
     const proofHtml=proof.length?'<div style="font-size:12px;color:var(--txt);opacity:.85;margin:3px 0 0;letter-spacing:.3px">'+proof.join(' · ')+'</div>':'';
+    // 库存四态提示行：现货讲「快」，仅剩讲「稀缺」，预订走默认节奏
+    const stx=stockState(p);
+    const stLine=(stx==='in')?'<div class="stline in">✓ 现货在马来 · 下单 1–3 天到手</div>'
+               :(stx==='low')?'<div class="stline low">🔥 这批只带回 '+p.stock+' 件 · 卖完等下批</div>':'';
     const specs=[];
     if(brandOf(p)) specs.push(['品牌',esc(brandOf(p))]);
     if(p.sku) specs.push(['货号',esc(p.sku)]);
     (p.params||[]).forEach(x=>specs.push([esc(x.k),esc(x.v)]));
     specs.push(['保障','正品保证 · 假一赔十 · 支持验货']);
-    specs.push(['配送','马来包邮 · 约 7–15 天送达']);
+    specs.push(['配送',(stx==='in'||stx==='low')?'现货在马来 · 下单 1–3 天到手':'马来包邮 · 约 7–15 天送达']);
     // 规格选择（勾选过的才会从视图里出来）
     const vs=(p.variants||[]).filter(v=>v&&v.name);
     _sheetVs=vs;
@@ -1787,7 +2048,7 @@
     document.getElementById('sheetContent').innerHTML=
       videoHtml(p)+
       galleryHtml(p)+
-      '<div class="sheet-body">'+(brandOf(p)?'<div class="sheet-brand">'+esc(brandOf(p))+'</div>':'')+'<h2>'+esc(p.name_cn||'')+'</h2>'+priceBlock+proofHtml+varHtml+
+      '<div class="sheet-body">'+(brandOf(p)?'<div class="sheet-brand">'+esc(brandOf(p))+'</div>':'')+'<h2>'+esc(p.name_cn||'')+'</h2>'+priceBlock+stLine+proofHtml+varHtml+
       '<div class="svcbox">'+
         '<div><b>正品保证</b>支持验货</div>'+
         '<div><b>假一赔十</b>放心买</div>'+
@@ -1802,14 +2063,14 @@
       sheetFavBtn(p.id)+
       '<button onclick="shareProduct('+p.id+')" style="width:100%;background:none;border:none;color:var(--sub);font-size:12.5px;font-weight:500;padding:10px;letter-spacing:1px">分享这件好物</button>'+
       '</div>'+
-      (p.soldout
-        ?'<div class="sheet-bar"><button class="sbtn add" style="opacity:.55" disabled>已售罄</button>'+
+      (soldOut(p)
+        ?'<div class="sheet-bar"><button class="sbtn add" style="opacity:.55" disabled>已抢完</button>'+
           '<a class="sbtn buy" href="'+restockHref(p)+'" target="_blank" rel="noopener" onclick="wantRestock('+p.id+')">到货喊我 🔔</a>'+
-          '<div class="sbnote">留个信息，补到货第一时间通知你</div></div>'
+          '<div class="sbnote">留个信息，下批带回第一时间通知你</div></div>'
         :'<div class="sheet-bar">'+
           '<button class="sbtn add" onclick="sheetAdd('+p.id+',this)">'+(cart[p.id]?'已在心愿单':'加入心愿单')+'</button>'+
           '<a class="sbtn buy" href="'+askHref(p)+'" target="_blank" rel="noopener">立即下单</a>'+
-          '<div class="sbnote">下单走客服确认 · 核价后再付款，无需在线支付</div>'+
+          '<div class="sbnote">'+((stx==='in'||stx==='low')?'现货直发 · 客服核价确认后付款':'下单走客服确认 · 核价后再付款，无需在线支付')+'</div>'+
         '</div>');
     const si=document.querySelector('#sheet .sheet-in'); if(si) si.scrollTop=0;
     document.getElementById('sheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
@@ -2105,7 +2366,9 @@
   function flyEffect(srcEl,tab,imgUrl){
     try{
       if(!srcEl||!srcEl.getBoundingClientRect) return;
-      const nav=document.querySelector('#nav button[data-tab="'+tab+'"]')||document.querySelector('#nav button[data-tab="list"]'); if(!nav) return;
+      // 清单挪去了首页右上角图标：心愿单飞 🛍、收藏飞 ❤（不在首页时退回底部对应 Tab）
+      const hdr=(tab==='fav')?document.querySelector('.hicons .hic:first-child'):document.getElementById('hdrBag');
+      const nav=(hdr&&hdr.offsetParent!==null)?hdr:(document.querySelector('#nav button[data-tab="'+tab+'"]')||document.querySelector('#nav button[data-tab="shop"]')); if(!nav) return;
       const s=srcEl.getBoundingClientRect(); if(!s.width) return;
       const d=nav.getBoundingClientRect();
       const fly=document.createElement('div'); fly.className='fly';
@@ -2119,21 +2382,21 @@
         {transform:'translate('+(dx*0.55)+'px,'+(dy*0.35-40)+'px) scale(.9)',opacity:1,offset:.55},
         {transform:'translate('+dx+'px,'+dy+'px) scale(.2)',opacity:.35}
       ],{duration:640,easing:'cubic-bezier(.4,0,.6,1)'});
-      anim.onfinish=()=>{ fly.remove(); const ic=nav.querySelector('.i'); if(ic){ ic.classList.remove('bump'); void ic.offsetWidth; ic.classList.add('bump'); } };
+      anim.onfinish=()=>{ fly.remove(); const ic=nav.querySelector('.i')||nav; if(ic){ ic.classList.remove('bump'); void ic.offsetWidth; ic.classList.add('bump'); } };
       setTimeout(()=>{ if(fly.parentNode) fly.remove(); },950);
     }catch(e){}
   }
   function cardAdd(id,btn){
     const p=ALL.find(x=>x.id==id); if(!p) return;
     // 有规格的货：从卡片 + 直接加会漏选尺码 → 打开详情让顾客先选规格，避免发错单
-    if(!p.soldout && (p.variants||[]).some(v=>v&&v.name)){ openSheet(id); toast('这件有规格，选一下再加入'); return; }
-    if(!p.soldout) flyEffect(btn,'cart',p.image_url?im(p.image_url,120):null);
+    if(!soldOut(p) && (p.variants||[]).some(v=>v&&v.name)){ openSheet(id); toast('这件有规格，选一下再加入'); return; }
+    if(!soldOut(p)) flyEffect(btn,'cart',p.image_url?im(p.image_url,120):null);
     addCart(id);
   }
   function favClick(btn,id){ if(!isFav(id)) flyEffect(btn,'fav',null); toggleFav(id); }
   function addCart(id){
     const p=pById(id);
-    if(p&&p.soldout){ toast('这件已售罄，问客服等补货吧'); return; }
+    if(p&&soldOut(p)){ toast('这件已抢完，点开可以留「到货喊我」'); return; }
     const pv=pickedOf(id); if(pv){ cartVar[id]=pv; localStorage.setItem('cartvar369',JSON.stringify(cartVar)); }
     cart[id]=(cart[id]||0)+1; saveCart(); haptic('light'); refreshCard(id); if(tab==='list'&&listSub==='cart')renderCart();
     track('wishlist_add',{pid:id});
@@ -3205,7 +3468,7 @@
       const r=await fetch(SUPABASE_URL+'/rest/v1/config_369?select=key,value',{headers:headers()});
       const rows=r.ok?await r.json():[];
       const m={}; rows.forEach(x=>m[x.key]=x.value||'');
-      [['noticeInput','notice'],['waInput','contact_wa'],['tgInput','contact_tg'],['giftAmtInput','gift_amt'],['giftTxtInput','gift_txt'],['refTxtInput','ref_text'],['payNoteInput','pay_note']].forEach(([id,k])=>{
+      [['noticeInput','notice'],['curStatInput','curator_status'],['waInput','contact_wa'],['tgInput','contact_tg'],['giftAmtInput','gift_amt'],['giftTxtInput','gift_txt'],['refTxtInput','ref_text'],['payNoteInput','pay_note']].forEach(([id,k])=>{
         const el=document.getElementById(id);
         if(el&&document.activeElement!==el) el.value=m[k]||'';
       });
@@ -3214,6 +3477,7 @@
   }
   async function saveSettings(){
     const kv=[['notice',document.getElementById('noticeInput').value.trim()],
+              ['curator_status',document.getElementById('curStatInput').value.trim().slice(0,40)],
               ['contact_wa',document.getElementById('waInput').value.replace(/[^\d]/g,'')],
               ['contact_tg',document.getElementById('tgInput').value.trim().replace(/^@/,'')],
               ['gift_amt',document.getElementById('giftAmtInput').value.replace(/[^\d.]/g,'')],
@@ -3226,6 +3490,88 @@
       toast('设置已保存 ✅'); haptic('medium');
       kv.forEach(([k,v])=>CFG[k]=v); setNotice(CFG.notice||''); applyContact();
     } else toast('部分保存失败，重试一下');
+  }
+  // ===== 到货动态发布（店主端 → feed-369，照片沿用 product-369 桶通道，前缀 fd）=====
+  let _fdShots=[],_fdRows=[];
+  function toggleFeedCard(){
+    const b=document.getElementById('feedBody'); b.classList.toggle('hidden');
+    document.getElementById('feedArrow').textContent=b.classList.contains('hidden')?'▼':'▲';
+    if(!b.classList.contains('hidden')){ fdFillProds(); fdLoadList(); }
+  }
+  function fdFillProds(){
+    const sel=document.getElementById('fdProd'); if(!sel) return;
+    const cur=sel.value;
+    sel.innerHTML='<option value="">不关联</option>'+(AROWS||[]).filter(p=>p.status==='已上架').map(p=>'<option value="'+p.id+'">'+esc((p.name_cn||'').slice(0,30))+(p.sell_myr!=null?' · RM'+money(p.sell_myr):'')+'</option>').join('');
+    if(cur) sel.value=cur;
+  }
+  function fdThumbsR(){ const box=document.getElementById('fdThumbs'); if(box) box.innerHTML=_fdShots.map((u,i)=>'<div class="rt2"><img src="'+esc(im(u,200))+'" referrerpolicy="no-referrer" onerror="this.style.opacity=.25"><button onclick="fdRm('+i+')">✕</button></div>').join(''); }
+  function fdRm(i){ _fdShots.splice(i,1); fdThumbsR(); }
+  async function fdUpload(inp){
+    const files=[...(inp.files||[])].slice(0,Math.max(0,4-_fdShots.length));
+    if(!files.length){ inp.value=''; if(_fdShots.length>=4) toast('最多 4 张'); return; }
+    const txt=document.getElementById('fdUpTxt'), old=txt.innerHTML; let ok=0;
+    try{
+      for(let i=0;i<files.length;i++){
+        txt.innerHTML='<span class="spin"></span> 上传中 '+(i+1)+'/'+files.length+'…';
+        const f=await downscale(files[i],1400);
+        const path='fd'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)+'.jpg';
+        const r=await fetch(SUPABASE_URL+'/storage/v1/object/product-369/'+path,{method:'POST',
+          headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Content-Type':f.type||'image/jpeg','x-upsert':'true'},body:f});
+        if(!r.ok) throw new Error('第'+(i+1)+'张上传失败('+r.status+')');
+        _fdShots.push(SUPABASE_URL+'/storage/v1/object/public/product-369/'+path); ok++;
+      }
+      fdThumbsR(); toast('已传 '+ok+' 张 ✅'); haptic('light');
+    }catch(e){ fdThumbsR(); toast(String(e&&e.message||e)); }
+    finally{ txt.innerHTML=old; inp.value=''; }
+  }
+  async function fdPublish(btn){
+    const text=(document.getElementById('fdText').value||'').trim();
+    if(!text){ toast('写一句到货说明～'); return; }
+    const pid=document.getElementById('fdProd').value||null;
+    const qty=(document.getElementById('fdQty').value||'').trim();
+    const sync=document.getElementById('fdSync').checked;
+    const old=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="spin"></span> 发布中…';
+    try{
+      const body={action:'postNew',text:text,photos:_fdShots.slice(0,4)};
+      if(pid) body.product_id=Number(pid);
+      if(qty&&Number.isFinite(Number(qty))) body.qty=Math.floor(Number(qty));
+      if(pid&&sync&&qty&&Number.isFinite(Number(qty))) body.stock=Math.floor(Number(qty)); // 到货数顺手写成现货库存
+      const r=await fetch(FN+'/feed-369',{method:'POST',headers:{...fnHeaders(),'x-admin-pin':getPin()},body:JSON.stringify(body)}).then(x=>x.json());
+      if(!r.ok) throw new Error(r.error||'发布失败');
+      toast('已发布 ✅ 店面立刻可见'); haptic('medium');
+      document.getElementById('fdText').value=''; document.getElementById('fdQty').value=''; _fdShots=[]; fdThumbsR();
+      fdLoadList(); loadFeed(); if(pid&&sync) loadAdmin();
+    }catch(e){ toast(String(e&&e.message||e)); }
+    finally{ btn.disabled=false; btn.innerHTML=old; }
+  }
+  async function fdLoadList(){
+    const box=document.getElementById('fdList'); if(!box) return;
+    box.innerHTML='<div class="hint">加载动态…</div>';
+    try{
+      const r=await fetch(FN+'/feed-369',{method:'POST',headers:{...fnHeaders(),'x-admin-pin':getPin()},body:JSON.stringify({action:'postList'})}).then(x=>x.json());
+      if(!r.ok) throw 0; _fdRows=r.rows||[];
+      if(!_fdRows.length){ box.innerHTML='<div class="hint">还没发过动态。今天到什么货，拍一张发一条 👆</div>'; return; }
+      box.innerHTML='<div class="sec-title"><span>已发动态（最近 30 条）</span></div>'+_fdRows.map((po,i)=>
+        '<div style="display:flex;gap:9px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)'+(po.active?'':';opacity:.45')+'">'+
+        ((po.photos&&po.photos[0])?'<img src="'+esc(im(po.photos[0],120))+'" style="width:38px;height:38px;border-radius:8px;object-fit:cover;flex:0 0 auto" referrerpolicy="no-referrer" onerror="this.style.opacity=.2" alt="">':'<span style="font-size:19px">📦</span>')+
+        '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(po.text)+'</div>'+
+        '<div style="font-size:10.5px;color:var(--sub)">'+timeAgo(po.created_at)+(po.pname?' · '+esc(String(po.pname).slice(0,14)):'')+(po.qty?' · '+po.qty+'件':'')+(po.active?'':' · 已下架')+'</div></div>'+
+        '<button class="mini ghost" title="复制文案发 Status" onclick="fdCopy('+i+')">📋</button>'+
+        (po.active?'<button class="mini ghost" style="color:var(--bad)" onclick="fdDel(\''+po.id+'\')">下架</button>':'')+
+        '</div>').join('');
+    }catch(e){ box.innerHTML='<div class="hint">动态加载失败，收起再展开重试</div>'; }
+  }
+  async function fdDel(id){
+    if(!confirm('下架这条动态？店面将不再显示')) return;
+    const r=await fetch(FN+'/feed-369',{method:'POST',headers:{...fnHeaders(),'x-admin-pin':getPin()},body:JSON.stringify({action:'postDel',id:id})}).then(x=>x.json()).catch(()=>null);
+    if(r&&r.ok){ toast('已下架'); fdLoadList(); loadFeed(); } else toast('下架失败，再试一次');
+  }
+  function fdCopy(i){
+    const po=_fdRows[i]; if(!po) return;
+    let t=po.text;
+    if(po.pname) t+='\n👉 '+po.pname+(po.pprice!=null?' · RM'+money(po.pprice):'');
+    t+='\n下单/问价直接回我，或进小店看图：'+location.origin+location.pathname+(po.product_id?'?p='+po.product_id:'');
+    if(navigator.clipboard){ navigator.clipboard.writeText(t).then(()=>toast('文案已复制，去发 WhatsApp Status 📲')).catch(()=>toast('复制失败，长按手动复制')); } else toast('浏览器不支持一键复制');
   }
   // ===== 从得物动态导入买家秀 =====
   let _trend=null, _trendPick=new Set();
@@ -3521,6 +3867,7 @@
           '<label style="display:flex;gap:6px;align-items:center;margin:0;color:var(--txt);font-size:13.5px"><input type="checkbox" id="e_hot" style="width:auto;accent-color:#ff7a00"'+(p.hot?' checked':'')+'>🔥 热卖</label>'+
           '<label style="display:flex;gap:6px;align-items:center;margin:0;color:var(--txt);font-size:13.5px"><input type="checkbox" id="e_soldout" style="width:auto;accent-color:var(--bad)"'+(p.soldout?' checked':'')+'>售罄</label>'+
         '</div></div></div>'+
+      '<div class="fld"><label>📦 现货数量（留空=预订款不限量 · 填 0=已抢完 · 记一单成交自动减 1）</label><input id="e_stock" type="number" inputmode="numeric" min="0" value="'+v(p.stock)+'" placeholder="留空 = 预订 7–14 天"></div>'+
       '<div class="fld"><label>🎬 主图视频（选填 · 直链 .mp4，填了详情页顶部会播放）</label><input id="e_video" value="'+v(p.video_url)+'" placeholder="https://….mp4"></div>'+
       ((p.params&&p.params.length)?'<div class="fld"><label>商品参数（勾选的才在店面显示）</label><div style="background:var(--card2);border-radius:10px;padding:6px 10px">'+
         p.params.map((x,i)=>'<label class="ckrow"><input type="checkbox" class="pk" data-i="'+i+'"'+(x.on?' checked':'')+'><span>'+esc(x.k)+'：'+esc(x.v)+'</span></label>').join('')+'</div></div>':'')+
@@ -3657,6 +4004,7 @@
       soldout:document.getElementById('e_soldout').checked,
       category:document.getElementById('e_cat').value||null,
       video_url:(document.getElementById('e_video').value||'').trim()||null,
+      stock:num(document.getElementById('e_stock').value), // null=不限量，服务端会钳成非负整数
     };
     fields.review_shots=_rvShots.length?_rvShots:null;
     const p0=AROWS.find(x=>x.id===id);
