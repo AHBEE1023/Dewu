@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: figma-v17 -->
+<!-- build: figma-v18 -->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -886,6 +886,92 @@
   #nav{background:var(--warm);border-top:1px solid var(--line)}
   #nav button{color:var(--sub)}
   #nav button.on{color:var(--gold)}
+  /* —— B9 物流剧场 —— */
+  .etacard{background:var(--ink);border-radius:18px;padding:15px 17px;color:var(--onInk);margin:0 0 16px;overflow:hidden}
+  .etacard .el{font-size:11px;color:#B8AD9C;font-weight:600;letter-spacing:.5px}
+  .etacard .erow{display:flex;align-items:center;gap:9px;margin-top:3px}
+  .etacard .ed{font-family:var(--serif);font-size:23px;font-weight:700;color:#EADFC6;flex:1;min-width:0;line-height:1.2}
+  .etacard .ep{background:var(--gold);color:#fff;font-size:11px;font-weight:800;border-radius:999px;padding:3.5px 11px;flex:0 0 auto}
+  .etacard .ebar{height:6px;background:#3A3126;border-radius:3px;margin-top:13px;overflow:hidden}
+  .etacard .ebar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),#D9BF8C);border-radius:3px}
+  .tl{padding:4px 0 0}
+  .tlstep{position:relative;padding:0 0 22px 31px}
+  .tlstep:before{content:'';position:absolute;left:9px;top:22px;bottom:0;width:2px;background:var(--line)}
+  .tlstep:last-child:before{display:none}
+  .tlstep.done:before{background:color-mix(in srgb,var(--ok) 45%,var(--line))}
+  .tldot{position:absolute;left:0;top:0;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
+  .tlstep.done .tldot{background:var(--ok);color:#fff}
+  .tlstep.cur .tldot{background:var(--gold);color:#fff;box-shadow:0 0 0 4px var(--goldSoft)}
+  .tlstep.todo .tldot{background:var(--card2);color:var(--sub)}
+  .tlstep .tt{font-size:14px;font-weight:800;display:flex;align-items:baseline;gap:8px}
+  .tlstep.todo .tt{color:var(--sub);font-weight:600}
+  .tlstep .tt .tta{margin-left:auto;font-size:10.5px;color:var(--sub);font-weight:500;flex:0 0 auto}
+  .tlstep .tsx{font-size:11.5px;color:var(--sub);margin-top:2px;line-height:1.5}
+  .trknote{background:var(--goldSoft);border:1px dashed var(--gold);border-radius:13px;padding:10.5px 13px;font-size:11.5px;color:var(--gold);font-weight:700;line-height:1.6;margin-top:2px}
+  .trknote u{cursor:pointer}
+  .otrack{display:flex;align-items:center;width:100%;background:var(--card2);border:none;border-radius:10px;padding:8.5px 12px;margin:8px 0 2px;font-size:12px;font-weight:800;color:var(--txt);text-align:left;gap:7px}
+  .otrack .ar{margin-left:auto;color:var(--sub);font-weight:600}
+  /* —— B10 安心首单 / B5 送礼 共用大标 —— */
+  .fotitle{font-family:var(--serif);font-weight:700;font-size:26px;line-height:1.32;margin:0}
+  .fotitle .g{color:var(--gold)}
+  .fosub{margin:7px 0 0;font-size:12px;color:var(--sub);line-height:1.6}
+  .folist{background:var(--card);border:1px solid var(--line);border-radius:16px;margin-top:16px;overflow:hidden}
+  .forow{display:flex;gap:11px;padding:13px 15px;border-bottom:1px solid var(--line);align-items:flex-start}
+  .forow:last-child{border-bottom:none}
+  .forow .fi{font-size:18px;flex:0 0 auto;line-height:1.2}
+  .forow b{display:block;font-size:14px}
+  .forow span{display:block;font-size:11.5px;color:var(--sub);margin-top:2px;line-height:1.5}
+  .fogift{margin-top:12px;background:var(--goldSoft);border:1px dashed var(--gold);border-radius:14px;padding:12px 14px}
+  .fogift b{display:block;font-size:13px;color:var(--gold)}
+  .fogift span{display:block;font-size:11px;color:var(--sub);margin-top:3px;line-height:1.5}
+  .fosteps{display:flex;gap:9px;margin-top:12px}
+  .fostep{flex:1;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:12px 6px;text-align:center}
+  .fostep i{font-style:normal;display:inline-flex;width:21px;height:21px;border-radius:50%;background:var(--ink);color:var(--onInk);font-size:11px;font-weight:800;align-items:center;justify-content:center}
+  .fostep b{display:block;font-size:11px;margin-top:6px}
+  .focta{width:100%;background:var(--ink);color:var(--onInk);border:none;border-radius:14px;padding:14.5px;font-size:15px;font-weight:800;letter-spacing:1px;margin-top:15px}
+  .focta:active{transform:scale(.98)}
+  .foask{display:block;width:100%;background:none;border:1.5px solid var(--ok);color:var(--ok);border-radius:14px;padding:12px;font-size:13px;font-weight:800;margin-top:10px;text-align:center;text-decoration:none;box-sizing:border-box}
+  .fofoot{margin:13px 0 0;text-align:center;font-size:11px;color:var(--sub)}
+  .fofoot u{color:var(--gold);cursor:pointer;font-weight:700}
+  /* —— B11 晒单墙 —— */
+  .wstats{display:flex;gap:9px;margin:0 0 14px}
+  .wstat{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 5px;text-align:center}
+  .wstat b{display:block;font-family:var(--serif);font-size:20px;color:var(--txt);line-height:1.1}
+  .wstat span{display:block;font-size:10px;color:var(--sub);margin-top:3px}
+  .wall{column-count:2;column-gap:10px}
+  .wcard{break-inside:avoid;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:10px}
+  .wcard img{width:100%;display:block;background:var(--card2);object-fit:cover}
+  .wcard .wb{padding:9px 11px 11px}
+  .wcard .wq{font-size:12px;line-height:1.55;font-weight:600;word-break:break-word}
+  .wcard .wm{font-size:10.5px;color:var(--sub);margin-top:5px}
+  .wcard .wm .stars{color:var(--gold);letter-spacing:1px}
+  .wcard .wp{display:inline-block;background:var(--card2);border-radius:999px;padding:3px 10px;font-size:10px;font-weight:700;margin-top:7px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* —— B5 送礼 —— */
+  .gfchips{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}
+  .gfchip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;color:var(--txt)}
+  .gfchip.on{background:var(--ink);color:var(--onInk);border-color:var(--ink)}
+  .gfgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:13px}
+  .gfcard{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer}
+  .gfcard .gi{position:relative;height:110px;background:var(--card2)}
+  .gfcard .gi img{width:100%;height:100%;object-fit:cover;display:block}
+  .gfcard .gi .fchip{position:absolute;left:7px;top:7px}
+  .gfcard .gb{padding:8px 11px 10px}
+  .gfcard .gb b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gfcard .gb i{font-style:normal;color:var(--price);font-weight:800;font-size:13px}
+  .gfcard .gb span{display:block;font-size:10px;color:var(--sub);margin-top:2px}
+  .gfopts{background:var(--card);border:1px solid var(--line);border-radius:16px;margin-top:14px;overflow:hidden}
+  .gfopt{display:flex;gap:11px;align-items:center;padding:12.5px 14px;border-bottom:1px solid var(--line)}
+  .gfopt:last-child{border-bottom:none}
+  .gfopt .fi{font-size:17px;flex:0 0 auto}
+  .gfopt .gm{flex:1;min-width:0}
+  .gfopt b{display:block;font-size:13.5px}
+  .gfopt span{display:block;font-size:11px;color:var(--sub);margin-top:1px;line-height:1.45}
+  .gswitch{width:44px;height:26px;border-radius:13px;background:var(--card2);border:1px solid var(--line);position:relative;flex:0 0 auto;cursor:pointer;transition:background .18s;padding:0}
+  .gswitch:after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);transition:left .18s}
+  .gswitch.on{background:var(--ok);border-color:var(--ok)}
+  .gswitch.on:after{left:20px}
+  .giftrow{display:flex;align-items:center;gap:8px;margin:13px 0 0;background:var(--goldSoft);border-radius:12px;padding:9px 13px;font-size:12px;font-weight:700;color:var(--gold);cursor:pointer}
+  .giftrow .ar{margin-left:auto}
   /* figma-v17:B1 稿上没有的旧元素全部下线(功能代码保留) */
   #tipbar,#notice,#campBanner,.searchwrap,#seg,#subfilter,#recent,#feat,#foryou{display:none!important}
 </style>
@@ -983,8 +1069,9 @@
     <div class="mcard hidden" id="pushCard" style="cursor:pointer"></div>
     <div class="melist">
       <div class="mli" onclick="changePwPrompt()"><span class="mi2">🔑</span><b>修改密码</b><span class="ar2">›</span></div>
-      <div class="mli"><span class="mi2">🛡️</span><b>正品保障</b><span class="sub2">件件正品 · 假一赔十</span></div>
-      <div class="mli"><span class="mi2">🚚</span><b>马来包邮</b><span class="sub2">下单 7–15 天到手</span></div>
+      <div class="mli" onclick="openFo()"><span class="mi2">🛡️</span><b>第一次找代购？</b><span class="sub2">风险我来担</span></div>
+      <div class="mli" onclick="openWall()"><span class="mi2">📸</span><b>晒单墙</b><span class="sub2">真实到手实拍</span></div>
+      <div class="mli" onclick="openGift()"><span class="mi2">🎁</span><b>送礼模式</b><span class="sub2">按场景挑 · 代包装</span></div>
       <div class="mli" onclick="toggleMeFaq()"><span class="mi2">❓</span><b>常见问题</b><span class="ar2" id="faqArrow">›</span></div>
       <div class="mli" onclick="shareShop()"><span class="mi2">↗</span><b>分享店铺</b><span class="ar2">›</span></div>
     </div>
@@ -1041,6 +1128,8 @@
       <input class="asearch" id="srcProofTitleInput" maxlength="30" placeholder="本周帮 12 位姐妹找到了" style="margin-bottom:0">
       <label style="margin-top:10px">📋 帮我找·战绩清单（逗号分隔，最多 8 个）</label>
       <input class="asearch" id="srcProofItemsInput" maxlength="200" placeholder="三丽鸥断货挂件, 日版 Switch2, MAC 断色口红" style="margin-bottom:0">
+      <label style="margin-top:10px">🎀 礼盒包装收费（RM，送礼模式里展示；留空=面议）</label>
+      <input class="asearch" id="giftBoxFeeInput" inputmode="numeric" maxlength="5" placeholder="15" style="margin-bottom:0">
       <label style="margin-top:10px">💬 WhatsApp 号（如 60123456789 — 填了顾客下单/问价直达你）</label>
       <input class="asearch" id="waInput" inputmode="numeric" placeholder="60123456789" style="margin-bottom:0">
       <label style="margin-top:10px">✈️ Telegram 用户名（不带 @；WhatsApp 留空时顾客走这里）</label>
@@ -1282,6 +1371,31 @@
     </div>
   </div>
 
+  <!-- 物流剧场(B9) -->
+  <div class="sheet" id="trackSheet" onclick="if(event.target===this)closeTrack()">
+    <div class="sheet-in"><div class="close"><button onclick="closeTrack()" aria-label="关闭">✕</button></div>
+      <div style="padding:6px 18px calc(22px + var(--safe-b))" id="trackContent"></div>
+    </div>
+  </div>
+  <!-- 安心首单(B10) -->
+  <div class="sheet" id="foSheet" onclick="if(event.target===this)closeFo()">
+    <div class="sheet-in"><div class="close"><button onclick="closeFo()" aria-label="关闭">✕</button></div>
+      <div style="padding:6px 18px calc(22px + var(--safe-b))" id="foContent"></div>
+    </div>
+  </div>
+  <!-- 晒单墙(B11) -->
+  <div class="sheet" id="wallSheet" onclick="if(event.target===this)closeWall()">
+    <div class="sheet-in"><div class="close"><button onclick="closeWall()" aria-label="关闭">✕</button></div>
+      <div style="padding:6px 18px calc(22px + var(--safe-b))" id="wallContent"></div>
+    </div>
+  </div>
+  <!-- 送礼模式(B5) -->
+  <div class="sheet" id="giftSheet" onclick="if(event.target===this)closeGift()">
+    <div class="sheet-in"><div class="close"><button onclick="closeGift()" aria-label="关闭">✕</button></div>
+      <div style="padding:6px 18px calc(22px + var(--safe-b))" id="giftContent"></div>
+    </div>
+  </div>
+
   <!-- 全屏看图（可左右滑动切换） -->
   <div id="lightbox" onclick="closeLightbox()">
     <button class="lbx" onclick="closeLightbox()" aria-label="关闭">✕</button>
@@ -1406,6 +1520,10 @@
     if(on('sharelay')){ closeShare(); return; }
     if(on('acctSheet')){ closeAcct(); return; }
     if(on('srcSheet')){ closeSrc(); return; }
+    if(on('trackSheet')){ closeTrack(); return; }
+    if(on('foSheet')){ closeFo(); return; }
+    if(on('wallSheet')){ closeWall(); return; }
+    if(on('giftSheet')){ closeGift(); return; }
     if(on('gbSheet')){ closeGb(); return; }
     if(on('revSheet')){ closeRev(); return; }
     if(on('salesSheet')){ closeSales(); return; }
@@ -1416,7 +1534,7 @@
   }
   function anyOverlay(){
     const on=(id)=>{ const el=document.getElementById(id); return !!el&&el.classList.contains('show'); };
-    return on('lightbox')||on('sentlay')||on('sharelay')||on('acctSheet')||on('srcSheet')||on('gbSheet')||on('revSheet')||on('salesSheet')||on('edit')||on('sheet');
+    return on('lightbox')||on('sentlay')||on('sharelay')||on('acctSheet')||on('srcSheet')||on('trackSheet')||on('foSheet')||on('wallSheet')||on('giftSheet')||on('gbSheet')||on('revSheet')||on('salesSheet')||on('edit')||on('sheet');
   }
   // 浏览器/安卓返回键关弹层：开弹层压一条历史，back 弹出时关掉最上层；✕ 关闭时把那条历史消化掉
   let _ovPushed=false,_ovIgnorePop=false;
@@ -1440,7 +1558,7 @@
   // role=button 的元素支持 Enter/空格 触发（chips、FAQ、联想等非原生按钮）
   document.addEventListener('keydown',(e)=>{ if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.matches&&e.target.matches('[role="button"]')){ e.preventDefault(); e.target.click(); } });
   // 键盘 Esc 关弹层（无障碍 / 桌面端）
-  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ const on=(id)=>document.getElementById(id).classList.contains('show'); if(on('lightbox')||on('sentlay')||on('sharelay')||on('acctSheet')||on('srcSheet')||on('gbSheet')||on('revSheet')||on('salesSheet')||on('edit')||on('sheet')) handleBack(); } });
+  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ const on=(id)=>document.getElementById(id).classList.contains('show'); if(on('lightbox')||on('sentlay')||on('sharelay')||on('acctSheet')||on('srcSheet')||on('trackSheet')||on('foSheet')||on('wallSheet')||on('giftSheet')||on('gbSheet')||on('revSheet')||on('salesSheet')||on('edit')||on('sheet')) handleBack(); } });
 
   // ===== 后台隐藏入口：连点 logo 5 次才显示「后台」按钮，顾客看不到 =====
   let adminEntry = localStorage.getItem('a369_entry')==='1';
@@ -1845,6 +1963,150 @@
     toast('已发给主理人 ✅ 截图直接发 WhatsApp'); haptic('medium');
   }
 
+  // ===== B9 物流剧场:订单追踪页 =====
+  const TRACK_FLOW=['已发送','已确认','已付款','已采购','运输中','已到手'];
+  const TRACK_SUB={'已发送':'订单已送达主理人,等确认','已确认':'主理人已接单 · 核价中','已付款':'款项已确认 · 排进采购单','已采购':'已买到 · 附小票/实拍留档','运输中':'国际段 · 一般 5–8 天,中途几天不动很正常','已到手':'签收完成 · 欢迎晒单 🤍'};
+  function openTrack(ts){
+    const o=(_ordersView||mergedOrders()).find(x=>String(x.ts)===String(ts)); if(!o) return;
+    const box=document.getElementById('trackContent'); if(!box) return;
+    const canceled=(o.status||'')==='已取消';
+    const idx=Math.max(0,TRACK_FLOW.indexOf(o.status||'已发送'));
+    const pct=canceled?0:Math.round(idx/(TRACK_FLOW.length-1)*100);
+    // 预计到手:下单日 +7 ~ +15 天(现货件后台会更快,这里给区间)
+    const d0=new Date(o.ts+7*86400e3), d1=new Date(o.ts+15*86400e3);
+    const fd=(d)=>(d.getMonth()+1)+'月'+d.getDate()+'日';
+    const eta=canceled?'已取消':(o.status==='已到手'?'已送达 ✓':fd(d0)+' – '+fd(d1));
+    const steps=canceled
+      ? '<div class="tlstep cur"><div class="tldot">✕</div><div class="tt">已取消</div><div class="tsx">有疑问随时找主理人</div></div>'
+      : TRACK_FLOW.map((st,i)=>{
+          const cls=i<idx?'done':(i===idx?'cur':'todo');
+          const mark=i<idx?'✓':(i===idx?'●':(i+1));
+          const when=(i===idx&&o.srv)?'<span class="tta">'+fmtDate(o.ts)+' 下单</span>':'';
+          const sub=(i<=idx)?('<div class="tsx">'+esc(TRACK_SUB[st]||'')+((st==='运输中'&&i===idx&&o.note)?'':'')+'</div>'):'';
+          return '<div class="tlstep '+cls+'"><div class="tldot">'+mark+'</div><div class="tt">'+esc(st)+when+'</div>'+sub+'</div>';
+        }).join('');
+    box.innerHTML='<div class="srchd"><b>‹ 订单 '+esc(o.no)+'</b><span>TRACKING</span></div>'+
+      '<div class="etacard"><div class="el">预计到手</div><div class="erow"><div class="ed">'+eta+'</div>'+(canceled?'':'<span class="ep">已走 '+pct+'%</span>')+'</div><div class="ebar"><i style="width:'+Math.max(4,pct)+'%"></i></div></div>'+
+      '<div class="tl">'+steps+'</div>'+
+      (o.note?'<div class="trknote">单号 '+esc(o.note)+' · <u onclick="copyTrackNo(\''+jesc(o.note)+'\')">复制</u> · 一般 5–8 天,中途几天不动很正常,别慌</div>'
+             :(canceled?'':'<div class="trknote">主理人发货后会把单号填在这里 · 有任何问题直接 WhatsApp 问</div>'));
+    document.getElementById('trackSheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
+    track('track_open');
+  }
+  function copyTrackNo(t){ if(navigator.clipboard){ navigator.clipboard.writeText(t).then(()=>toast('单号已复制 ✅')).catch(()=>toast(t)); } else toast(t); }
+  function closeTrack(){ document.getElementById('trackSheet').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
+
+  // ===== B10 安心首单 =====
+  function openFo(){
+    const box=document.getElementById('foContent'); if(!box) return;
+    const soldN=ALL.reduce((s,p)=>s+(Number(p.sold_count)||0),0);
+    const refTxt=(CFG.ref_text||'').trim();
+    box.innerHTML='<div class="srchd"><b>‹ 第一次找代购？</b><span>FIRST ORDER</span></div>'+
+      '<h2 class="fotitle">第一单，<br><span class="g">风险我来担。</span></h2>'+
+      '<div class="folist">'+
+        '<div class="forow"><span class="fi">🛡️</span><div><b>假一赔十</b><span>发货前拍验货视频给你，确认了才发</span></div></div>'+
+        '<div class="forow"><span class="fi">💳</span><div><b>核价后才付款</b><span>先发单不用付钱，客服报完总价你确认再转账</span></div></div>'+
+        '<div class="forow"><span class="fi">📷</span><div><b>到手 48h 内有问题</b><span>拍照给主理人，坏损错漏包退包换</span></div></div>'+
+      '</div>'+
+      (refTxt?'<div class="fogift"><b>🎁 首单邀请有礼</b><span>'+esc(refTxt)+'</span></div>':'')+
+      '<div class="fosteps">'+
+        '<div class="fostep"><i>1</i><b>挑货加清单</b></div>'+
+        '<div class="fostep"><i>2</i><b>发给主理人核价</b></div>'+
+        '<div class="fostep"><i>3</i><b>确认才付款</b></div>'+
+      '</div>'+
+      '<button class="focta" onclick="closeFo();setTab(\'shop\')">放心逛 · 挑第一件 →</button>'+
+      '<a class="foask" href="'+contactHref('你好,第一次找你代购,想先问几个问题 🙂')+'" target="_blank" rel="noopener">💬 有顾虑？先问问主理人</a>'+
+      (soldN>=10?'<p class="fofoot">已有 '+soldN.toLocaleString()+' 单送达马来各地 · 详见<u onclick="closeFo();openWall()">「晒单墙」</u></p>':'');
+    document.getElementById('foSheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
+    track('firstorder_open');
+  }
+  function closeFo(){ document.getElementById('foSheet').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
+
+  // ===== B11 晒单墙 =====
+  let _wallRows=null;
+  async function openWall(){
+    const box=document.getElementById('wallContent'); if(!box) return;
+    document.getElementById('wallSheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
+    box.innerHTML='<div class="srchd"><b>‹ 晒单墙</b><span>DELIVERED</span></div><div class="empty" style="padding:30px 0"><div class="big">⏳</div>正在搬来实拍…</div>';
+    if(!_wallRows){
+      try{
+        const r=await fetch(SUPABASE_URL+'/rest/v1/reviews_369_pub?select=product_id,rating,body,nickname,photo,created_at&order=created_at.desc&limit=40',{headers:headers()});
+        _wallRows=r.ok?await r.json():[];
+      }catch(e){ _wallRows=[]; }
+    }
+    renderWall(); track('wall_open');
+  }
+  function renderWall(){
+    const box=document.getElementById('wallContent'); if(!box) return;
+    const rows=Array.isArray(_wallRows)?_wallRows:[];
+    const soldN=ALL.reduce((s,p)=>s+(Number(p.sold_count)||0),0);
+    const rArr=Object.values(_rstats); const rCnt=rArr.reduce((s,x)=>s+x.cnt,0);
+    const rAvg=rCnt?(rArr.reduce((s,x)=>s+x.avg*x.cnt,0)/rCnt):0;
+    const stars=(n)=>'<span class="stars">'+'★'.repeat(Math.max(1,Math.round(n||5)))+'</span>';
+    const cards=rows.map(rv=>{
+      const p=rv.product_id?ALL.find(x=>x.id===rv.product_id):null;
+      return '<div class="wcard">'+(rv.photo?'<img src="'+esc(im(rv.photo,400))+'" referrerpolicy="no-referrer" loading="lazy" onerror="this.remove()" alt="">':'')+
+        '<div class="wb">'+(rv.body?'<div class="wq">“'+esc(rv.body)+'”</div>':'')+
+        '<div class="wm">'+esc(rv.nickname||'顾客')+' '+stars(rv.rating)+'</div>'+
+        (p?'<span class="wp">'+esc((p.name_cn||'').slice(0,14))+'</span>':'')+
+        '</div></div>';
+    }).join('');
+    box.innerHTML='<div class="srchd"><b>‹ 晒单墙</b><span>DELIVERED</span></div>'+
+      '<div class="wstats">'+
+        '<div class="wstat"><b>'+(soldN>=10?soldN.toLocaleString():'—')+'</b><span>单已送达</span></div>'+
+        '<div class="wstat"><b>'+(rCnt?('★'+rAvg.toFixed(1)):'—')+'</b><span>平均评分</span></div>'+
+        '<div class="wstat"><b>'+(rCnt||'—')+'</b><span>条真实晒单</span></div>'+
+      '</div>'+
+      (cards?'<div class="wall">'+cards+'</div>'
+            :'<div class="empty" style="padding:34px 0"><div class="big">📸</div>晒单墙刚砌好<br><span style="font-size:12.5px">第一批到手实拍马上就来</span></div>')+
+      '<div class="trknote" style="margin-top:12px;cursor:pointer" onclick="closeWall();setTab(\'orders\')">📷 晒你的到手实拍，下一单更优惠 —— 到「订单」里对着已到手的货点「评价」就行</div>';
+  }
+  function closeWall(){ document.getElementById('wallSheet').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
+
+  // ===== B5 送礼模式 =====
+  const GIFT_SCENES=[['bday','🎂 生日急救',/玩偶|毛绒|公仔|挂件|盲盒|jellycat|labubu/i],['comfort','🫂 安慰闺蜜',/玩偶|毛绒|安抚|香|杯/i],['baby','🍼 满月礼',/婴|儿童|安抚|baby/i],['self','🏆 犒赏自己',/包|表|杯|香水|饰品/i],['anniv','🎁 纪念日',/.*/]];
+  let _gfScene='bday';
+  let _gift={box:false,card:false,direct:false};
+  try{ _gift=Object.assign(_gift,JSON.parse(localStorage.getItem('gift369')||'{}')); }catch(e){}
+  function giftOptsText(){
+    const on=[]; if(_gift.box) on.push('🎀 要礼盒包装'+(CFG.gift_box_fee?'(+RM'+CFG.gift_box_fee+')':''));
+    if(_gift.card) on.push('✍️ 要手写贺卡'); if(_gift.direct) on.push('📮 直接寄给收礼人,价签拆掉');
+    return on.length?('\n— 送礼选项 —\n'+on.join('\n')):'';
+  }
+  function openGift(){
+    renderGiftSheet();
+    document.getElementById('giftSheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
+    track('gift_open');
+  }
+  function gfSet(k){ _gfScene=k; renderGiftSheet(); haptic('light'); }
+  function gToggle(k){ _gift[k]=!_gift[k]; try{ localStorage.setItem('gift369',JSON.stringify(_gift)); }catch(e){} renderGiftSheet(); haptic('light'); }
+  function renderGiftSheet(){
+    const box=document.getElementById('giftContent'); if(!box) return;
+    const sc=GIFT_SCENES.find(x=>x[0]===_gfScene)||GIFT_SCENES[0];
+    const pool=ALL.filter(p=>!soldOut(p)&&p.image_url&&sc[2].test((p.name_cn||'')+' '+(p.brand||'')+' '+(p.category||'')));
+    const picks=(pool.length?pool:ALL.filter(p=>!soldOut(p)&&p.image_url)).slice(0,6);
+    const chips=GIFT_SCENES.map(x=>'<span class="gfchip'+(x[0]===_gfScene?' on':'')+'" onclick="gfSet(\''+x[0]+'\')">'+x[1]+'</span>').join('');
+    const cards=picks.map(p=>{
+      const rs=_rstats[p.id];
+      const sub=rs&&rs.cnt>0?('★'.repeat(Math.max(1,Math.round(rs.avg)))+' '+rs.cnt+' 条好评'):(p.sold_count>0?('已送出 '+p.sold_count+' 份'):'主理人亲选');
+      return '<div class="gfcard" onclick="closeGift();openSheet('+p.id+')">'+
+        '<div class="gi"><img src="'+esc(im(p.image_url,300))+'" referrerpolicy="no-referrer" loading="lazy" onerror="imgFB(this)" alt=""><span class="fchip gold">🎁 送礼热选</span></div>'+
+        '<div class="gb"><b>'+esc(p.name_cn||'')+'</b>'+(p.sell_myr!=null?'<i>RM'+money(p.sell_myr)+'</i>':'')+'<span>'+sub+'</span></div></div>';
+    }).join('');
+    box.innerHTML='<div class="srchd"><b>‹ 送礼模式</b><span>GIFTING</span></div>'+
+      '<h2 class="fotitle">买的不是玩偶，<br><span class="g">是一份情绪价值。</span></h2>'+
+      '<p class="fosub">生日 · 安慰 · 满月 · 犒赏自己——按场景挑，不迷路</p>'+
+      '<div class="gfchips">'+chips+'</div>'+
+      '<div class="gfgrid">'+cards+'</div>'+
+      '<div class="gfopts">'+
+        '<div class="gfopt"><span class="fi">🎀</span><div class="gm"><b>礼盒包装</b><span>'+(CFG.gift_box_fee?'+RM'+esc(CFG.gift_box_fee)+' · ':'')+'拍照给你确认再寄</span></div><button class="gswitch'+(_gift.box?' on':'')+'" onclick="gToggle(\'box\')" aria-label="礼盒包装"></button></div>'+
+        '<div class="gfopt"><span class="fi">✍️</span><div class="gm"><b>手写贺卡</b><span>免费 · 你打字，主理人帮你写</span></div><button class="gswitch'+(_gift.card?' on':'')+'" onclick="gToggle(\'card\')" aria-label="手写贺卡"></button></div>'+
+        '<div class="gfopt"><span class="fi">📮</span><div class="gm"><b>直接寄给 TA</b><span>收货地址填 TA 的，价签拆掉</span></div><button class="gswitch'+(_gift.direct?' on':'')+'" onclick="gToggle(\'direct\')" aria-label="直接寄给TA"></button></div>'+
+      '</div>'+
+      '<p class="gffoot" style="margin:12px 0 0;text-align:center;font-size:11px;color:var(--sub)">🤍 所有礼物到手先验货拍照，确认完好再包装寄出'+((_gift.box||_gift.card||_gift.direct)?'<br><b style="color:var(--gold)">已选送礼选项会自动附在你的订单消息里</b>':'')+'</p>';
+  }
+  function closeGift(){ document.getElementById('giftSheet').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
+
   // 联系方式优先级：后台配的 WhatsApp → 后台配的 TG 用户名（直达聊天）→ 兜底 Telegram 分享
   function contactHref(text){
     const wa=((CFG.contact_wa||CONTACT_WA)||'').replace(/[^\d]/g,'');
@@ -2104,7 +2366,7 @@
   }
 
   // ===== 埋点：尽力而为，绝不阻塞体验；店主自己不计（错误除外，那个要收）=====
-  const BUILD='figma-v17';
+  const BUILD='figma-v18';
   let _errN=0;
   function track(t,opts){
     opts=opts||{};
@@ -2179,11 +2441,12 @@
       videoHtml(p)+
       galleryHtml(p)+
       '<div class="sheet-body">'+(brandOf(p)?'<div class="sheet-brand">'+esc(brandOf(p))+'</div>':'')+'<h2>'+esc(p.name_cn||'')+'</h2>'+priceBlock+stLine+proofHtml+varHtml+
-      '<div class="svcbox">'+
+      '<div class="svcbox" onclick="openFo()" style="cursor:pointer">'+
         '<div><b>正品保证</b>支持验货</div>'+
         '<div><b>假一赔十</b>放心买</div>'+
-        '<div><b>直邮包邮</b>7–15 天</div>'+
+        '<div><b>核价付款</b>先单后款</div>'+
       '</div>'+
+      '<div class="giftrow" onclick="openGift()">🎁 送人的？进「送礼模式」帮你礼盒包装 + 手写贺卡<span class="ar">›</span></div>'+
       '<div id="rvslot">'+reviewHtml(p)+'</div>'+
       '<div id="crevslot">'+custReviewHtml(p.id)+'</div>'+
       '<div class="specs">'+specs.map(s=>'<div class="spec"><span>'+s[0]+'</span><b>'+s[1]+'</b></div>').join('')+'</div>'+
@@ -2576,10 +2839,11 @@
     const rs=document.querySelector('#checkout .reass'); if(rs) rs.textContent=refBy()?'🎁 已带推荐优惠 · 客服核价时抵运费':'发送不扣款 · 客服核价后再付';
     document.getElementById('cartSend').href=cartWaHref();
   }
+  function askHrefGiftHook(){} // 送礼选项在 askHref/cartWaHref 内拼接
   function askHref(p){
     const pv=pickedOf(p.id);
     const price=(pv&&pv.sell!=null)?pv.sell:p.sell_myr;
-    const t='我想要这个：'+(p.name_cn||'')+(pv?'【规格：'+pv.name+'】':'')+(p.sku?'（货号 '+p.sku+'）':'')+(price!=null?'，RM'+money(price):'');
+    const t='我想要这个：'+(p.name_cn||'')+(pv?'【规格：'+pv.name+'】':'')+(p.sku?'（货号 '+p.sku+'）':'')+(price!=null?'，RM'+money(price):'')+giftOptsText();
     return contactHref(t);
   }
   // 售罄登记：预填到货通知消息 + 顺手收藏（顾客能在收藏里找回，店主补货改价也有降价提醒兜着）
@@ -2620,7 +2884,7 @@
   }
   function cartWaHref(){
     _lastOrder=buildOrder();
-    return _lastOrder?contactHref(orderText(_lastOrder)):contactHref('你好，想问下 '+SHOP_NAME+' 的货');
+    return _lastOrder?contactHref(orderText(_lastOrder)+giftOptsText()):contactHref('你好，想问下 '+SHOP_NAME+' 的货');
   }
 
   // ===== 我的订单（本地留底，方便顾客回看 / 再发一次）=====
@@ -2884,6 +3148,7 @@
     const more=o.items.length>4?'<span class="omore">+'+(o.items.length-4)+'</span>':'';
     return '<div class="ocard"><div class="ohead"><b>'+esc(o.no)+'</b><span>'+fmtDate(o.ts)+'</span></div>'+
       orderStatusHtml(o)+
+      '<button class="otrack" onclick="openTrack('+o.ts+')">🚚 物流进度 · 预计到手<span class="ar">›</span></button>'+
       (o.note?'<div class="onote">备注/单号：'+esc(o.note)+'</div>':'')+
       '<div class="othumbs">'+thumbs+more+'</div>'+
       payBlockHtml(o)+
@@ -3590,7 +3855,7 @@
       const r=await fetch(SUPABASE_URL+'/rest/v1/config_369?select=key,value',{headers:headers()});
       const rows=r.ok?await r.json():[];
       const m={}; rows.forEach(x=>m[x.key]=x.value||'');
-      [['noticeInput','notice'],['curStatInput','curator_status'],['srcProofTitleInput','src_proof_title'],['srcProofItemsInput','src_proof_items'],['waInput','contact_wa'],['tgInput','contact_tg'],['giftAmtInput','gift_amt'],['giftTxtInput','gift_txt'],['refTxtInput','ref_text'],['payNoteInput','pay_note']].forEach(([id,k])=>{
+      [['noticeInput','notice'],['curStatInput','curator_status'],['srcProofTitleInput','src_proof_title'],['srcProofItemsInput','src_proof_items'],['giftBoxFeeInput','gift_box_fee'],['waInput','contact_wa'],['tgInput','contact_tg'],['giftAmtInput','gift_amt'],['giftTxtInput','gift_txt'],['refTxtInput','ref_text'],['payNoteInput','pay_note']].forEach(([id,k])=>{
         const el=document.getElementById(id);
         if(el&&document.activeElement!==el) el.value=m[k]||'';
       });
@@ -3602,6 +3867,7 @@
               ['curator_status',document.getElementById('curStatInput').value.trim().slice(0,40)],
               ['src_proof_title',document.getElementById('srcProofTitleInput').value.trim().slice(0,30)],
               ['src_proof_items',document.getElementById('srcProofItemsInput').value.trim().slice(0,200)],
+              ['gift_box_fee',document.getElementById('giftBoxFeeInput').value.replace(/[^\d]/g,'').slice(0,5)],
               ['contact_wa',document.getElementById('waInput').value.replace(/[^\d]/g,'')],
               ['contact_tg',document.getElementById('tgInput').value.trim().replace(/^@/,'')],
               ['gift_amt',document.getElementById('giftAmtInput').value.replace(/[^\d.]/g,'')],
