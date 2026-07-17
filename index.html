@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: figma-v18 -->
+<!-- build: figma-v19 -->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -972,6 +972,70 @@
   .gswitch.on:after{left:20px}
   .giftrow{display:flex;align-items:center;gap:8px;margin:13px 0 0;background:var(--goldSoft);border-radius:12px;padding:9px 13px;font-size:12px;font-weight:700;color:var(--gold);cursor:pointer}
   .giftrow .ar{margin-left:auto}
+  /* —— B6 熟客先挑 —— */
+  .eacard{background:var(--ink);border-radius:18px;padding:16px 17px;color:var(--onInk);margin:14px 0 12px;text-align:center}
+  .eacard .echip{display:inline-block;background:var(--gold);color:#fff;font-size:10px;font-weight:800;border-radius:999px;padding:3px 11px;letter-spacing:.5px}
+  .eacard h3{margin:10px 0 0;font-size:17.5px;font-weight:800;color:#fff;line-height:1.4}
+  .eacard .ecd{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:11px;font-size:11px;color:#B8AD9C}
+  .eacard .ecd b{background:#3A3126;border-radius:6px;padding:3px 7px;font-size:14px;color:#EADFC6;font-family:var(--serif)}
+  .ealvls{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin:0 0 12px}
+  .ealvl{display:flex;gap:11px;padding:12px 15px;border-bottom:1px solid var(--line);align-items:flex-start}
+  .ealvl:last-child{border-bottom:none}
+  .ealvl.on{background:var(--goldSoft)}
+  .ealvl .fi{font-size:17px;flex:0 0 auto}
+  .ealvl b{display:block;font-size:13.5px}
+  .ealvl span{display:block;font-size:11px;color:var(--sub);margin-top:1px}
+  .eagrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .eacardp{background:var(--warm);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer}
+  .eacardp .gi{position:relative;height:96px;background:var(--card2)}
+  .eacardp .gi img{width:100%;height:100%;object-fit:cover;display:block}
+  .eacardp .gi .fchip{position:absolute;left:7px;top:7px}
+  .eacardp .gb{padding:9px 11px 11px}
+  .eacardp .gb b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .eacardp .gb i{font-style:normal;color:var(--price);font-weight:800;font-size:13px;display:block;margin-top:1px}
+  .eabar{height:5px;background:var(--card2);border-radius:3px;margin-top:7px;overflow:hidden}
+  .eabar i{display:block;height:100%;background:var(--gold);border-radius:3px}
+  .eatake{font-size:10px;color:var(--sub);margin-top:4px;display:block}
+  .eafoot{margin:13px 0 0;font-size:11px;color:var(--sub);line-height:1.65;text-align:center}
+  /* —— B15 出问题了 —— */
+  .isord{display:flex;align-items:center;gap:10px;background:var(--warm);border:1px solid var(--line);border-radius:14px;padding:11px 13px;margin:14px 0 0;cursor:pointer}
+  .isord img{width:38px;height:38px;border-radius:9px;object-fit:cover;background:#D9BF8C;flex:0 0 auto}
+  .isord .im{flex:1;min-width:0}
+  .isord b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .isord span{display:block;font-size:11px;color:var(--sub);margin-top:1px}
+  .isord .sw{font-size:11.5px;color:var(--gold);font-weight:800;flex:0 0 auto}
+  .islab{display:block;font-size:12px;font-weight:800;margin:15px 0 8px}
+  .ischips{display:flex;gap:8px;flex-wrap:wrap}
+  .ischip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;color:var(--txt)}
+  .ischip.on{background:var(--ink);color:var(--onInk);border-color:var(--ink)}
+  .isrow{display:flex;gap:10px;margin-top:13px;align-items:stretch}
+  .isrow .srcphoto2{flex:0 0 84px}
+  .isrow .srcta{flex:1;min-height:84px}
+  .ispromis{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:14px}
+  .isfoot{margin:11px 0 0;text-align:center;font-size:10.5px;color:var(--sub);line-height:1.6}
+  /* —— 首页空态引导卡(保持 B1 版式) —— */
+  .arrive .aintro{padding:11px 15px 14px}
+  /* —— 商品网格卡:设计语言重塑 —— */
+  .prod{background:var(--warm);border:1px solid var(--line);border-radius:14px;box-shadow:none;overflow:hidden}
+  .prod .pinfo{padding:8px 11px 11px}
+  .prod .pbrand{font-size:9px;letter-spacing:1.2px;color:var(--sub);font-weight:800;text-transform:uppercase}
+  .prod .pname{font-size:12px;font-weight:700;line-height:1.35;height:32px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .prod .price{color:var(--price);font-weight:800;font-size:14.5px;margin-top:3px}
+  .prod .price small{font-size:10px;font-weight:800;margin-right:1px}
+  .prod .price .del{color:var(--sub);font-weight:600;font-size:10.5px;margin-left:6px;text-decoration:line-through}
+  .prod .pmeta{font-size:10px;color:var(--sub);margin-top:3px}
+  .prod .pmeta .rrate{color:var(--gold);font-weight:800}
+  .prod .addbtn{background:var(--ink);color:var(--onInk);border:none;width:30px;height:30px;border-radius:50%;font-size:16px;line-height:1;box-shadow:0 3px 10px rgba(28,24,19,.25)}
+  .prod .addbtn.in{background:var(--ok)}
+  /* —— B16 节日作战日历(后台) —— */
+  .fcrow{display:flex;gap:11px;align-items:flex-start;background:var(--warm);border:1px solid var(--line);border-radius:14px;padding:12px 13px;margin-top:9px}
+  .fcrow.on{border:1.5px solid var(--ink)}
+  .fcm{flex:0 0 auto;width:44px;height:34px;border-radius:9px;background:var(--goldSoft);color:var(--gold);font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center}
+  .fcb{flex:1;min-width:0}
+  .fcb .ft1{display:flex;align-items:center;gap:7px}
+  .fcb .ft1 b{font-size:13.5px}
+  .fcb .ft1 .fchip{font-size:9.5px}
+  .fcb .ft2{font-size:11px;color:var(--sub);margin-top:3px;line-height:1.5}
   /* figma-v17:B1 稿上没有的旧元素全部下线(功能代码保留) */
   #tipbar,#notice,#campBanner,.searchwrap,#seg,#subfilter,#recent,#feat,#foryou{display:none!important}
 </style>
@@ -1130,6 +1194,10 @@
       <input class="asearch" id="srcProofItemsInput" maxlength="200" placeholder="三丽鸥断货挂件, 日版 Switch2, MAC 断色口红" style="margin-bottom:0">
       <label style="margin-top:10px">🎀 礼盒包装收费（RM，送礼模式里展示；留空=面议）</label>
       <input class="asearch" id="giftBoxFeeInput" inputmode="numeric" maxlength="5" placeholder="15" style="margin-bottom:0">
+      <label style="margin-top:10px">⭐ 熟客场标题（「熟客先挑」页黑卡大字）</label>
+      <input class="asearch" id="earlyTitleInput" maxlength="30" placeholder="这批现货，熟客提前 2 小时挑" style="margin-bottom:0">
+      <label style="margin-top:10px">⭐ 对所有人开放时间（填了就跑真实倒计时；过期自动消失）</label>
+      <input class="asearch" id="earlyOpenInput" type="datetime-local" style="margin-bottom:0">
       <label style="margin-top:10px">💬 WhatsApp 号（如 60123456789 — 填了顾客下单/问价直达你）</label>
       <input class="asearch" id="waInput" inputmode="numeric" placeholder="60123456789" style="margin-bottom:0">
       <label style="margin-top:10px">✈️ Telegram 用户名（不带 @；WhatsApp 留空时顾客走这里）</label>
@@ -1189,6 +1257,17 @@
         </div>
         <button class="btn" onclick="fdPublish(this)" style="margin-top:12px">🚀 发布到店面</button>
         <div id="fdList" style="margin-top:12px"></div>
+      </div>
+    </div>
+    <div class="card" style="padding-bottom:10px">
+      <div onclick="toggleFcal()" style="display:flex;align-items:center;cursor:pointer;margin-bottom:4px">
+        <label style="margin:0;flex:1;color:var(--txt);font-size:13.5px;font-weight:700">📅 节日作战日历<span style="color:var(--sub);font-weight:500;font-size:12px">　马来旺季是叠着来的</span></label>
+        <span id="fcalArrow" style="color:var(--sub);font-size:12px">▼</span>
+      </div>
+      <div id="fcalBody" class="hidden">
+        <div class="hint" style="margin-top:8px"><b>别追着节日跑——提前量才是利润。</b>下面每个节点该提前几周备货都标好了,到点照着做就行。</div>
+        <div id="fcalRows"></div>
+        <div class="hint" style="margin-top:10px">🔔 每个节点提前 N 周动手,你永远不用记日子。</div>
       </div>
     </div>
     <div class="card" style="padding-bottom:10px">
@@ -1396,6 +1475,19 @@
     </div>
   </div>
 
+  <!-- 熟客先挑(B6) -->
+  <div class="sheet" id="earlySheet" onclick="if(event.target===this)closeEarly()">
+    <div class="sheet-in"><div class="close"><button onclick="closeEarly()" aria-label="关闭">✕</button></div>
+      <div style="padding:6px 18px calc(22px + var(--safe-b))" id="earlyContent"></div>
+    </div>
+  </div>
+  <!-- 出问题了(B15) -->
+  <div class="sheet" id="issueSheet" onclick="if(event.target===this)closeIssue()">
+    <div class="sheet-in"><div class="close"><button onclick="closeIssue()" aria-label="关闭">✕</button></div>
+      <div style="padding:6px 18px calc(22px + var(--safe-b))" id="issueContent"></div>
+    </div>
+  </div>
+
   <!-- 全屏看图（可左右滑动切换） -->
   <div id="lightbox" onclick="closeLightbox()">
     <button class="lbx" onclick="closeLightbox()" aria-label="关闭">✕</button>
@@ -1524,6 +1616,8 @@
     if(on('foSheet')){ closeFo(); return; }
     if(on('wallSheet')){ closeWall(); return; }
     if(on('giftSheet')){ closeGift(); return; }
+    if(on('earlySheet')){ closeEarly(); return; }
+    if(on('issueSheet')){ closeIssue(); return; }
     if(on('gbSheet')){ closeGb(); return; }
     if(on('revSheet')){ closeRev(); return; }
     if(on('salesSheet')){ closeSales(); return; }
@@ -1534,7 +1628,7 @@
   }
   function anyOverlay(){
     const on=(id)=>{ const el=document.getElementById(id); return !!el&&el.classList.contains('show'); };
-    return on('lightbox')||on('sentlay')||on('sharelay')||on('acctSheet')||on('srcSheet')||on('trackSheet')||on('foSheet')||on('wallSheet')||on('giftSheet')||on('gbSheet')||on('revSheet')||on('salesSheet')||on('edit')||on('sheet');
+    return on('lightbox')||on('sentlay')||on('sharelay')||on('acctSheet')||on('srcSheet')||on('trackSheet')||on('foSheet')||on('wallSheet')||on('giftSheet')||on('earlySheet')||on('issueSheet')||on('gbSheet')||on('revSheet')||on('salesSheet')||on('edit')||on('sheet');
   }
   // 浏览器/安卓返回键关弹层：开弹层压一条历史，back 弹出时关掉最上层；✕ 关闭时把那条历史消化掉
   let _ovPushed=false,_ovIgnorePop=false;
@@ -1558,7 +1652,7 @@
   // role=button 的元素支持 Enter/空格 触发（chips、FAQ、联想等非原生按钮）
   document.addEventListener('keydown',(e)=>{ if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.matches&&e.target.matches('[role="button"]')){ e.preventDefault(); e.target.click(); } });
   // 键盘 Esc 关弹层（无障碍 / 桌面端）
-  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ const on=(id)=>document.getElementById(id).classList.contains('show'); if(on('lightbox')||on('sentlay')||on('sharelay')||on('acctSheet')||on('srcSheet')||on('trackSheet')||on('foSheet')||on('wallSheet')||on('giftSheet')||on('gbSheet')||on('revSheet')||on('salesSheet')||on('edit')||on('sheet')) handleBack(); } });
+  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'){ const on=(id)=>document.getElementById(id).classList.contains('show'); if(on('lightbox')||on('sentlay')||on('sharelay')||on('acctSheet')||on('srcSheet')||on('trackSheet')||on('foSheet')||on('wallSheet')||on('giftSheet')||on('earlySheet')||on('issueSheet')||on('gbSheet')||on('revSheet')||on('salesSheet')||on('edit')||on('sheet')) handleBack(); } });
 
   // ===== 后台隐藏入口：连点 logo 5 次才显示「后台」按钮，顾客看不到 =====
   let adminEntry = localStorage.getItem('a369_entry')==='1';
@@ -1879,7 +1973,15 @@
     const box=document.getElementById('arriveCard');
     if(box){
       const po=_posts[0];
-      if(!po){ box.classList.add('hidden'); box.innerHTML=''; }
+      if(!po){
+        // 还没有动态:英雄位保持 B1 版式,放「关注这里」引导(不造假内容)
+        box.classList.remove('hidden');
+        box.innerHTML='<div class="aphoto ph" onclick="setTab(\'feed\')"></div>'+
+          '<div class="abody" onclick="setTab(\'feed\')">'+
+          '<div class="achips"><span class="fchip ink">📦 到货动态</span><span class="fchip gold">敬请蹲守</span></div>'+
+          '<div class="atext">主理人到什么货、拆箱验货实拍，都会第一时间发在这里——看到就是有货。</div>'+
+          '<div class="arow"><span class="amore">去「到货」蹲第一批 ›</span></div></div>';
+      }
       else{
         const ph=(po.photos&&po.photos[0])||'';
         const pr=po.product_id?ALL.find(x=>x.id===po.product_id):null;
@@ -1901,7 +2003,7 @@
     const list=ALL.filter(p=>!soldOut(p)&&p.stock!=null&&p.stock>0&&p.image_url).slice(0,10);
     if(!list.length){ box.classList.add('hidden'); box.innerHTML=''; return; }
     box.classList.remove('hidden');
-    box.innerHTML='<div class="shelfhead"><b>现货秒发 · READY TO SHIP</b><span onclick="openSrc()"></span></div>'+
+    box.innerHTML='<div class="shelfhead"><b>现货秒发 · READY TO SHIP</b><span onclick="openEarly()" role="button" tabindex="0">全部 ›</span></div>'+
       '<div class="shelf">'+list.map(p=>{
         const st=stockState(p);
         return '<div class="scard" onclick="openSheet('+p.id+')">'+
@@ -1989,7 +2091,8 @@
       '<div class="etacard"><div class="el">预计到手</div><div class="erow"><div class="ed">'+eta+'</div>'+(canceled?'':'<span class="ep">已走 '+pct+'%</span>')+'</div><div class="ebar"><i style="width:'+Math.max(4,pct)+'%"></i></div></div>'+
       '<div class="tl">'+steps+'</div>'+
       (o.note?'<div class="trknote">单号 '+esc(o.note)+' · <u onclick="copyTrackNo(\''+jesc(o.note)+'\')">复制</u> · 一般 5–8 天,中途几天不动很正常,别慌</div>'
-             :(canceled?'':'<div class="trknote">主理人发货后会把单号填在这里 · 有任何问题直接 WhatsApp 问</div>'));
+             :(canceled?'':'<div class="trknote">主理人发货后会把单号填在这里 · 有任何问题直接 WhatsApp 问</div>'))+
+      '<button class="foask" style="margin-top:12px" onclick="closeTrack();openIssue('+o.ts+')">😥 出问题了？别急，有我呢 ›</button>';
     document.getElementById('trackSheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
     track('track_open');
   }
@@ -2006,7 +2109,7 @@
       '<div class="folist">'+
         '<div class="forow"><span class="fi">🛡️</span><div><b>假一赔十</b><span>发货前拍验货视频给你，确认了才发</span></div></div>'+
         '<div class="forow"><span class="fi">💳</span><div><b>核价后才付款</b><span>先发单不用付钱，客服报完总价你确认再转账</span></div></div>'+
-        '<div class="forow"><span class="fi">📷</span><div><b>到手 48h 内有问题</b><span>拍照给主理人，坏损错漏包退包换</span></div></div>'+
+        '<div class="forow" onclick="closeFo();openIssue()" style="cursor:pointer"><span class="fi">📷</span><div><b>到手 48h 内有问题</b><span>拍照给主理人，坏损错漏包退包换 · 点这里直达售后</span></div></div>'+
       '</div>'+
       (refTxt?'<div class="fogift"><b>🎁 首单邀请有礼</b><span>'+esc(refTxt)+'</span></div>':'')+
       '<div class="fosteps">'+
@@ -2106,6 +2209,111 @@
       '<p class="gffoot" style="margin:12px 0 0;text-align:center;font-size:11px;color:var(--sub)">🤍 所有礼物到手先验货拍照，确认完好再包装寄出'+((_gift.box||_gift.card||_gift.direct)?'<br><b style="color:var(--gold)">已选送礼选项会自动附在你的订单消息里</b>':'')+'</p>';
   }
   function closeGift(){ document.getElementById('giftSheet').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
+
+  // ===== B6 熟客先挑 =====
+  function openEarly(){
+    const box=document.getElementById('earlyContent'); if(!box) return;
+    const m=memberStats();
+    const openAt=CFG.early_open_at?new Date(CFG.early_open_at):null;
+    const hasCd=openAt&&!isNaN(openAt.getTime())&&openAt.getTime()>Date.now();
+    const title=(CFG.early_title||'这批现货，熟客提前挑').slice(0,30);
+    const stocked=ALL.filter(p=>!soldOut(p)&&p.stock!=null&&p.stock>0&&p.image_url).slice(0,8);
+    const cards=stocked.map(p=>{
+      const sold=Number(p.sold_count)||0, tot=sold+p.stock;
+      const pct=tot>0?Math.round(sold/tot*100):0;
+      return '<div class="eacardp" onclick="closeEarly();openSheet('+p.id+')">'+
+        '<div class="gi"><img src="'+esc(im(p.image_url,300))+'" referrerpolicy="no-referrer" loading="lazy" onerror="imgFB(this)" alt=""><span class="fchip '+(stockState(p)==='low'?'red':'ok')+'">'+(stockState(p)==='low'?'仅剩 '+p.stock:'现货')+'</span></div>'+
+        '<div class="gb"><b>'+esc(p.name_cn||'')+'</b>'+(p.sell_myr!=null?'<i>RM'+money(p.sell_myr)+'</i>':'')+
+        (sold>0?'<div class="eabar"><i style="width:'+pct+'%"></i></div><span class="eatake">熟客已拿走 '+sold+' / '+tot+'</span>':'')+
+        '</div></div>';
+    }).join('');
+    box.innerHTML='<div class="srchd"><b>‹ 熟客先挑</b><span>EARLY ACCESS</span></div>'+
+      '<div class="eacard"><span class="echip">⭐ 老顾客专属</span><h3>'+esc(title)+'</h3>'+
+      (hasCd?'<div class="ecd" id="eaCd" data-dl="'+esc(openAt.toISOString())+'"><span>对所有人开放还有</span></div>':'<div class="ecd"><span>老店规矩 · 好东西先给熟人</span></div>')+
+      '</div>'+
+      '<div class="ealvls">'+
+        '<div class="ealvl'+(m.tier==='新朋友'?' on':'')+'"><span class="fi">🌱</span><div><b>新朋友</b><span>正常时间开抢</span></div></div>'+
+        '<div class="ealvl'+(m.tier==='老顾客'?' on':'')+'"><span class="fi">🎖</span><div><b>老顾客（2单+）</b><span>现货提前 2 小时 + 推送提醒</span></div></div>'+
+        '<div class="ealvl'+(m.tier==='挚友会员'?' on':'')+'"><span class="fi">💎</span><div><b>挚友会员（5单+）</b><span>提前 1 天 + 可留货 24h</span></div></div>'+
+      '</div>'+
+      (cards?'<div class="eagrid">'+cards+'</div>':'<div class="empty" style="padding:26px 0"><div class="big">📦</div>这批现货被熟客拿完了<br><span style="font-size:12px">开「到货提醒」,下一批第一时间喊你</span></div>')+
+      '<div class="eafoot">🔔 开抢前 10 分钟推送提醒你（开了「到货提醒」就行）<br>为什么这样做：好东西先给熟人，是老店的规矩。</div>';
+    document.getElementById('earlySheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
+    if(hasCd) tickEaCd();
+    track('early_open');
+  }
+  let _eaTick=null;
+  function tickEaCd(){
+    if(_eaTick){ clearInterval(_eaTick); }
+    _eaTick=setInterval(()=>{
+      const el=document.getElementById('eaCd');
+      if(!el){ clearInterval(_eaTick); _eaTick=null; return; }
+      let ms=new Date(el.dataset.dl).getTime()-Date.now();
+      if(ms<=0){ el.innerHTML='<span>已对所有人开放 🎉</span>'; clearInterval(_eaTick); _eaTick=null; return; }
+      const p2=n=>String(n).padStart(2,'0');
+      const h=Math.floor(ms/3600e3); ms-=h*3600e3; const mi=Math.floor(ms/60e3); ms-=mi*60e3;
+      el.innerHTML='<span>对所有人开放还有</span><b>'+p2(h)+'</b><b>'+p2(mi)+'</b><b>'+p2(Math.floor(ms/1e3))+'</b>';
+    },1000);
+  }
+  function closeEarly(){ document.getElementById('earlySheet').classList.remove('show'); document.body.style.overflow=''; if(_eaTick){ clearInterval(_eaTick); _eaTick=null; } updateBack(); }
+
+  // ===== B15 出问题了 =====
+  let _isOrder=null,_isKind='';
+  function openIssue(ts){
+    const list=(_ordersView||mergedOrders());
+    _isOrder=ts?list.find(x=>String(x.ts)===String(ts)):(list[0]||null);
+    _isKind='';
+    renderIssue();
+    document.getElementById('issueSheet').classList.add('show'); document.body.style.overflow='hidden'; updateBack();
+    track('issue_open');
+  }
+  function isPick(){
+    const list=(_ordersView||mergedOrders());
+    if(list.length<2){ toast(list.length?'就这一单啦':'还没有订单'); return; }
+    const i=list.indexOf(_isOrder);
+    _isOrder=list[(i+1)%list.length]; renderIssue(); haptic('light');
+  }
+  function isKindSet(k){ _isKind=(_isKind===k)?'':k; renderIssue(); haptic('light'); }
+  function renderIssue(){
+    const box=document.getElementById('issueContent'); if(!box) return;
+    const o=_isOrder;
+    const kinds=['坏了 / 破损','发错款','少了件','一直没到','不喜欢'];
+    const txt=(document.getElementById('isTxt')||{}).value||'';
+    const it=o&&(o.items||[])[0];
+    box.innerHTML='<div class="srchd"><b>‹ 出问题了？</b><span>SUPPORT</span></div>'+
+      '<h2 class="fotitle">别急，<span class="g">有我呢。</span></h2>'+
+      '<p class="fosub">说清楚发生了什么，24 小时内给你方案</p>'+
+      (o?'<div class="isord" onclick="isPick()">'+((it&&it.image)?'<img src="'+esc(im(it.image,120))+'" referrerpolicy="no-referrer" onerror="this.style.opacity=.25" alt="">':'')+
+         '<div class="im"><b>'+esc(o.no)+(it?' · '+esc((it.name||'').slice(0,14)):'')+'</b><span>'+fmtDate(o.ts)+(o.status?' · '+esc(o.status):'')+'</span></div><span class="sw">换一单 ›</span></div>'
+        :'<div class="isord" style="cursor:default"><div class="im"><b>还没有订单</b><span>也可以直接说,主理人一样管</span></div></div>')+
+      '<label class="islab">哪里出了问题？</label>'+
+      '<div class="ischips">'+kinds.map(k=>'<span class="ischip'+(_isKind===k?' on':'')+'" onclick="isKindSet(\''+k+'\')">'+k+'</span>').join('')+'</div>'+
+      '<div class="isrow">'+
+        '<div class="srcphoto2" onclick="toast(\'提交后把照片直接发到 WhatsApp 对话里 📷\')"><i>📷</i>拍给我看</div>'+
+        '<textarea class="srcta" id="isTxt" maxlength="300" placeholder="兔耳朵接缝处开线了…">'+esc(txt)+'</textarea>'+
+      '</div>'+
+      '<div class="ispromis">'+
+        '<div class="forow"><span class="fi">⏱</span><div><b>2 小时内</b><span>主理人本人回复你（不是机器人）</span></div></div>'+
+        '<div class="forow"><span class="fi">🤝</span><div><b>24 小时内</b><span>给方案：补发 / 退款 / 部分退——你来选</span></div></div>'+
+        '<div class="forow"><span class="fi">📋</span><div><b>全程留痕</b><span>处理记录都在 WhatsApp 对话里，随时可查</span></div></div>'+
+      '</div>'+
+      '<button class="focta" onclick="issueSubmit()">提交 · 主理人 2 小时内回你</button>'+
+      '<p class="isfoot">🤍 处理得好的问题，比没出问题更让人放心<br>（同样的错，不允许自己犯第二次）</p>';
+  }
+  function issueSubmit(){
+    const desc=((document.getElementById('isTxt')||{}).value||'').trim();
+    if(!_isKind&&!desc){ toast('选一下问题类型,或写一句发生了什么'); haptic('medium'); return; }
+    const o=_isOrder;
+    let msg='😥 我的订单出了点问题:\n';
+    if(o) msg+='订单 '+o.no+(o.status?'('+o.status+')':'')+'\n';
+    if(_isKind) msg+='问题:'+_isKind+'\n';
+    if(desc) msg+='情况:'+desc+'\n';
+    msg+='(照片我这就发你)';
+    track('issue_submit',{q:(_isKind+' '+desc).slice(0,120)});
+    const a=document.createElement('a'); a.href=contactHref(msg); a.target='_blank'; a.rel='noopener'; document.body.appendChild(a); a.click(); a.remove();
+    closeIssue(); toast('已带到 WhatsApp,主理人 2 小时内回你 🤝'); haptic('medium');
+  }
+  function closeIssue(){ document.getElementById('issueSheet').classList.remove('show'); document.body.style.overflow=''; updateBack(); }
 
   // 联系方式优先级：后台配的 WhatsApp → 后台配的 TG 用户名（直达聊天）→ 兜底 Telegram 分享
   function contactHref(text){
@@ -2229,13 +2437,10 @@
   // 卡片社交证明行：验货是全店承诺（每件都能显示），已售有数才显示，包邮已归到金色担保条
   function cardMeta(p){
     if(p.sell_myr==null) return '';
-    const bits=[];
     const rs=_rstats[p.id];
-    if(rs&&rs.cnt>0) bits.push('<span class="rrate">★'+rs.avg.toFixed(1)+'</span> '+rs.cnt+'评价');
-    else bits.push('<span class="vok">✓验货</span>');
-    if(p.sold_count>0) bits.push('已售 '+p.sold_count);
-    else if(!(rs&&rs.cnt>0)) bits.push('包邮');
-    return '<div class="pmeta">'+bits.join('<span class="sep">·</span>')+'</div>';
+    if(rs&&rs.cnt>0) return '<div class="pmeta"><span class="rrate">★'+rs.avg.toFixed(1)+'</span> '+rs.cnt+' 条好评</div>';
+    if(p.sold_count>0) return '<div class="pmeta">已售 '+p.sold_count+'</div>';
+    return '';
   }
   function thumb(p){
     return p.image_url
@@ -2347,13 +2552,11 @@
   function cardHtml(p){
     const inCart=!!cart[p.id];
     const nImg=(p.images&&p.images.length)||0;
-    const isNew=p.created_at&&(Date.now()-new Date(p.created_at).getTime())<3*86400000;
-    const corner=p.hot?'<span class="hotbadge">HOT</span>':(isNewSince(p)?'<span class="newbadge">上新</span>':(isNew?'<span class="newbadge">NEW</span>':''));
     const st=stockState(p);
+    const corner='';
     const stchip=(st==='in')?'<span class="stchip in">现货秒发</span>':(st==='low')?'<span class="stchip low">仅剩 '+p.stock+' 件</span>':'';
     return '<div class="prod'+(soldOut(p)?' isout':'')+'" data-id="'+p.id+'">'+
-      '<div class="thumb" onclick="openSheet('+p.id+')">'+thumb(p)+
-        (nImg>1?'<span class="imgbadge">'+nImg+' 图</span>':'')+corner+
+      '<div class="thumb" onclick="openSheet('+p.id+')">'+thumb(p)+corner+
         (p.video_url?'<span class="playic">▶</span>':'')+
         favBtn(p.id)+stchip+
         (soldOut(p)?'<div class="soldcover"><span>已抢完</span></div>':
@@ -2366,7 +2569,7 @@
   }
 
   // ===== 埋点：尽力而为，绝不阻塞体验；店主自己不计（错误除外，那个要收）=====
-  const BUILD='figma-v18';
+  const BUILD='figma-v19';
   let _errN=0;
   function track(t,opts){
     opts=opts||{};
@@ -3284,7 +3487,7 @@
     else if(m.tier==='老顾客'){ const g=5-m.n; if(g>0) next='再下 '+g+' 单升挚友会员 💎'; }
     else next='挚友会员 · 感谢一路支持 🤍';
     const meta='已下单 <b>'+m.n+'</b> 单'+(m.spend>0?' · 累计 <b>RM'+money(m.spend)+'</b>':'');
-    return '<div class="memcard"><div class="mic">'+m.icon+'</div><div class="mm">'+
+    return '<div class="memcard" onclick="openEarly()" style="cursor:pointer"><div class="mic">'+m.icon+'</div><div class="mm">'+
       '<div class="mtier">'+m.icon+' '+esc(m.tier)+'</div>'+
       '<div class="mmeta">'+meta+'</div>'+
       (next?'<div class="mnext">'+esc(next)+'</div>':'')+
@@ -3299,6 +3502,32 @@
         '<div class="empty" style="padding:44px 0"><div class="big">📋</div>还没有订单<br>去心愿单点「发给客服」，这里就会留底<br><button onclick="closeOrders();setTab(\'shop\')" style="margin-top:14px;background:var(--ink);border:none;color:var(--onInk);border-radius:20px;padding:11px 30px;font-size:13.5px;font-weight:600;letter-spacing:1px">去逛逛</button></div>');
   }
   // openOrders / closeOrders 已迁移到「订单 Tab」区（setTab('orders')）
+
+  // ===== B16 节日作战日历(店主端,静态打法卡;高亮下一个节点) =====
+  const FCAL=[
+    {m:'9月',mo:9,name:'9.9 大促 + 中秋',lead:'提前 3 周',tip:'8 月中开始：礼盒装 + Jellycat 兔款现货；凑一波拼团'},
+    {m:'11月',mo:11,name:'11.11 全年最大',lead:'提前 6 周',tip:'爆款开预售收定金 · 9 月底就要下扫货清单'},
+    {m:'12月',mo:12,name:'圣诞 + 年终 YES',lead:'提前 6 周',tip:'Jellycat 全年峰值 · 送礼模式全开 · 晒单墙冲量'},
+    {m:'1-2月',mo:1,name:'农历新年 CNY',lead:'截单 ~1/20',tip:'红色系 + 年货 + 「最后一班船」倒计时挂首页'},
+    {m:'3月',mo:3,name:'Hari Raya',lead:'提前 4 周',tip:'马来友人送礼窗口 · 试水非华语客（观察询单）'},
+  ];
+  function toggleFcal(){
+    const b=document.getElementById('fcalBody'); if(!b) return;
+    b.classList.toggle('hidden');
+    document.getElementById('fcalArrow').textContent=b.classList.contains('hidden')?'▼':'▲';
+    if(!b.classList.contains('hidden')) renderFcal();
+  }
+  function renderFcal(){
+    const box=document.getElementById('fcalRows'); if(!box) return;
+    const now=new Date().getMonth()+1;
+    // 下一个节点:与当前月距离最近(含备货期,粗算提前2个月内算「进行中」)
+    let best=-1,bd=99;
+    FCAL.forEach((f,i)=>{ let d=(f.mo-now+12)%12; if(d<bd){ bd=d; best=i; } });
+    box.innerHTML=FCAL.map((f,i)=>'<div class="fcrow'+(i===best?' on':'')+'">'+
+      '<div class="fcm">'+f.m+'</div><div class="fcb">'+
+      '<div class="ft1"><b>'+f.name+'</b><span class="fchip gold">'+f.lead+'</span>'+(i===best?'<span class="fchip ink">当前目标</span>':'')+'</div>'+
+      '<div class="ft2">'+f.tip+'</div></div></div>').join('');
+  }
 
   // ===== 后台 =====
   function showMsg(k,t){ const m=document.getElementById('msg'); m.className='msg show '+k; m.textContent=t; }
@@ -3855,7 +4084,7 @@
       const r=await fetch(SUPABASE_URL+'/rest/v1/config_369?select=key,value',{headers:headers()});
       const rows=r.ok?await r.json():[];
       const m={}; rows.forEach(x=>m[x.key]=x.value||'');
-      [['noticeInput','notice'],['curStatInput','curator_status'],['srcProofTitleInput','src_proof_title'],['srcProofItemsInput','src_proof_items'],['giftBoxFeeInput','gift_box_fee'],['waInput','contact_wa'],['tgInput','contact_tg'],['giftAmtInput','gift_amt'],['giftTxtInput','gift_txt'],['refTxtInput','ref_text'],['payNoteInput','pay_note']].forEach(([id,k])=>{
+      [['noticeInput','notice'],['curStatInput','curator_status'],['srcProofTitleInput','src_proof_title'],['srcProofItemsInput','src_proof_items'],['giftBoxFeeInput','gift_box_fee'],['earlyTitleInput','early_title'],['earlyOpenInput','early_open_at'],['waInput','contact_wa'],['tgInput','contact_tg'],['giftAmtInput','gift_amt'],['giftTxtInput','gift_txt'],['refTxtInput','ref_text'],['payNoteInput','pay_note']].forEach(([id,k])=>{
         const el=document.getElementById(id);
         if(el&&document.activeElement!==el) el.value=m[k]||'';
       });
@@ -3868,6 +4097,8 @@
               ['src_proof_title',document.getElementById('srcProofTitleInput').value.trim().slice(0,30)],
               ['src_proof_items',document.getElementById('srcProofItemsInput').value.trim().slice(0,200)],
               ['gift_box_fee',document.getElementById('giftBoxFeeInput').value.replace(/[^\d]/g,'').slice(0,5)],
+              ['early_title',document.getElementById('earlyTitleInput').value.trim().slice(0,30)],
+              ['early_open_at',document.getElementById('earlyOpenInput').value||''],
               ['contact_wa',document.getElementById('waInput').value.replace(/[^\d]/g,'')],
               ['contact_tg',document.getElementById('tgInput').value.trim().replace(/^@/,'')],
               ['gift_amt',document.getElementById('giftAmtInput').value.replace(/[^\d.]/g,'')],
