@@ -1,0 +1,115 @@
+ntinue;out.push(x);used[x.kind]=(used[x.kind]||0)+1;if(out.length>=5)break}
+    return out;
+  };
+
+  // Stage-aware readiness instead of always calling it move-in readiness.
+  const readinessBase=readiness;
+  readiness=function(){
+    const idx=Math.max(0,ST.indexOf(s.stage));
+    if(idx<=2){
+      const ds=s.decisions.length?s.decisions.filter(x=>x.status==='已确认').length/s.decisions.length:1;
+      const df=s.defects.length?s.defects.filter(x=>x.status==='已解决').length/s.defects.length:1;
+      const so=s.sockets.length?s.sockets.filter(x=>x.status==='完成').length/s.sockets.length:1;
+      const co=s.contractors.length?Math.min(1,s.contractors.filter(x=>x.quote||x.contact||x.status==='进行中').length/Math.max(1,s.contractors.length)):0;
+      return Math.round((ds*.35+df*.30+so*.20+co*.15)*100);
+    }
+    return readinessBase();
+  };
+
+  const productRowsBase=productRows;
+  productRows=async function(items){
+    let out='';
+    for(const x of items){
+      let img=await mediaGet(x.imgKey),ph=phaseOf(x),target=x.target&&landed(x)>x.target?` · 目标 ${rm(x.target)}`:'';
+      out+=`<button class="product" data-prod="${x.id}">${img?`<img src="${img}">`:'<div class="prodph">🛒</div>'}<span class="main"><b>${esc(x.item)}</b><small>${esc(x.platform||'未注明来源')} · ${esc(x.room||'未分房间')}${target}</small><span class="statusline">${pill(x.status)}<span class="pill">${esc(ph)}</span>${x.group?`<span class="pill">${esc(x.group)}</span>`:''}</span></span><span class="price"><b class="${missingPrice(x)?'priceMissing':''}">${priceLabel(x)}</b><small>${missingPrice(x)?'先收藏，后补价':'到手价'}</small></span></button>`
+    }
+    return out
+  };
+
+  renderShoppingHub=async function(){
+    const sm=shopMoney(),all=s.shopping,missing=all.filter(missingPrice).length,compare=all.filter(x=>x.group).length,selected=all.filter(x=>['已选','等优惠'].includes(x.status)).length;
+    let filtered=[...all];
+    if(shopView==='candidate')filtered=filtered.filter(x=>['想买','找资料','比价中'].includes(x.status));
+    if(shopView==='selected')filtered=filtered.filter(x=>['已选','等优惠'].includes(x.status));
+    if(shopView==='ordered')filtered=filtered.filter(x=>['已下单','运输中','已到货','已安装','完成'].includes(x.status));
+    if(shopView==='incomplete')filtered=filtered.filter(x=>missingPrice(x)||!x.room||!x.category);
+    if(R.shopPhase!=='全部')filtered=filtered.filter(x=>phaseOf(x)===R.shopPhase);
+    if(R.shopQuery){const q=R.shopQuery.toLowerCase();filtered=filtered.filter(x=>[x.item,x.room,x.category,x.platform,x.note,x.group].some(v=>String(v||'').toLowerCase().includes(q)))}
+    const phaseCounts=Object.fromEntries(PHASES.slice(1).map(p=>[p,all.filter(x=>phaseOf(x)===p).length]));
+    let body='';
+    if(shopView==='compare'){
+      let gs={};all.filter(x=>x.group).forEach(x=>(gs[x.group]??=[]).push(x));
+      let groups=Object.entries(gs).filter(([k,v])=>v.length>1);
+      body=groups.map(([g,v])=>`<button class="compareGroup" data-group="${esc(g)}"><b>${esc(g)}</b><small>${v.length} 个候选 · ${v.some(missingPrice)?'含待补价格':rm(Math.min(...v.map(landed)))+' – '+rm(Math.max(...v.map(landed)))}</small></button>`).join('')||empty('还没有对比组。给多个商品填写相同的“对比组”即可。')
+    }else{
+      const shown=filtered.slice(0,R.shopLimit);
+      if(R.shopPhase==='全部'&&!R.shopQuery&&shopView==='all'){
+        let groups=[];for(const p of ['3个月前','1个月前','入住时','锦上添花','待定','未分类']){let arr=shown.filter(x=>phaseOf(x)===p);if(arr.length)groups.push([p,arr])}
+        for(const [p,arr] of groups){body+=`<div class="shopGroupTitle"><b>${esc(p)}</b><small>${all.filter(x=>phaseOf(x)===p).length} 件</small></div>`+await productRows(arr)}
+      }else body=await productRows(shown);
+      if(filtered.length>R.shopLimit)body+=`<button class="shopMore" id="shopMore">再显示 ${Math.min(30,filtered.length-R.shopLimit)} 条 · 还有 ${filtered.length-R.shopLimit} 条</button>`;
+    }
+    $('#controlList').innerHTML=`
+      <div class="shopStats compact"><div><small>全部收藏</small><b>${all.length}</b></div><div><small>待补价格</small><b class="${missing?'priceMissing':''}">${missing}</b></div><div><small>已选 / 等优惠</small><b>${selected}</b></div><div><small>预计采购</small><b>${rm(sm.forecast)}</b></div></div>
+      ${missing?`<div class="dataHint"><b>先整理最影响决策的资料</b><br>${missing} 件商品还没价格。Reno247 不会把 RM0 当真实价格，补价后预算预测才会更准。</div>`:''}
+      <div class="shopToolbar"><button id="addProduct">＋ 收藏商品</button><button id="compareProducts">⚖️ 对比商品</button></div>
+      <div class="shopSearch"><input id="shopQuery" placeholder="搜商品、房间、平台、备注…" value="${esc(R.shopQuery)}"><button id="clearShop">×</button></div>
+      <div class="phaseRail">${PHASES.map(p=>`<button data-phase="${p}" class="${R.shopPhase===p?'on':''}">${p}${p==='全部'?'':` ${phaseCounts[p]||0}`}</button>`).join('')}</div>
+      <div class="tabs"><button data-shopview="all" class="${shopView==='all'?'on':''}">全部</button><button data-shopview="candidate" class="${shopView==='candidate'?'on':''}">候选</button><button data-shopview="selected" class="${shopView==='selected'?'on':''}">已选</button><button data-shopview="ordered" class="${shopView==='ordered'?'on':''}">购买中</button><button data-shopview="incomplete" class="${shopView==='incomplete'?'on':''}">待补资料</button><button data-shopview="compare" class="${shopView==='compare'?'on':''}">对比组</button></div>
+      <div id="shopItems">${body||empty('没有符合当前筛选的商品')}</div>`;
+    $('#addProduct').onclick=()=>productForm();$('#compareProducts').onclick=()=>{shopView='compare';R.shopLimit=30;renderShoppingHub()};
+    $('#shopQuery').oninput=e=>{R.shopQuery=e.target.value.trim();R.shopLimit=30;clearTimeout(window.__sqTimer);window.__sqTimer=setTimeout(renderShoppingHub,180)};
+    $('#clearShop').onclick=()=>{R.shopQuery='';R.shopLimit=30;renderShoppingHub()};
+    $$('[data-phase]').forEach(b=>b.onclick=()=>{R.shopPhase=b.dataset.phase;R.shopLimit=30;renderShoppingHub()});
+    $$('[data-shopview]').forEach(b=>b.onclick=()=>{shopView=b.dataset.shopview;R.shopLimit=30;renderShoppingHub()});
+    if($('#shopMore'))$('#shopMore').onclick=()=>{R.shopLimit+=30;renderShoppingHub()};
+    $$('[data-prod]').forEach(b=>b.onclick=()=>productDetail(b.dataset.prod));$$('[data-group]').forEach(b=>b.onclick=()=>compareDetail(b.dataset.group));
+  };
+
+  // Global search across imported renovation knowledge.
+  function installSearch(){
+    const top=document.querySelector('.top');if(!top||$('#globalSearchBtn'))return;
+    const bell=$('#bell');const box=document.createElement('div');box.className='topActions';
+    const sb=document.createElement('button');sb.className='circle searchCircle';sb.id='globalSearchBtn';sb.setAttribute('aria-label','搜索装修资料');
+    bell.parentNode.insertBefore(box,bell);box.appendChild(sb);box.appendChild(bell);
+    sb.onclick=()=>openGlobalSearch();
+  }
+  function openGlobalSearch(q=''){
+    modal('搜索装修资料','一次搜房间、商品、任务、决定、Defect、电位和师傅',`<label>搜索<input id="gsq" autocomplete="off" placeholder="例如：冷气 / 厨房 / 插座 / 橱柜" value="${esc(q)}"></label><div id="gsResults" class="searchResults"></div>`);
+    const inp=$('#gsq');const run=()=>renderGlobalSearch(inp.value.trim());inp.oninput=run;setTimeout(()=>{inp.focus();run()},50)
+  }
+  function renderGlobalSearch(q){
+    const box=$('#gsResults');if(!box)return;if(!q){box.innerHTML='<div class="empty">输入关键词即可跨所有装修资料搜索</div>';return}
+    const z=q.toLowerCase();const hit=v=>String(v||'').toLowerCase().includes(z);let groups=[];
+    let rooms=s.rooms.filter(r=>hit(r)||hit(s.roomData[r]?.note)||hit(s.roomData[r]?.dimensions));if(rooms.length)groups.push(['房间',rooms.slice(0,8).map(r=>({ico:EM[r]||'🏠',title:r,sub:[s.roomData[r]?.dimensions,s.roomData[r]?.note].filter(Boolean).join(' · '),kind:'room',id:r}))]);
+    let shops=s.shopping.filter(x=>[x.item,x.room,x.category,x.note,x.platform,x.group].some(hit));if(shops.length)groups.push(['选购',shops.slice(0,10).map(x=>({ico:'🛒',title:x.item,sub:[x.room,phaseOf(x),priceLabel(x)].filter(Boolean).join(' · '),kind:'shop',id:x.id}))]);
+    let tasks=s.tasks.filter(x=>[x.name,x.room,x.note].some(hit));if(tasks.length)groups.push(['任务',tasks.slice(0,8).map(x=>({ico:'✅',title:x.name,sub:x.room||x.note,kind:'tab',id:'task'}))]);
+    let dec=s.decisions.filter(x=>[x.title,x.room,x.note,x.block].some(hit));if(dec.length)groups.push(['决定',dec.slice(0,8).map(x=>({ico:'◇',title:x.title,sub:x.block?'阻塞：'+x.block:(x.room||x.note),kind:'tab',id:'decision'}))]);
+    let defs=s.defects.filter(x=>[x.title,x.room,x.note,x.owner].some(hit));if(defs.length)groups.push(['Defect',defs.slice(0,8).map(x=>({ico:'⚠️',title:x.title,sub:x.room||x.note,kind:'tab',id:'defect'}))]);
+    let socks=s.sockets.filter(x=>[x.title,x.room,x.position,x.note,x.type].some(hit));if(socks.length)groups.push(['电位',socks.slice(0,8).map(x=>({ico:'🔌',title:x.title,sub:[x.room,x.position,x.qty].filter(Boolean).join(' · '),kind:'tab',id:'sockets'}))]);
+    let cons=s.contractors.filter(x=>[x.name,x.type,x.contact,x.note].some(hit));if(cons.length)groups.push(['师傅',cons.slice(0,8).map(x=>({ico:'👷',title:x.name,sub:[x.type,x.contact].filter(Boolean).join(' · '),kind:'tab',id:'contractors'}))]);
+    if(!groups.length){box.innerHTML='<div class="empty">没有找到相关资料</div>';return}
+    box.innerHTML=groups.map(([g,arr])=>`<div class="searchGroup"><small>${g} · ${arr.length}</small>${arr.map(x=>`<button class="searchItem" data-kind="${x.kind}" data-id="${esc(x.id)}"><span class="sico">${x.ico}</span><span class="scopy"><b>${esc(x.title)}</b><small>${esc(x.sub||'')}</small></span><span>›</span></button>`).join('')}</div>`).join('');
+    $$('.searchItem').forEach(b=>b.onclick=()=>{const k=b.dataset.kind,id=b.dataset.id;if(k==='room'){roomHub(id);return}if(k==='shop'){productDetail(id);return}if(k==='tab'){tab=id;$('#modal').classList.add('hide');go('control');fullSetControlActive(id);renderControl()}})
+  }
+
+  function fullSetControlActive(id){$$('[data-tab]').forEach(b=>b.classList.toggle('on',b.dataset.tab===id))}
+  function installControlTabs(){
+    const tabs=$('#ctabs');if(!tabs)return;
+    const wanted=[['overview','总览'],['task','任务'],['decision','待确认'],['defect','缺陷'],['inspect','验收'],['variation','变更'],['log','日志'],['shopping','选购'],['contractors','师傅'],['sockets','电位'],['handover','交付']];
+    tabs.innerHTML=wanted.map(([id,label])=>`<button data-tab="${id}">${label}</button>`).join('');
+    $$('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;fullSetControlActive(tab);renderControl()});
+    tab='overview';fullSetControlActive(tab);
+  }
+
+  const renderControlBase=renderControl;
+  renderControl=function(){
+    updateControlHero();
+    if(tab==='overview'){
+      $('#controlKicker').textContent='真实资料 · 自动分流';$('#controlTitle').textContent='控制中心';$('#controlDesc').textContent='先看数量和阻塞，再进入具体模块。';
+      const data=[
+        ['task','✅','任务',fullOpenCount('task'),'施工与日常待办'],['decision','◇','待确认',fullOpenCount('decision'),'会影响下单/施工的决定'],['defect','⚠️','待复验 Defect',fullOpenCount('defect'),'发展商修复后仍要复验'],['inspect','✓','待验收',fullOpenCount('inspect'),'封工前与关键节点'],['shopping','🛒','选购',s.shopping.length,'Notion + Reno247 收藏'],['sockets','🔌','电位 / 网络',s.sockets.filter(x=>x.status!=='完成').length,'封墙前重点确认'],['contractors','👷','师傅 / 供应商',s.contractors.length,'报价、订金、联系方式'],['handover','🔑','交付 / Warranty',s.handover.filter(x=>x.status!=='已收齐'&&x.status!=='完成').length,'入住前后的长期档案']
+      ];
+      const blockers=s.decisions.filter(x=>x.status!=='已确认'&&x.block).slice(0,3);
+      $('#controlList').innerHTML=`<div class="controlGrid">${data.map(x=>`<button class="controlTile ${(['decision','defect','inspect'].includes(x[0])&&x[3])?'attn':''}" data-jump="${x[0]}"><span class="ico">${x[1]}</span><b>${x[3]}</b><span>${x[2]}</span><small>${x[4]}</small></button>`).join('')}</div>${blockers.length?`<div class="blockerList"><div class="shopGroupTitle"><b>正在阻塞工程</b><small>${blockers.length} 项</small></div>${blockers.map(x=>`<div class="row"><span>⛔</span><span class="main"><b>${esc(x.title)}</b><small>${esc('会阻塞：'+x.block)}</small></span>${pill('待确认')}</div>`).join('')}</div>`:''}`;
+      $$('[data-jump]').forEach(b=>b.onclick=()=>{ta
