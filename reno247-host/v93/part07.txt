@@ -1,0 +1,78 @@
+b=b.dataset.jump;fullSetControlActive(tab);renderControl()});return;
+    }
+    if(tab==='task'){
+      $('#controlKicker').textContent='下一步 × 执行';$('#controlTitle').textContent='任务';$('#controlDesc').textContent='先处理逾期、今天与会阻塞工程的事项。';
+      let a=[...s.tasks].sort((x,y)=>(x.done-y.done)||dateDelta(x.due)-dateDelta(y.due));
+      $('#controlList').innerHTML=`<button class="controlAdd" id="addTask922">＋ 新增任务</button>`+(a.map(x=>`<div class="row"><span>${x.done?'☑️':'✅'}</span><span class="main"><b>${esc(x.name)}</b><small>${esc([x.room,x.due?('截止 '+x.due):'',x.note].filter(Boolean).join(' · '))}</small></span><button class="linkbtn" data-taskdone="${x.id}">${x.done?'恢复':'完成'}</button></div>`).join('')||empty());
+      $('#addTask922').onclick=()=>add('task');$$('[data-taskdone]').forEach(b=>b.onclick=()=>{let x=s.tasks.find(v=>v.id===b.dataset.taskdone);if(x){x.done=!x.done;save();render();renderControl()}});return;
+    }
+    if(tab==='defect'){
+      $('#controlKicker').textContent='Evidence × 复验';$('#controlTitle').textContent='Defect';$('#controlDesc').textContent='发展商说修好 ≠ 已验收，待复验项目集中在这里。';
+      let a=[...s.defects].sort((x,y)=>(x.status==='已解决')-(y.status==='已解决'));
+      $('#controlList').innerHTML=a.map(x=>`<div class="row"><span>⚠️</span><span class="main"><b>${esc(x.title)}</b><small>${esc([x.room,x.owner,x.note].filter(Boolean).join(' · '))}</small></span><button class="linkbtn" data-defdone="${x.id}">${x.status==='已解决'?'恢复':'已复验'}</button></div>`).join('')||empty();
+      $$('[data-defdone]').forEach(b=>b.onclick=()=>{let x=s.defects.find(v=>v.id===b.dataset.defdone);if(x){x.status=x.status==='已解决'?'待复验':'已解决';save();render();renderControl()}});return;
+    }
+    renderControlBase();
+  };
+
+  const renderBudgetBase=renderBudget;
+  renderBudget=function(){
+    renderBudgetBase();
+    const buckets=[...(s.budgetBuckets||[])].sort((a,b)=>(Number(b.spent||0)/Math.max(1,Number(b.budget||0)))-(Number(a.spent||0)/Math.max(1,Number(a.budget||0))));
+    const spent=buckets.reduce((a,x)=>a+Number(x.spent||0),0),used=s.budget?Math.round(spent/s.budget*100):0;
+    const lead=document.createElement('div');lead.className='budgetLead';lead.innerHTML=`<div><small>Notion 已记录实际支出</small><b>${rm(spent)}</b></div><div class="right"><small>占总预算</small><b>${used}%</b></div>`;
+    const note=$('#moneyNote');if(note&&note.nextSibling)note.parentNode.insertBefore(lead,note.nextSibling);else note?.after(lead);
+    const bb=$('#budgetBuckets');if(bb)bb.innerHTML=buckets.map(x=>{let p=x.budget?Math.round(Number(x.spent||0)/Number(x.budget||0)*100):0;return`<div class="bucket"><small>${esc(x.name)}</small><b>${rm(x.spent||0)} / ${rm(x.budget||0)}</b><strong class="${p>=80?'warn':''}">${p}%</strong><div class="bucketUsage"><i style="width:${Math.min(100,p)}%"></i></div><em>${esc(x.note||'')}</em></div>`}).join('');
+  };
+
+  function renderRoomsGrouped(){
+    const root=$('#rooms');if(!root||!s)return;
+    const known=new Set([...GF,...FF]);const other=s.rooms.filter(r=>!known.has(r));
+    const group=(title,arr)=>{const rows=arr.filter(r=>s.rooms.includes(r));if(!rows.length)return'';return`<div class="floorGroup"><div class="floorHead"><b>${title}</b><small>${rows.length} 个空间</small></div>${rows.map(r=>{let d=s.roomData[r]||{},n=s.tasks.filter(x=>x.room===r&&!x.done).length,df=s.defects.filter(x=>x.room===r&&x.status!=='已解决').length,sp=s.shopping.filter(x=>x.room===r&&!['完成','未选择'].includes(x.status)).length;let chips=[];if(n)chips.push(`<span>${n} 待办</span>`);if(df)chips.push(`<span class="warn">${df} Defect</span>`);if(sp)chips.push(`<span>${sp} 选购</span>`);if(!chips.length)chips.push(`<span class="ok">暂无待处理</span>`);return`<button class="room" data-r="${esc(r)}"><span class="roomIcon">${EM[r]||'🏠'}</span><span class="roomCopy"><b>${esc(r)} ${d.dimensions?`<small class="roomArea">· ${esc(d.dimensions)}</small>`:''}</b><div class="roomMetaLine">${chips.join('')}</div><div class="bar"><i style="width:${d.progress||0}%"></i></div></span><span class="roomArrow">›</span></button>`}).join('')}</div>`};
+    root.innerHTML=group('楼下 Ground Floor',GF)+group('楼上 First Floor',FF)+group('其他空间',other);
+    $$('[data-r]').forEach(b=>b.onclick=()=>roomHub(b.dataset.r));
+  }
+
+  function installPulse(){
+    const risk=$('#risk');if(!risk||$('#contentPulse'))return;
+    const el=document.createElement('div');el.id='contentPulse';el.className='contentPulse';risk.insertAdjacentElement('afterend',el);
+  }
+  function updatePulse(){
+    const el=$('#contentPulse');if(!el||!s)return;const d=fullOpenCount('decision'),f=fullOpenCount('defect'),i=fullOpenCount('inspect'),m=s.shopping.filter(missingPrice).length;
+    el.innerHTML=`<button class="pulseCard ${d?'attn':''}" data-pulse="decision"><small>待确认</small><b>${d}</b><em>决定会影响下单/施工</em></button><button class="pulseCard ${f?'attn':''}" data-pulse="defect"><small>待复验 Defect</small><b>${f}</b><em>发展商修后仍需确认</em></button><button class="pulseCard" data-pulse="inspect"><small>待验收</small><b>${i}</b><em>封工前关键节点</em></button><button class="pulseCard ${m?'attn':''}" data-pulse="shopmissing"><small>商品待补价格</small><b>${m}</b><em>补完预算预测更准</em></button>`;
+    $$('[data-pulse]').forEach(b=>b.onclick=()=>{let k=b.dataset.pulse;if(k==='shopmissing'){tab='shopping';shopView='incomplete';R.shopPhase='全部';R.shopLimit=30;go('control');fullSetControlActive('shopping');renderControl()}else{tab=k;go('control');fullSetControlActive(k);renderControl()}})
+  }
+
+  function updateReadinessCopy(){
+    const idx=Math.max(0,ST.indexOf(s.stage));const sec=$('#readyRing')?.closest('.section');if(!sec)return;const h=sec.querySelector('.head h3');if(idx<=2){h.textContent='开工准备度';$('#readyTitle').textContent=readiness()>=70?'开工前资料基本齐':'先解决会卡住开工的事项';let pending=[];const d=fullOpenCount('decision'),f=fullOpenCount('defect'),so=s.sockets.filter(x=>x.status!=='完成').length;if(d)pending.push(d+' 个决定');if(f)pending.push(f+' 个待复验');if(so)pending.push(so+' 个电位');$('#readyDesc').textContent=pending.length?'目前重点：'+pending.join('、'):'关键准备项已基本确认。'}else if(idx<=5){h.textContent='施工推进度'}else h.textContent='入住准备度';
+  }
+
+  function updateNavBadges(){
+    $$('[data-nav]').forEach(b=>b.querySelector('.navBadge')?.remove());
+    const c=fullOpenCount('task')+fullOpenCount('decision')+fullOpenCount('defect')+fullOpenCount('inspect');const roomDef=s.defects.filter(x=>x.status!=='已解决').length;
+    const ctrl=$('[data-nav="control"]'),rooms=$('[data-nav="rooms"]');
+    if(ctrl&&c){let n=document.createElement('span');n.className='navBadge';n.textContent=c>99?'99+':c;ctrl.appendChild(n)}
+    if(rooms&&roomDef){let n=document.createElement('span');n.className='navBadge';n.textContent=roomDef;rooms.appendChild(n)}
+  }
+
+  const renderBase=render;
+  render=function(){renderBase();installPulse();updatePulse();renderRoomsGrouped();updateReadinessCopy();updateNavBadges();const sm=document.querySelector('.top small');if(sm)sm.textContent='Reno247 · '+V;};
+
+  installSearch();installControlTabs();installPulse();
+  if(s)render();
+})();
+</script>
+<style id="v923-full-style">
+/* V9.3 — full-feature restore. Enhances content-aware IA without removing modules. */
+.fullActions{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin:12px 0}.fullActions button{border:1px solid var(--line);background:#fff;border-radius:15px;padding:12px;font-size:11px;font-weight:800;text-align:left}.moduleHint{font-size:10px;color:var(--muted);line-height:1.5;margin:8px 0 12px}.mediaGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.mediaCard{border:1px solid var(--line);background:#fff;border-radius:18px;overflow:hidden;text-align:left;padding:0;box-shadow:0 6px 18px rgba(25,29,38,.035)}.mediaCard img,.mediaPh{width:100%;aspect-ratio:4/3;object-fit:cover;background:#f0f1f4;display:grid;place-items:center;font-size:28px}.mediaCard .copy{padding:11px}.mediaCard b{display:block;font-size:12px}.mediaCard small{display:block;color:var(--muted);font-size:9px;margin-top:4px}.planWrap{position:relative;border-radius:18px;overflow:hidden;background:#eee;border:1px solid var(--line)}.planWrap img{width:100%;display:block}.markerDot{position:absolute;transform:translate(-50%,-50%);width:31px;height:31px;border:3px solid #fff;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:800;box-shadow:0 4px 12px rgba(0,0,0,.22)}.defMedia{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}.defMedia img,.defMedia .placeholder{width:100%;aspect-ratio:1/1;border-radius:14px;object-fit:cover;background:#f0f1f4;display:grid;place-items:center;color:#9aa0aa;font-size:10px}.galleryStrip{display:flex;gap:8px;overflow:auto;padding-bottom:3px}.galleryStrip button{border:0;background:none;padding:0;flex:0 0 112px}.galleryStrip img,.galleryStrip .ph{width:112px;height:90px;border-radius:14px;object-fit:cover;background:#eef0f3;display:grid;place-items:center}.optionCard{border:1px solid var(--line);background:#fff;border-radius:16px;padding:12px;margin-bottom:8px}.optionCard.chosen{border-color:#a9dfc3;background:#f7fcf9}.optionCard .topline{display:flex;justify-content:space-between;gap:10px}.optionCard small{display:block;color:var(--muted);font-size:10px;margin-top:4px}.timeline{position:relative;padding-left:17px}.timeline:before{content:"";position:absolute;left:5px;top:7px;bottom:7px;width:2px;background:#e1e4ea}.timelineItem{position:relative;padding:0 0 15px 14px}.timelineItem:before{content:"";position:absolute;left:-16px;top:6px;width:9px;height:9px;background:#fff;border:2px solid var(--accent);border-radius:50%}.timelineItem b{display:block;font-size:12px}.timelineItem small{display:block;color:var(--muted);font-size:10px;margin-top:3px}.quoteCompare{display:grid;gap:8px}.quoteRow{border:1px solid var(--line);background:#fff;border-radius:17px;padding:13px}.quoteRow.selected{border-color:#9ed8bb;background:#f6fcf8}.quoteRow .topline{display:flex;justify-content:space-between;gap:8px}.quoteRow small{display:block;color:var(--muted);font-size:10px;margin-top:4px}.roomFinance{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.roomFinance>div{background:#f7f8fa;border:1px solid #eceef2;border-radius:15px;padding:11px}.roomFinance small{display:block;color:var(--muted);font-size:9px}.roomFinance b{display:block;font-size:13px;margin-top:4px}.fullBadge{display:inline-flex;align-items:center;border-radius:99px;padding:5px 8px;background:#f0f1f4;color:#666;font-size:9px;font-weight:800;margin-right:5px;margin-top:5px}.fullBadge.red{background:#fff0f2;color:#c63e49}.fullBadge.green{background:#eaf7f0;color:#267a52}.restoreNotice{background:#f5f8ff;border:1px solid #dfe7fb;border-radius:16px;padding:12px;color:#50617c;font-size:10px;line-height:1.5;margin:10px 0}.miniToolbar{display:flex;gap:7px;overflow:auto;margin:8px 0 12px}.miniToolbar button{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 11px;font-size:10px;font-weight:800}.miniToolbar button.on{background:#171a20;color:#fff}.photoCount{min-width:28px;height:28px;border-radius:99px;background:#f1f2f5;display:grid;place-items:center;font-size:10px;font-weight:800}.quick.fullQuick{grid-template-columns:repeat(3,1fr)}
+@media(max-width:370px){.mediaGrid,.fullActions,.roomFinance{grid-template-columns:1fr}.quick.fullQuick{grid-template-columns:repeat(2,1fr)}}
+</style>
+<script id="v923-full-script">
+(()=>{
+  const FULL_VERSION='V9.3';
+  function fullSetControlActive(id){$$('[data-tab]').forEach(b=>b.classList.toggle('on',b.dataset.tab===id))}
+  function fullOpenCount(kind){if(kind==='task')return s.tasks.filter(x=>!x.done).length;if(kind==='decision')return s.decisions.filter(x=>x.status!=='已确认').length;if(kind==='defect')return s.defects.filter(x=>x.status!=='已解决').length;if(kind==='inspect')return s.inspections.filter(x=>x.status!=='通过').length;return 0}
+  function fullPhaseOf(x){let m=String(x.note||'').match(/Notion购买批次：([^。]+)/);return m?m[1]:''}
+  document.title='Reno247 V9.3 Full Feature';
+  if(!s)return;
+  // Preserve a
