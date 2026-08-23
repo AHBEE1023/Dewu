@@ -1,0 +1,7 @@
+ and version label is correct.
+  const render923Base=render;render=function(){render923Base();fullTabs();const sm=document.querySelector('.top small');if(sm)sm.textContent='Reno247 · '+FULL_VERSION;};
+  fullTabs();render();
+})();
+</script>
+
+</body></html>
